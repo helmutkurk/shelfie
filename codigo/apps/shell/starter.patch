@@ -58,6 +58,41 @@ index 3a74bb4..98fd6e4 100644
   if(typeof input!=='string'||!input.trim()||input.length>16000) throw new Error('Input must contain 1 to 16000 characters');
   const {session}=await client.sessions.create();
   writeFileSync(journal,JSON.stringify({sessionId:session.state.sessionId,phase:'sending'}),{mode:0o600});
+diff --git a/comments.mjs b/comments.mjs
+index 99e2329..91b5303 100644
+--- a/comments.mjs
++++ b/comments.mjs
+@@ -5,6 +5,17 @@ import {taskTarget,assertTaskTarget,verifyRuntimeTask} from './task-target.mjs';
+ const target=taskTarget();
+ const {readRuntimeCredential,createCoworkerHttpClient,fetchTaskEvents,createTaskEvent}=await loadSokosumiRuntime();
+ const runtime=createCoworkerHttpClient({apiKey:readRuntimeCredential(target.coworkerId)});
++// Shelfie: tell the buyer once why no result comes (WITHHOLD or intake rejection). Comment only: no status
++// change and no result, so a paid Task's escrow still refunds on its own after the submit deadline.
++export async function postWithheld(task,comment){
++ assertTaskTarget(task,target);
++ const p=`.local/${task.id}-withheld.json`;
++ if(existsSync(p))return;
++ writeFileSync(p,JSON.stringify({state:'post-pending'}),{mode:0o600});
++ await verifyRuntimeTask(runtime,task.id,target);
++ const event=await createTaskEvent(runtime,task.id,{comment:String(comment).slice(0,2000)},AbortSignal.timeout(30000));
++ writeFileSync(p,JSON.stringify({state:'posted',eventId:event?.id??event?.data?.id??null}),{mode:0o600});
++}
+ export async function reply(task){
+  assertTaskTarget(task,target);
+  const taskId=task.id;
+diff --git a/payment-registration.mjs b/payment-registration.mjs
+index cdfecf0..c7cd31b 100644
+--- a/payment-registration.mjs
++++ b/payment-registration.mjs
+@@ -24,7 +24,7 @@ if(process.argv[2]==='key'){
+  const sources=await request('/payment-source?take=100');
+  const find=(x)=>{if(Array.isArray(x)){for(const y of x){const r=find(y);if(r)return r;}}else if(x&&typeof x==='object'){if(x.id===payment.sourceId)return x;for(const y of Object.values(x)){const r=find(y);if(r)return r;}}};
+  const source=find(sources);if(!source||wallet.walletAddress!==payment.sellerAddress)throw Error('Dedicated source or wallet mismatch');
+- const body={network:'Preprod',type:'Standard',sellingWalletVkey:wallet.walletVkey,supportedPaymentSources:[{chain:'Cardano',network:'Preprod',paymentSourceType:'Web3CardanoV2',address:source.smartContractAddress,pricing:{pricingType:'Dynamic'}}],ExampleOutputs:[],Tags:['hackathon','team-names'],name:'Hackathon Team Name Finder',description:'Suggests hackathon team names from a project topic and style.',Capability:{name:process.env.ZAI_MODEL,version:'1'},Author:{name:author},apiBaseUrl:registrationUrl(process.env.AGENT_API_PORT)};
++ const body={network:'Preprod',type:'Standard',sellingWalletVkey:wallet.walletVkey,supportedPaymentSources:[{chain:'Cardano',network:'Preprod',paymentSourceType:'Web3CardanoV2',address:source.smartContractAddress,pricing:{pricingType:'Dynamic'}}],ExampleOutputs:[],...(process.env.SHELL_TOKEN?.trim()?{Tags:['shelfie','retail','shelf-check','munich','verified-photo'],name:'Shelfie',description:'Verified shelf checks in Munich stores: a person photographs the product price tag with a one-time code, a verifier checks the photo, and you pay only when the photo is true. Pick a product and a store from the catalog.',Capability:{name:'shelfie-shelf-check',version:'1'}}:{Tags:['hackathon','team-names'],name:'Hackathon Team Name Finder',description:'Suggests hackathon team names from a project topic and style.',Capability:{name:process.env.ZAI_MODEL,version:'1'}}),Author:{name:author},apiBaseUrl:registrationUrl(process.env.AGENT_API_PORT)};
+  state.registrationWritePending=true;state.request=body;save();
+  const r=await request('/registry',body);state.registrationId=r.id;state.registrationWritePending=false;state.registration=r;save();console.log(JSON.stringify(r));
+ }else{
 diff --git a/sokosumi-runtime.mjs b/sokosumi-runtime.mjs
 index d95c7c2..7a7f83f 100644
 --- a/sokosumi-runtime.mjs
@@ -84,15 +119,20 @@ index d95c7c2..7a7f83f 100644
  }
  export async function loadSokosumiRuntime(){
 diff --git a/worker.mjs b/worker.mjs
-index 54308fc..04bc2b2 100644
+index 54308fc..4df872e 100644
 --- a/worker.mjs
 +++ b/worker.mjs
-@@ -1,4 +1,4 @@
+@@ -1,8 +1,8 @@
 -import {execFileSync} from 'node:child_process';
 +import {execSokosumi} from './sokosumi-runtime.mjs';
  import {existsSync,readFileSync,writeFileSync} from 'node:fs';
  import {acquireWorkerLock} from './worker-lock.mjs';
  import {answer,client} from './client.mjs';
+-import {reply} from './comments.mjs';
++import {reply,postWithheld} from './comments.mjs';
+ import {createPaidAdapter,isPaidReady} from './paid-task.mjs';
+ import {taskTarget,isTaskForTarget} from './task-target.mjs';
+ const target=taskTarget();
 @@ -10,7 +10,7 @@ const id=target.coworkerId;
  const releaseLock=acquireWorkerLock();
  process.once('exit',releaseLock);
@@ -102,3 +142,14 @@ index 54308fc..04bc2b2 100644
  await client.health();
  const paid=await createPaidAdapter({target,answer,save:async(taskId,state)=>writeFileSync(`.local/${taskId}.json`,JSON.stringify(state),{mode:0o600})});
  console.log('Continuous worker running',process.pid);
+@@ -35,7 +35,9 @@ while(true){
+  writeFileSync(journal,JSON.stringify({...state,phase:'completed',completion:completed}),{mode:0o600});console.log('Completed',t.id);
+  }
+  if(state.phase==='completed')await reply(t);
+- }catch(e){console.error('Task blocked',t.id,e.message.slice(0,200))}
++ }catch(e){
++ if(e?.name==='WithheldError'){console.log('Withheld',t.id,e.reason);await postWithheld(t,e.comment).catch(c=>console.error('Withheld comment not posted',t.id,c.message.slice(0,200)));continue;}
++ console.error('Task blocked',t.id,e.message.slice(0,200))}
+  }
+  }catch(e){console.error('Polling read failed',e.message.slice(0,200))}
+  await new Promise(r=>setTimeout(r,5000));

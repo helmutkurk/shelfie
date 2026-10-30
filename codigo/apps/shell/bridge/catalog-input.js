@@ -148,7 +148,8 @@ export function resolveCatalogInput(input, catalog) {
   }
   if (!productEan || !storeId) {
     const missing = [!productEan && "product", !storeId && "store"].filter(Boolean).join(" and ");
-    throw new BridgeError("input_schema_violation", `${REJECT} Could not identify the ${missing}.`, { status: 422, details: { reasons: [{ code: "catalog_unresolved" }] } });
+    const hint = 'Name the product and the store chain with its street, for example "Nutella at the REWE on August-Everding-Straße".';
+    throw new BridgeError("input_schema_violation", `${REJECT} Could not identify the ${missing}. ${hint}`, { status: 422, details: { reasons: [{ code: "catalog_unresolved" }] } });
   }
   return { productEan, stores: [{ id: storeId }] };
 }
