@@ -1,0 +1,100 @@
+{
+  "project": "Shelfie story page",
+  "locale": "en",
+  "goal": "Tell how Shelfie started, show the market and the cost of shelf checks today, introduce the team, and send visitors to /dashboard (order a check) or /w (take checks)",
+  "chosenVariant": "transformation: the shopping cart from the logo assembles while the story is told",
+  "style": {
+    "tone": "warm, concrete, editorial; numbers always with a source",
+    "type": "large condensed display headlines, system fonts (CSP allows no web fonts)",
+    "palette": ["#0B2E1F", "#2E7D32", "#6BAF5B", "#CFE7C1", "#F5EFE3"],
+    "motion": "scroll-scrubbed procedural canvas sequence"
+  },
+  "rooms": [
+    {
+      "id": "story",
+      "title": "The cart assembles",
+      "durationVh": 620,
+      "durationVhMobile": 560,
+      "renderer": "canvasSequence (procedural: progress -> frame drawn in code, no image files)",
+      "beats": [
+        {
+          "id": "intro",
+          "range": [0, 0.16],
+          "headline": "Paid only when the photo is true.",
+          "visual": "ghost outline of the cart; the handle draws itself"
+        },
+        {
+          "id": "request",
+          "range": [0.16, 0.34],
+          "headline": "Can you photograph my competitors in a few shops?",
+          "visual": "basket outline, then the basket grid"
+        },
+        {
+          "id": "problem",
+          "range": [0.34, 0.5],
+          "headline": "He can't check our photos. An AI can't see a shelf.",
+          "visual": "rail, front wheels drop in"
+        },
+        {
+          "id": "idea",
+          "range": [0.5, 0.68],
+          "headline": "An agent that hires a person to look.",
+          "visual": "back wheels: all four wheels on the ground"
+        },
+        {
+          "id": "proof",
+          "range": [0.68, 0.86],
+          "headline": "A verifier checks every photo before anyone is paid.",
+          "visual": "products fall into the basket; photo card with a price tag and a hand gesture gets a green check"
+        },
+        {
+          "id": "payment",
+          "range": [0.86, 1],
+          "headline": "Nobody pays for a photo that isn't true.",
+          "visual": "cart rolls with speed lines; two escrow blocks joined by a chain (logo)"
+        }
+      ]
+    },
+    { "id": "market", "renderer": "html", "content": "three sourced market figures with count-up" },
+    {
+      "id": "price",
+      "renderer": "html",
+      "content": "cost bars (upper value of each published range) and the 10-store comparison"
+    },
+    {
+      "id": "how",
+      "renderer": "html",
+      "content": "five steps: order, claim, photograph, verify, settle"
+    },
+    { "id": "proof", "renderer": "html", "content": "five real Cardano preprod transactions" },
+    {
+      "id": "team",
+      "renderer": "html",
+      "content": "four people with photo, study program and role"
+    },
+    { "id": "start", "renderer": "html", "content": "CTA buttons to /dashboard and /w" }
+  ],
+  "assets": [
+    {
+      "id": "logo",
+      "type": "image",
+      "path": "/story/shelfie-logo.webp",
+      "source": "team logo, palette swatches cropped off"
+    },
+    {
+      "id": "team",
+      "type": "image",
+      "path": "/story/team/{helmut,isabel,lorenz,fernando}.webp",
+      "source": "photos supplied by the team, 480 px"
+    }
+  ],
+  "qaChecks": [
+    "Desktop 1440x900 at story progress 0, .1, .25, .5, .75, .9, 1",
+    "Mobile 390x844 at the same progress points",
+    "No blank canvas (ghost outline from progress 0)",
+    "No text overlap between beats and the cart",
+    "CTA visible and clickable",
+    "Reduced motion and no-JS fallbacks show every beat as plain content",
+    "No inline script or style (site CSP)"
+  ]
+}
