@@ -11,6 +11,7 @@ import {
   isAppError,
 } from "@shelfie/core";
 import type {
+  ErrorBody,
   Clock,
   Logger,
   VerifierEnv,
@@ -19,7 +20,7 @@ import type {
 } from "@shelfie/core";
 import { findExtraKeys } from "@shelfie/vision";
 import type { Evaluator } from "./evaluate.js";
-import type { IdempotencyCache} from "./idempotency.js";
+import type { IdempotencyCache } from "./idempotency.js";
 import { IdempotencyConflict } from "./idempotency.js";
 import type { ImageService } from "./image.js";
 import { X402_NETWORK } from "./payment.js";
@@ -106,9 +107,17 @@ export function createApp(deps: AppDeps): express.Express {
     wrap(async (req, res, next) => {
       const parsed = VerifyRequestSchema.safeParse(req.body);
       if (!parsed.success) {
-        throw new AppError("invalid_request", "Request body does not match the schema.", undefined, {
-          issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
-        });
+        throw new AppError(
+          "invalid_request",
+          "Request body does not match the schema.",
+          undefined,
+          {
+            issues: parsed.error.issues.map((i) => ({
+              path: i.path.join("."),
+              message: i.message,
+            })),
+          },
+        );
       }
       const extras = findExtraKeys(req.body, parsed.data);
       if (extras.length > 0) {
@@ -118,7 +127,9 @@ export function createApp(deps: AppDeps): express.Express {
       }
       const body: VerifyRequest = parsed.data;
       if (body.packId !== env.PACK_ID) {
-        throw new AppError("invalid_request", "Unknown packId.", undefined, { packId: body.packId });
+        throw new AppError("invalid_request", "Unknown packId.", undefined, {
+          packId: body.packId,
+        });
       }
       if (!SAFE_ID.test(body.submissionId) || !SAFE_ID.test(body.task.taskId)) {
         throw new AppError("invalid_request", "Malformed id.");
@@ -284,10 +295,27 @@ export function createApp(deps: AppDeps): express.Express {
       logger.error("request failed", { code: appErr.code });
     }
     // A status >= 400 makes the x402 middleware cancel settlement: nothing is charged.
-    res.status(appErr.status ?? ERROR_STATUS[appErr.code]).json(appErr.toBody());
+    res.status(appErr.status ?? ERROR_STATUS[appErr.code]).json(publicErrorBody(appErr));
   };
   app.use(errorHandler);
   return app;
+}
+
+/**
+ * Response body for an AppError. `vision_unavailable` keeps only its fixed `reason`: the
+ * provider's status and error text are for logs and eval reports, never for the engine or the
+ * paying buyer (security rule: error responses carry no upstream messages).
+ */
+export function publicErrorBody(err: AppError): ErrorBody {
+  if (err.code !== "vision_unavailable") return err.toBody();
+  const reason = err.details["reason"];
+  return {
+    error: {
+      code: err.code,
+      message: err.message,
+      details: typeof reason === "string" ? { reason } : {},
+    },
+  };
 }
 
 function isBodyParserError(err: unknown): err is { type: string } {

@@ -2,7 +2,14 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { addSeconds, systemClock } from "@shelfie/core";
-import type { Clock, GateName, ReasonCode, VerifyContext, VerifyResponse, VerifyTask } from "@shelfie/core";
+import type {
+  Clock,
+  GateName,
+  ReasonCode,
+  VerifyContext,
+  VerifyResponse,
+  VerifyTask,
+} from "@shelfie/core";
 import { StubVisionClient } from "@shelfie/vision";
 import type { Evaluator } from "@shelfie/verifier";
 import type { Label } from "./labels.js";
@@ -28,7 +35,7 @@ export interface EntryResult {
     model: VerifyResponse["model"];
     wallLatencyMs: number;
   } | null;
-  error?: { code: string; reason?: string };
+  error?: { code: string; reason?: string; httpStatus?: number; providerMessage?: string };
   /** pass equals the label and every expected gate/reason is present. */
   matched: boolean | null;
   /** The decision itself (pass/fail) equals the label. */
@@ -85,13 +92,22 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
   const results: EntryResult[] = [];
 
   for (const label of opts.labels) {
-    const base: Omit<EntryResult, "status" | "actual" | "matched" | "decisionCorrect" | "codeReadExact" | "priceExact"> = {
+    const base: Omit<
+      EntryResult,
+      "status" | "actual" | "matched" | "decisionCorrect" | "codeReadExact" | "priceExact"
+    > = {
       file: label.file,
       outcome: label.outcome,
       case: label.case,
       expect: label.expect,
     };
-    const empty = { actual: null, matched: null, decisionCorrect: null, codeReadExact: null, priceExact: null };
+    const empty = {
+      actual: null,
+      matched: null,
+      decisionCorrect: null,
+      codeReadExact: null,
+      priceExact: null,
+    };
 
     const path = join(opts.photosDir, label.file);
     let bytes: Buffer | null = null;
@@ -122,7 +138,11 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
       taskWindowEndsAt: addSeconds(claimIssuedAt, 900),
       receivedAt: addSeconds(claimIssuedAt, label.claimOffsetSec),
     };
-    const ctx: VerifyContext = { packId: "shelf-check", submissionId: `sub_${label.file.replace(/\W+/g, "_").slice(0, 40)}`, previousImageSha256: previous };
+    const ctx: VerifyContext = {
+      packId: "shelf-check",
+      submissionId: `sub_${label.file.replace(/\W+/g, "_").slice(0, 40)}`,
+      previousImageSha256: previous,
+    };
 
     opts.beforeEntry?.(label);
     const started = nowMs();
@@ -133,13 +153,17 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
         ctx,
       );
       const wall = Math.round(nowMs() - started);
-      const reasonCodes = verdict.gates.flatMap((g) => (g.pass || !g.reasonCode ? [] : [g.reasonCode]));
+      const reasonCodes = verdict.gates.flatMap((g) =>
+        g.pass || !g.reasonCode ? [] : [g.reasonCode],
+      );
       const decisionCorrect = verdict.pass === label.expect.pass;
       const gatesOk = label.expect.failedGates.every((g) => verdict.failedGates.includes(g));
       const reasonsOk = label.expect.reasonCodes.every((c) => reasonCodes.includes(c));
       const anyOk =
-        label.expect.reasonCodesAnyOf.length === 0 || label.expect.reasonCodesAnyOf.some((c) => reasonCodes.includes(c));
-      const seenCode = (verdict.extraction["code"] as { text?: string | null } | undefined)?.text ?? null;
+        label.expect.reasonCodesAnyOf.length === 0 ||
+        label.expect.reasonCodesAnyOf.some((c) => reasonCodes.includes(c));
+      const seenCode =
+        (verdict.extraction["code"] as { text?: string | null } | undefined)?.text ?? null;
       const priceSeen = verdict.extraction["verifierPriceValue"];
       const r: EntryResult = {
         ...base,
@@ -167,13 +191,27 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
       results.push(r);
       opts.onEntry?.(r);
     } catch (err) {
-      const code = typeof err === "object" && err !== null && "code" in err ? String((err).code) : "unknown";
-      const rawReason =
+      const code =
+        typeof err === "object" && err !== null && "code" in err ? String(err.code) : "unknown";
+      const details =
         typeof err === "object" && err !== null && "details" in err
-          ? (err as { details: Record<string, unknown> }).details["reason"]
-          : undefined;
-      const reason = typeof rawReason === "string" ? rawReason : "";
-      const r: EntryResult = { ...base, status: "error", ...empty, error: { code, ...(reason ? { reason } : {}) } };
+          ? (err as { details: Record<string, unknown> }).details
+          : {};
+      const reason = typeof details["reason"] === "string" ? details["reason"] : "";
+      const httpStatus = typeof details["status"] === "number" ? details["status"] : undefined;
+      const providerMessage =
+        typeof details["providerMessage"] === "string" ? details["providerMessage"] : undefined;
+      const r: EntryResult = {
+        ...base,
+        status: "error",
+        ...empty,
+        error: {
+          code,
+          ...(reason ? { reason } : {}),
+          ...(httpStatus ? { httpStatus } : {}),
+          ...(providerMessage ? { providerMessage } : {}),
+        },
+      };
       results.push(r);
       opts.onEntry?.(r);
     }
@@ -181,7 +219,8 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
   return results;
 }
 
-const normalize = (s: string | null | undefined): string => (s ?? "").toUpperCase().replace(/[\s-]+/g, "");
+const normalize = (s: string | null | undefined): string =>
+  (s ?? "").toUpperCase().replace(/[\s-]+/g, "");
 
 /** Stored extractions from an earlier results file, keyed by photo file name. */
 export function replayMapFrom(results: RunResults): Map<string, unknown> {
