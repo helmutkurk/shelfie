@@ -2,7 +2,7 @@
 # One-shot launch of the PUBLIC team repo (ADR 0003) (runbook: docs/github-setup.md). Run by Helmut, from anywhere:
 #   scripts/launch-github.sh            pre-flight only (changes nothing)
 #   scripts/launch-github.sh --go       pre-flight, git init, first commit, create PUBLIC repo, push, invite
-#   scripts/launch-github.sh --protect  protect main and dev + enable secret scanning and push protection (run after the first CI run)
+#   scripts/launch-github.sh --protect  protect main (release PR, 3 approvals) and dev (direct push, no force push/delete) + enable secret scanning and push protection (run after the first CI run)
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$ROOT"
@@ -82,24 +82,39 @@ case "$MODE" in
     echo "Next: wait for the first CI run, then scripts/launch-github.sh --protect."
     ;;
   --protect)
-    tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
+    tmp="$(mktemp)"; tmpdev="$(mktemp)"; trap 'rm -f "$tmp" "$tmpdev"' EXIT
+    # main (ADR-0006): only the release PR dev -> main; the opener counts as the 4th, three teammates approve.
     cat > "$tmp" <<'JSON'
 {
   "required_status_checks": { "strict": true, "contexts": ["check", "secret-scan", "security", "context-gate"] },
   "enforce_admins": false,
-  "required_pull_request_reviews": { "required_approving_review_count": 1, "require_code_owner_reviews": true, "dismiss_stale_reviews": true },
+  "required_pull_request_reviews": { "required_approving_review_count": 3, "require_code_owner_reviews": false, "dismiss_stale_reviews": true },
   "restrictions": null,
   "allow_force_pushes": false,
   "allow_deletions": false
 }
 JSON
-    for branch in main dev; do
-      if gh api "repos/$OWNER/$REPO/branches/$branch/protection" -X PUT --input "$tmp" >/dev/null; then
-        ok "$branch protected (PR + 1 code-owner review + required checks; no force push or deletion)"
-      else
-        warn "$branch protection refused. Verify the plan in repo settings; fallback: team convention in CONTRIBUTING.md."
-      fi
-    done
+    # dev: direct pushes by everyone; agents peer-review (scripts/peer-review.sh). Only force push and deletion are blocked.
+    cat > "$tmpdev" <<'JSON'
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+JSON
+    if gh api "repos/$OWNER/$REPO/branches/main/protection" -X PUT --input "$tmp" >/dev/null; then
+      ok "main protected (release PR only, 3 approvals, required checks, dismiss stale reviews; no force push or deletion; admin bypass for emergencies)"
+    else
+      warn "main protection refused. Verify the plan in repo settings; fallback: team convention in CONTRIBUTING.md."
+    fi
+    if gh api "repos/$OWNER/$REPO/branches/dev/protection" -X PUT --input "$tmpdev" >/dev/null; then
+      ok "dev protected (direct push allowed, no PR or checks required; no force push or deletion)"
+    else
+      warn "dev protection refused. Verify the plan in repo settings; fallback: team convention in CONTRIBUTING.md."
+    fi
     if gh api "repos/$OWNER/$REPO" -X PATCH --input - >/dev/null 2>&1 <<'JSON'
 { "security_and_analysis": { "secret_scanning": { "status": "enabled" }, "secret_scanning_push_protection": { "status": "enabled" } } }
 JSON

@@ -11,4 +11,4 @@ disable-model-invocation: true
 3. Fill Context, Decision, Consequences, Alternatives considered. Only facts from the discussion; mark open points "decide Friday" instead of guessing.
 4. Status `proposed` unless the team has accepted it. Deciders = people named in the discussion.
 5. If it replaces an earlier ADR, set the old status to `superseded by NNNN` (that line only).
-6. Add a line to `docs/ai-log.md` and link the ADR from the PR description.
+6. Add a line to `docs/ai-log.md` and link the ADR from the commit message (`Purpose-impact: ADR-<id>` when purpose files change).

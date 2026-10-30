@@ -1,7 +1,7 @@
 # Lorenz - role C
 - Role and pair: C, pair with Helmut (D)
 - GitHub: 04Lenz04
-- Reviews: pair reviews each other's PRs first
+- Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
 TBD (fill on Friday)

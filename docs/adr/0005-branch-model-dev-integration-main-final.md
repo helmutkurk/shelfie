@@ -1,6 +1,6 @@
 # 0005. Branch model: `dev` for integration, `main` for final
 
-- Status: accepted
+- Status: partially superseded by ADR-0006 (dev PRs, reviews, hotfixes, push ban); the dev/main split stays
 - Date: 2026-10-30
 - Deciders: Helmut
 

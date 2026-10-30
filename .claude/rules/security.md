@@ -18,6 +18,6 @@ Baseline, threat table and tests: `diseno/security.md` (canonical). Scaffold ord
 - Dependencies: exact pins, `npm ci --ignore-scripts`, no new package without the human and a one-line reason; prefer a small zero-dependency module; never edit lockfiles by hand; no auto-bump during the event.
 - CI and scripts: `permissions: contents: read`, third-party actions pinned by commit SHA, no `pull_request_target`, no secrets echoed, no `curl | sh`.
 - Personal data (worker location, photos, payout address): minimal, consent text shown, EXIF/GPS stripped before storage, photos outside the web root and the repo, deleted after the event. Details in `diseno/security.md` section 4.9.
-- A change that touches payments, auth, upload, env, CI or the tunnel needs its `*.sec.test.ts` in the same PR (list in `diseno/security.md` section 3).
+- A change that touches payments, auth, upload, env, CI or the tunnel needs its `*.sec.test.ts` in the same commit (list in `diseno/security.md` section 3).
 - The repo is public from the first push (ADR 0003): every committed byte is public and permanent. See `docs/public-release.md`.
 - Found a leaked secret: stop, tell the owner of the credential, rotate it (`docs/github-setup.md` section 8), then remove it from history before any further push.

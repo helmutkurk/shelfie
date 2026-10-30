@@ -8,9 +8,12 @@ branch=$(git branch --show-current 2>/dev/null)
 [[ -z "$branch" ]] && branch="detached HEAD ($(git rev-parse --short HEAD 2>/dev/null || echo unknown))"
 echo "Current branch: ${branch}."
 case "$branch" in
-  main|dev|master)
-    echo "You are on protected '${branch}'. Start feature/fix/docs work on a short branch from dev; see CONTRIBUTING.md for releases and hotfixes." ;;
+  main|master)
+    echo "You are on protected '${branch}' (only changed by the release PR dev -> main). Switch to dev: git switch dev." ;;
+  dev)
+    echo "You are on 'dev' (integration): commit and push here after git pull --rebase origin dev and npm run check. Feature branches are optional; see CONTRIBUTING.md." ;;
 esac
+echo "Peer review: run 'bash scripts/peer-review.sh pending' at the start of the work block and review other people's commits on dev first."
 dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 [[ "$dirty" != "0" ]] && echo "Working tree has ${dirty} uncommitted change(s)."
 

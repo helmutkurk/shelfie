@@ -2,7 +2,7 @@
 
 - Role and pair: D, pair with Lorenz (C)
 - GitHub: helmutkurk
-- Reviews: pair reviews each other's PRs first
+- Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
 

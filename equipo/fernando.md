@@ -1,7 +1,7 @@
 # Fernando - role B
 - Role and pair: B, pair with Isabel (A)
 - GitHub: Fmayo444
-- Reviews: pair reviews each other's PRs first
+- Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
 Pitch economics: market pricing analysis and verifier-neutrality answer (ADR-18). Next: B tasks (`bash scripts/task.sh next B`), M1 x402 paid request.

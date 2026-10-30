@@ -1,7 +1,7 @@
 # Isabel - role A
 - Role and pair: A, pair with Fernando (B)
 - GitHub: mariaisabel16
-- Reviews: pair reviews each other's PRs first
+- Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
 Bridge wired into the starter (A-10): an unpaid Sokosumi Task went through the bridge and the engine on fakes to COMPLETED with the Shelfie report. Next: WITHHOLD and intake rejection on a real Task (A-12), a Shelfie agent registration, then the paid path through the bridge with the real engine (needs Sokosumi credits: 16 left, top-up requested).

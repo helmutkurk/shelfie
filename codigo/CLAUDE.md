@@ -7,13 +7,13 @@ Code-specific notes. Complements the root `AGENTS.md`, which holds the shared ru
 - Your package's `README.md`: purpose, interfaces, milestone, definition of done, do-not list.
 
 ## Package ownership
-- One owner per folder (repo-layout section 2). Others open a PR or ask; do not edit another owner's folder directly.
+- One owner per folder (repo-layout section 2). Owner = who knows the area. Others may edit it (ADR-0006); the owner's agent sees the change in peer review.
 - `apps/verifier` has two owners by function: B up to the call of `evaluate(...)`, C from `evaluate` down.
 - Role-to-person mapping is decided Thursday; use placeholders until then.
 
 ## Contracts-first rule
 - Change `contracts.md` first, then the zod schema in `packages/core`, in the same commit.
-- Changes to `packages/core` are announced in chat and reviewed by the consumer owner.
+- Changes to `packages/core` are announced in chat; the consumer owner's agent checks it in peer review.
 - Customer routes beyond `/dashboard` and the exporter brief are "proposed, not in contracts yet" (`webapps.md`); do not implement them without a contract.
 
 ## Where types live
@@ -22,12 +22,12 @@ Code-specific notes. Complements the root `AGENTS.md`, which holds the shared ru
 - Validate with zod at every boundary (HTTP, env, model output, file loads). Errors use `AppError(code, message, status, details)`.
 
 ## Check command
-- `npm run check` (typecheck + lint + test) before every push. Defined Friday; if missing, say so instead of inventing one.
+- `npm run check` (typecheck + lint + test) before every push to `dev`. Defined Friday; if missing, say so instead of inventing one.
 - Run against fakes first: `FAKE_PAYMENTS=1`, `VERIFIER_PAYMENT=off`, `VERIFIER_MODE=stub`.
 
 ## Pinned dependencies
 - Node 24; TypeScript strict, ESM. Exact versions from the x402 template (`@x402/*` 2.26.0, `@evolution-sdk/evolution` 0.5.14, `express` 4.x). Do not bump during the event.
-- Each new dependency needs a one-line reason in the PR.
+- Each new dependency needs a one-line reason in the commit message.
 
 ## Safety
 - Never write mnemonics, keys, tokens or `.env` content into files, logs or screenshots; `.env.example` has names only.

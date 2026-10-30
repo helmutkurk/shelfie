@@ -137,7 +137,7 @@ Mobile CIP-30: phone browsers rarely inject `window.cardano` (webapps.md open it
 
 ## Recommended additions for today
 
-Highest value per minute saved, in order. Each needs a one-line reason in the PR and an exact pin.
+Highest value per minute saved, in order. Each needs a one-line reason in the commit message and an exact pin.
 
 1. `helmet` 8.3.0: replaces `securityHeaders.ts`; CSP per security.md 4.4. (A)
 2. `express-rate-limit` 8.7.2: replaces the token-bucket limiter; set `trust proxy` for the tunnel. (A)
@@ -172,8 +172,8 @@ Provider SDK (`@google/genai` 2.32.0 or `openai` 7.45.1): decide when C picks th
 
 ## Rule for additions
 
-- Every new dependency needs a one-line reason in the PR description (what it replaces or enables) and Helmut's OK before install (AGENTS.md: ask the human before any new dependency).
+- Every new dependency needs a one-line reason in the commit message (what it replaces or enables) and Helmut's OK before install (AGENTS.md: ask the human before any new dependency).
 - Exact version pin in `package.json` (no `^` or `~`), lockfile changed only by `npm install`, never by hand.
 - Check before adding: OSI licence, last publish date, Node 24 and browser support, transitive size, and whether it overlaps code the design already specifies.
 - Open-source libraries only as dependencies; no copying of other project repositories into ours. Organisers' starters are the only exception (note each in `codigo/docs/verified.md` with its pinned commit).
-- Versions in this file are a snapshot of 2026-10-30; re-run `npm view <pkg> version license time.modified` before pinning, and record any difference in the PR.
+- Versions in this file are a snapshot of 2026-10-30; re-run `npm view <pkg> version license time.modified` before pinning, and record any difference in the commit message.

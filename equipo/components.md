@@ -1,6 +1,6 @@
 # Component registry
 
-Everything contributed outside the planned design (bots, scripts, helper agents, prompts, tools). Rules: `equipo/README.md`. Add a row in the same PR as the code; change by PR. Planned components live in `diseno/` and are not listed here.
+Everything contributed outside the planned design (bots, scripts, helper agents, prompts, tools). Rules: `equipo/README.md`. Add a row in the same commit as the code; anyone may edit, peer review checks it. Planned components live in `diseno/` and are not listed here.
 
 | Name | Owner | Path | Purpose | Run command | Status | Design doc |
 |---|---|---|---|---|---|---|

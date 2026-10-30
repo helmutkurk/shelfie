@@ -12,7 +12,7 @@ scripts/launch-github.sh --protect  # after the first CI run: branch protection 
 
 After the initial repo creation, follow section 3 to create `dev` from `main` and set `dev` as the default branch before regular work starts.
 
-Roles A-D: fill `ROLE_A..ROLE_D` in `scripts/team.conf`, run `scripts/assign-roles.sh`, commit `.github/CODEOWNERS` in a PR. The manual steps below are the same, step by step.
+Roles A-D: fill `ROLE_A..ROLE_D` in `scripts/team.conf`, run `scripts/assign-roles.sh`, commit `.github/CODEOWNERS` to `dev` (informational only, ADR-0006). The manual steps below are the same, step by step.
 
 Timestamps: commits carry their real times. Prep docs were written Thursday 29-10, before the event; this is allowed (docs and config only). Application code starts Fri 30-10 09:00. Never backdate commits or rewrite dates.
 
@@ -20,7 +20,7 @@ Timestamps: commits carry their real times. Prep docs were written Thursday 29-1
 
 Decided (Helmut, 2026-10-29): public repo from the start. On public repos, GitHub documents protected branches, required reviews and required status checks as available on the Free plan, and secret scanning plus push protection as free for public repositories (docs: https://docs.github.com/en/code-security/getting-started/github-security-features, https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches). **Verify in repo settings Friday** (Settings > Branches, Settings > Code security): the docs were read on 29-10 and not tested on this account. Helmut also has GitHub Pro via the Student Developer Pack; if the Free-plan behaviour differs, Pro covers it. Standard Actions runners are free on public repos.
 
-If protection cannot be enforced: convention without enforcement (branches, PR, one review, nobody directly pushes or force-pushes `dev` or `main`; CODEOWNERS still requests reviews and CI shows red/green).
+If protection cannot be enforced: convention without enforcement (everyone pushes to `dev`, nobody force-pushes `dev` or `main`, `main` only via the release PR with 3 approvals; CI shows red/green and `scripts/peer-review.sh status` is run before the release).
 
 ## 1. Prerequisites
 
@@ -95,22 +95,22 @@ gh api "repos/$OWNER/$REPO/invitations" --jq '.[].invitee.login'
 
 Each teammate must accept the emailed invitation (or at https://github.com/OWNER/REPO/invitations). Personal-repo collaborator limits on Free: verify (GitHub docs list no cap for private collaborators; not re-verified).
 
-Note: CODEOWNERS owners need explicit write access, else they are not assigned (code-owners doc above).
+Note: CODEOWNERS is informational since ADR-0006 (no code-owner review is required anywhere); all four need write access to push to `dev`.
 
 ## 5. Protect `dev` and `main`, secret scanning, push protection
 
-`scripts/launch-github.sh --protect` applies the same rules to both branches (below is the manual version). Classic branch protection (public repo, any plan; verify Friday):
+`scripts/launch-github.sh --protect` applies these rules (below is the manual version; ADR-0006): `dev` takes direct pushes (no PR, no required checks), with no force push and no deletion; `main` requires a PR with 3 approvals, dismisses stale reviews, requires the checks, no force push, no deletion. `enforce_admins:false` on both (emergency bypass by Helmut only). Classic branch protection (public repo, any plan; verify Friday):
 
-In Settings > General > Pull Requests, allow squash merges and merge commits: use squash for feature/fix/docs PRs into `dev` and a merge commit for release PRs into `main`.
+In Settings > General > Pull Requests, allow merge commits (release PR `dev` -> `main`); squash is not used.
 
 ```bash
-cat > /tmp/protection.json <<'JSON'
+cat > /tmp/protection-main.json <<'JSON'
 {
   "required_status_checks": { "strict": true, "contexts": ["check", "secret-scan", "security", "context-gate"] },
   "enforce_admins": false,
   "required_pull_request_reviews": {
-    "required_approving_review_count": 1,
-    "require_code_owner_reviews": true,
+    "required_approving_review_count": 3,
+    "require_code_owner_reviews": false,
     "dismiss_stale_reviews": true
   },
   "restrictions": null,
@@ -118,29 +118,38 @@ cat > /tmp/protection.json <<'JSON'
   "allow_deletions": false
 }
 JSON
-for BRANCH in main dev; do
-  gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" -X PUT --input /tmp/protection.json
-done
+cat > /tmp/protection-dev.json <<'JSON'
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+JSON
+gh api "repos/$OWNER/$REPO/branches/main/protection" -X PUT --input /tmp/protection-main.json
+gh api "repos/$OWNER/$REPO/branches/dev/protection" -X PUT --input /tmp/protection-dev.json
 ```
 
-The contexts are the job names in `.github/workflows/ci.yml` (`check`, `secret-scan`), `.github/workflows/security.yml` (`security`) and `.github/workflows/context-gate.yml` (`context-gate`). CI and Security run on pushes and PRs targeting both `dev` and `main`. **`context-gate` is a required status check**: it fails a PR whose "Context and purpose" section is empty, or that changes purpose files without `ADR-<id>` or `minor: <reason>`. Each check must have run once before it can be required. CODEOWNERS requires Helmut on purpose files (`AGENTS.md`, `CLAUDE.md`, `ideas/decision.md`, `diseno/`, `.claude/`, `.github/`, `.githooks/`, `scripts/team.conf`); GitHub does not let an author approve their own PR, so for a PR authored by Helmut on those files use the admin bypass (`enforce_admins:false`). Hackathon note: `enforce_admins:false` lets Helmut bypass in an emergency; with 1 approval, a 4-person team merges quickly.
+The contexts are the job names in `.github/workflows/ci.yml` (`check`, `secret-scan`), `.github/workflows/security.yml` (`security`) and `.github/workflows/context-gate.yml` (`context-gate`). CI and Security run on pushes to `dev`/`main` and on PRs. **`context-gate` is a required status check on `main`**: it fails the release PR if its "Context and purpose" section is empty, or that changes purpose files without `ADR-<id>` or `minor: <reason>`. Each check must have run once before it can be required. No code-owner review is required (`require_code_owner_reviews:false`). GitHub does not count the PR author as an approver, so the release PR needs the three other teammates (the opener is the 4th). Hackathon note: `enforce_admins:false` lets Helmut bypass only for an emergency fix in the last hour before the Sat 15:00 deadline; he says so in chat and in `docs/ai-log.md`.
 
 Ruleset alternative (Team, or Pro if your Settings > Rules allows it):
 
 ```bash
 cat > /tmp/ruleset.json <<'JSON'
 {
-  "name": "dev-and-main-protection",
+  "name": "main-release-only",
   "target": "branch",
   "enforcement": "active",
-  "conditions": { "ref_name": { "include": ["refs/heads/main", "refs/heads/dev"], "exclude": [] } },
+  "conditions": { "ref_name": { "include": ["refs/heads/main"], "exclude": [] } },
   "rules": [
     { "type": "deletion" },
     { "type": "non_fast_forward" },
     { "type": "pull_request", "parameters": {
-        "required_approving_review_count": 1,
+        "required_approving_review_count": 3,
         "dismiss_stale_reviews_on_push": true,
-        "require_code_owner_review": true,
+        "require_code_owner_review": false,
         "require_last_push_approval": false,
         "required_review_thread_resolution": false } },
     { "type": "required_status_checks", "parameters": {
@@ -151,6 +160,8 @@ cat > /tmp/ruleset.json <<'JSON'
 JSON
 gh api "repos/$OWNER/$REPO/rulesets" -X POST --input /tmp/ruleset.json
 ```
+
+For `dev` the ruleset needs only `{ "type": "deletion" }` and `{ "type": "non_fast_forward" }` on `refs/heads/dev` (second ruleset): no PR rule, no required checks.
 
 If the API answers 403, the plan or repo visibility does not allow it: use the convention fallback (section 0). Do not use only one of classic/ruleset unless the other is unavailable; verify the JSON field names against https://docs.github.com/en/rest/branches/branch-protection and https://docs.github.com/en/rest/repos/rules (not tested).
 
@@ -193,7 +204,7 @@ git switch dev
 cp .env.example .env     # fill locally, never commit
 ```
 
-Then set up their agent (Claude Code and/or Codex) following `docs/playbook/agent-setup.md`. Read `AGENTS.md` first (Claude imports it from `CLAUDE.md`). Create each feature/fix/docs branch from `dev` and PR it into `dev`; see [CONTRIBUTING.md](../CONTRIBUTING.md) for release and hotfix flows. Never push directly to `dev` or `main`.
+Then set up their agent (Claude Code and/or Codex) following `docs/playbook/agent-setup.md`. Read `AGENTS.md` first (Claude imports it from `CLAUDE.md`). Work on `dev` and push to it directly (feature branches optional, no PR); agents peer-review each other's commits (`scripts/peer-review.sh`); see [CONTRIBUTING.md](../CONTRIBUTING.md) for the release PR. Never push to `main` or force-push.
 
 ## 8. Rotate a leaked key
 

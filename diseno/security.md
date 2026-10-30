@@ -161,12 +161,12 @@ Columns: S spoofing, T tampering, R repudiation, I information disclosure, D den
 | C2 | T | Known vulnerable dependency (starter README findings) | `npm audit --audit-level=high` in `security.yml`; the starter's known findings recorded in `codigo/docs/audit-known.md` (id, package, why accepted, expires at FRZ), nothing else ignored; no auto-bump during the event | A | S0 | `security.yml` red on a new high finding |
 | C3 | I | Secret committed | `.gitignore` (`.env*`, keys); gitleaks on every PR and push (CI) plus local pre-commit if installed; hooks of `.claude/`; the repo is public (ADR 0003), so GitHub secret scanning and push protection should also be on (free for public repos; **verify in repo settings Friday**, `docs/github-setup.md` section 5), but gitleaks stays the primary control; every clone installs the hooks and gitleaks before its first push; history of a public repo is permanent, so a leaked key is rotated, not just removed | all | S0 | CI secret-scan red on a planted fake token in a test branch (once, Friday) |
 | C4 | T | CI abused (pull_request_target, broad token permissions, unpinned third-party actions) | Workflows use `permissions: contents: read`; no `pull_request_target`; third-party actions pinned by commit SHA; no secrets in Actions | Helmut | S0 | `security-reviewer` checks workflow diffs |
-| C5 | E | Unreviewed push to `dev` or `main` | Branch protection on both branches per `docs/github-setup.md` section 5; CODEOWNERS | Helmut | S0 | `gh api` checks in checklist item 20 |
+| C5 | E | Unreviewed push to `dev` or any push to `main` | `dev`: agent peer review of every commit (`scripts/peer-review.sh`, ADR-0006) plus no force push/deletion; `main`: release PR with 3 approvals and required checks (`docs/github-setup.md` section 5); CODEOWNERS is informational | Helmut | S0 | `gh api` checks in checklist item 20; `peer-review.sh status` before the release |
 | C6 | T | Dependabot PRs bumping pinned versions mid-event | Dependabot **alerts** on, version-update PRs off (no `dependabot.yml`) | Helmut | S0 | checklist item 20 |
 
 ## 4. Control specifications
 
-Each subsection is the contract for the Friday scaffold. Where `contracts.md` differs (worker auth in section 0 says "open endpoints"), this file is the intended direction; change `contracts.md` in the same PR that implements it (A), with `Purpose-impact: minor: security baseline`.
+Each subsection is the contract for the Friday scaffold. Where `contracts.md` differs (worker auth in section 0 says "open endpoints"), this file is the intended direction; change `contracts.md` in the same commit that implements it (A), with `Purpose-impact: minor: security baseline`.
 
 ### 4.1 Authentication and sessions
 
@@ -224,7 +224,7 @@ Ledger entries and `docs/evidence/` contain ids, tx hashes, verdict, gate names,
 
 ### 4.8 Supply chain
 
-- Pins: AGENTS.md conventions (`@x402/*` 2.26.0, `@evolution-sdk/evolution` 0.5.14, `express` 4.x, Node 24). Lockfile committed (hooks block hand edits). New dependency: PR line "why / alternatives considered / install scripts / maintainers".
+- Pins: AGENTS.md conventions (`@x402/*` 2.26.0, `@evolution-sdk/evolution` 0.5.14, `express` 4.x, Node 24). Lockfile committed (hooks block hand edits). New dependency: commit-message line "why / alternatives considered / install scripts / maintainers".
 - `npm ci --ignore-scripts` in CI and by default in `codigo/.npmrc` (`ignore-scripts=true`); if a pinned package needs a build step (native, `esbuild`), run that step explicitly (`npm rebuild <pkg>`) and record it in `codigo/docs/verified.md`. Verify Friday that the starters install this way.
 - `npm audit --audit-level=high` (CI). Known starter findings: read the starters' READMEs Friday (the Masumi runbook says "review dependency findings before exposure") and list them in `codigo/docs/audit-known.md`; accepted only with a reason and an expiry.
 - Optional Socket Firewall (`sfw`): `npx sfw npm ci` style wrapper, free tier, blocks known-malicious packages at install time. Uses `npx` (human approval per settings) and adds a network dependency: **optional, verify Friday**, not required for the baseline.
