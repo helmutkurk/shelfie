@@ -242,3 +242,9 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Docs changed (docs only, no code): README.md, codigo/README.md, docs/START-HERE-TEAM.md, docs/deploy.md, preparacion/field-test-supermarket.md (new section 1b "Before leaving for the store"), equipo/components.md, this log. AGENTS.md unchanged (no rule changed).
 - Open: `scripts/deploy/branch.env.example` still defaults to fakes (the template, not a deployment); whether the Sokosumi buyer account has enough test USDM/credits is unverified.
 - Handoff: changes uncommitted in worktree `shelfie-real` (branch chore/d-real-mode-context); orchestrator commits.
+
+## 2026-10-30 20:00 (Europe/Berlin) - Claude Opus 5.5 for Isabel (A) - A-25 ADR-20 phase 0: Sokosumi Task by REST
+- Done: created one Sokosumi Task with a raw `POST https://api.preprod.sokosumi.com/v1/tasks` (Bearer token, `X-Organization-Slug`, ids-only JSON description) for the Shelfie Coworker; 201 in 0.58 s. The shell worker picked it up, the escrow locked, the bridge created the engine job with `externalRef` = Task id, DELIVER (engine on fakes), Task COMPLETED in about 4 min, 100 credits. Request shape, answer and caveats in `codigo/docs/verified.md`; lock and result txs in `tx-hashes.md`.
+- Decision input: GO for ADR-20. No spend cap field exists in the Task API, so caps per order and per day go in the engine (ADR-20 point 5). Credits are charged to the token's account.
+- TODO: create a Sokosumi user API key (`soko_preprod_`) for the engine instead of the CLI's OAuth session (A or B). Settlement row for this Task after the unlock time (A). B-16 can start from the request shape.
+- Handoff: spike script is local only (not committed); the engine call is a plain fetch with the shape above.
