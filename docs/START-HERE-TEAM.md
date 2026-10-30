@@ -13,6 +13,8 @@ Shelfie is ready for component work on fakes. Paid resources, real vision, phone
 
 Work on `dev` and push to it directly after `git pull --rebase origin dev` and `npm run check` (feature branches optional, no PR; ADR-0006). Start each block with `bash scripts/peer-review.sh pending` and review what it lists; `main` changes only through the release PR ([CONTRIBUTING.md](../CONTRIBUTING.md)). This integration pass made no git mutation, commit or push. Initial task.sh bookkeeping read local Git identity; subsequent updates set TASK_ACTOR=Codex to avoid it. Helmut (D) expressly authorised edits across all codigo folders and the named integration documents for this pass; ownership resumes for subsequent changes.
 
+Public test URLs and automatic rebuild on every push: [deploy.md](deploy.md) (Vercel + tunnel + pull-based deploy; Helmut operates the hub side).
+
 Start **every coding-agent session** from [investigacion/cardano/official-agent-prompt.md](../investigacion/cardano/official-agent-prompt.md). Before creating paid/on-chain resources, stop for the role owner's written authorisation: Payment Service databases, seeded wallets, registration and funding are included. On resume, inspect the saved resource/state inventory and reuse existing Vendor, Coworker and wallets. Never blindly retry an uncertain pending write. Personal Workspace first for M3/M4 tests; use the official prompt's TUM Workspace instructions for the demo.
 
 ## A: Isabel (pair: Fernando)

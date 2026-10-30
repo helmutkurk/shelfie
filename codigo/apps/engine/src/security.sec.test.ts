@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- test and smoke code reads untyped JSON responses */
 import type { Router } from "express";
 import { afterEach, describe, expect, it } from "vitest";
+import { parseAllowedOrigins } from "./http/security.js";
 import { ADMIN, EAN, SHELL, STORE_ID, makeRig } from "./testkit.js";
 import type { Rig } from "./testkit.js";
 
@@ -220,6 +221,46 @@ describe("hardening (E7, E8, E9)", () => {
       c.abort();
     });
     expect(codes).toEqual([200, 200, 429]);
+  });
+});
+
+describe("ALLOWED_ORIGINS exact allow-list (E9)", () => {
+  const job = (n: string) => ({
+    packId: "shelf-check",
+    source: "demo",
+    externalRef: n,
+    input: { productEan: EAN, stores: [{ id: STORE_ID }] },
+  });
+
+  it("passes the exact listed origin and refuses any other vercel.app origin", async () => {
+    rig = await makeRig({ env: { ALLOWED_ORIGINS: "https://shelfie.vercel.app" } });
+    const ok = await rig.call("POST", "/api/jobs", job("a1"), {
+      "x-shell-token": SHELL,
+      origin: "https://shelfie.vercel.app",
+    });
+    expect(ok.status).toBe(201);
+    for (const origin of [
+      "https://evil.vercel.app",
+      "https://shelfie.vercel.app.evil.example",
+      "http://shelfie.vercel.app",
+    ]) {
+      const bad = await rig.call("POST", "/api/jobs", job("a2"), {
+        "x-shell-token": SHELL,
+        origin,
+      });
+      expect(bad.status, origin).toBe(403);
+    }
+  });
+
+  it("refuses wildcard, path and non-http entries at parse time", () => {
+    expect(() => parseAllowedOrigins("*")).toThrow();
+    expect(() => parseAllowedOrigins("https://*.vercel.app")).toThrow();
+    expect(() => parseAllowedOrigins("https://a.example/path")).toThrow();
+    expect(() => parseAllowedOrigins("ftp://a.example")).toThrow();
+    expect([...parseAllowedOrigins(" https://A.example , http://b.example:3000 ")]).toEqual([
+      "https://a.example",
+      "http://b.example:3000",
+    ]);
   });
 });
 
