@@ -1,10 +1,16 @@
 \documentclass[aspectratio=169,14pt]{beamer}
 \usepackage{iftex}
-\usepackage{fontspec}
-\IfFontExistsTF{Fira Sans}{}{%
-  \setsansfont{Noto Sans}[Ligatures=TeX]\setmainfont{Noto Sans}[Ligatures=TeX]}
+% xelatex/lualatex: Fira Sans, else Noto Sans. pdflatex fallback (no fontspec needed): TeX Gyre Heros.
+\ifPDFTeX
+  \usepackage[T1]{fontenc}\usepackage{textcomp}
+  \usepackage{tgheros}\renewcommand{\familydefault}{\sfdefault}
+\else
+  \usepackage{fontspec}
+  \IfFontExistsTF{Fira Sans}{}{%
+    \setsansfont{Noto Sans}[Ligatures=TeX]\setmainfont{Noto Sans}[Ligatures=TeX]}
+\fi
 \usetheme[progressbar=frametitle,numbering=none,block=fill]{metropolis}
-\IfFontExistsTF{Fira Sans}{}{\setsansfont{Noto Sans}\setmainfont{Noto Sans}}
+\ifPDFTeX\else\IfFontExistsTF{Fira Sans}{}{\setsansfont{Noto Sans}\setmainfont{Noto Sans}}\fi
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
 \usepackage{qrcode}

@@ -9,6 +9,7 @@ latexmk -xelatex shelfie.tex     # produces shelfie.pdf
 latexmk -c                       # remove aux files (keeps the PDF)
 ```
 Needs `xelatex` (or `lualatex`), `metropolis`, `qrcode`, `tikz`. Fonts: Fira Sans if installed, otherwise Noto Sans.
+Without xelatex: `pdflatex shelfie.tex` (run twice) builds the same deck in TeX Gyre Heros; no extra packages beyond a standard TeX Live.
 If `xelatex.fmt` is missing, add `xelatex xetex language.def -translate-file=cp227.tcx *xelatex.ini` to `~/.texlive/texmf-config/web2c/fmtutil.cnf` and run `fmtutil-user --byfmt xelatex`.
 
 ## Edit
