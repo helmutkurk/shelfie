@@ -123,3 +123,10 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Failed: `shelfie.pdf` not rebuilt (no LaTeX engine on this machine).
 - TODO: rebuild the slides with `latexmk -xelatex shelfie.tex` in `pitch/slides/` (D). The "10 stores: EUR 120" comparison describes the customer's need; check that it fits the single-store MVP wording (ADR-16) (D). Lead time, unusable-data share and the 5% Masumi fee are still unsourced.
 - Handoff: PR to `main` needs Helmut's review (pitch/ and README are D's; diseno/ is a purpose file, `Purpose-impact: ADR-18`).
+
+## 2026-10-30 (Europe/Berlin) - Claude Opus 5.5 for Fernando (B) - payout-once script for ADR-04
+- Done: branch `feature/b-payout-once`. New `codigo/scripts/payout-once.ts`: one real preprod plain transfer from W-PAY through `EvolutionPayoutAdapter`, then waits for a confirmation and checks `find()` by metadata tag. Dry run unless `--send`; refuses `FAKE_PAYMENTS`; 1 to 5 tADA; one attempt per run. Security-reviewer pass: safe to push; L1 (validate `--check` inputs) and L2 (a query error after a send now exits 3 with do-not-resend, not 2) fixed; L3 documented (no idempotency record across runs, manual tool). B-04 started (B-07 started on `fix/b-payout-reconcile`).
+- Worked: typecheck and lint pass; refusal paths tried (missing env, FAKE_PAYMENTS). `npm run check` on main base: 355/356, the failure is the space-in-path eval test fixed on `fix/b-payout-reconcile`. Not run on preprod.
+- Open: Sokosumi credits are not tracked anywhere (balance, cost per job at 1 test USDM, refund on withhold unknown; verify Friday, A). Whether Sokosumi must reach the agent API publicly (mentor question M6) conflicts with the engine-only tunnel (A, D). `VISION_RUN_CAP` is unset by default (set it in the hub env). `VERIFY_RUN_CAP_LOVELACE` (security P5) is not implemented (B-10).
+- TODO (B): fund W-PAY, run `payout-once.ts --send` to a teammate address, record the hash (`/log-evidence`), the ADR-04 result in `codigo/docs/verified.md`, then `task.sh done B-04`. Pre-commit gitleaks flag fixed on main by Helmut and merged into this branch.
+- Handoff: PR to `main`; pair review by Isabel (A) first.
