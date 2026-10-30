@@ -31,7 +31,7 @@ Changing the main tagline means editing `slides/facts.tex` (one line), `devfolio
 | A4 | Pay for shelves you can see. | 6 | Brand-side angle; weaker on verification. |
 | A5 | Every shelf check, proven on-chain. | 5 | Strong for the Cardano judges; "on-chain" covers the payments and evidence ledger, not the photo itself. |
 
-### B. Brand-facing (Katharina, the customer)
+### B. Brand-facing (the customer)
 
 | # | Slogan | Notes |
 |---|---|---|

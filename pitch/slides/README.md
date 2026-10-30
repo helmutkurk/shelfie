@@ -13,7 +13,10 @@ If `xelatex.fmt` is missing, add `xelatex xetex language.def -translate-file=cp2
 
 ## Edit
 - **Facts** (names, numbers, tx hashes, explorer URLs, team, closing line): `facts.tex`. Placeholders render as red-on-orange `[...]` boxes via `\ph{...}`; replace the macro body with the real value.
-- **Slides**: one file each in `sections/NN-name.tex`, included from `shelfie.tex`. Reorder or drop by editing the `\input` list.
+- **Slides**: one file each in `sections/NN-name.tex`, included from `shelfie.tex`. Reorder or drop by editing the `\input` list. The live deck is title, hook, flow, demo, market, beyond, close; the slides after `\appendix` are backups for Q&A.
+- **Hook photo**: put one real shelf photo (brands blurred, no people) at `img/real-shelf.jpg`. The folder is git-ignored; without the file the slide shows a placeholder.
+- **Market figures** stay in `\ph{...}` until each one is checked at its source (`../pitch-plan.md` section 4).
+- **Present** with `pdfpc shelfie.pdf` (presenter view and timer); fallback `evince -s shelfie.pdf`.
 - **Colours**: palette defined at the top of `shelfie.tex` (`cardano`, `warm`, ...).
 - QR codes on the proof slide are generated from the `\Url...` macros.
 - No dates anywhere (`\date{}` empty).

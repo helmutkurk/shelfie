@@ -35,6 +35,9 @@ docs/evidence/screenshots/*.mov
 docs/evidence/screenshots/*.mp4
 !docs/evidence/screenshots/.gitkeep
 
+# Pitch photos (real shelf photos for the hook slide): local only
+pitch/slides/img/
+
 # Personal, never committed
 invoice/
 investigacion/codex-stdout.log
