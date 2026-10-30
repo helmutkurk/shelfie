@@ -10,6 +10,7 @@ import {
   VisionChain,
   createVisionClient,
   enforceSchema,
+  errorMessageOf,
   imageKey,
   parseModelJson,
 } from "./index.js";
@@ -35,7 +36,9 @@ const req = (over: Partial<VisionRequest> = {}): VisionRequest => ({
 
 type Handler = (req: IncomingMessage, res: ServerResponse, n: number, body: string) => void;
 const servers: Server[] = [];
-async function fake(handler: Handler): Promise<{ url: string; calls: () => number; bodies: string[] }> {
+async function fake(
+  handler: Handler,
+): Promise<{ url: string; calls: () => number; bodies: string[] }> {
   let n = 0;
   const bodies: string[] = [];
   const server = createServer((r, s) => {
@@ -71,7 +74,10 @@ const reply = (res: ServerResponse, content: string, status = 200): void => {
   res.end(JSON.stringify({ choices: [{ message: { content } }] }));
 };
 
-const client = (url: string, extra: Partial<ConstructorParameters<typeof OpenAiCompatibleVisionClient>[0]> = {}) =>
+const client = (
+  url: string,
+  extra: Partial<ConstructorParameters<typeof OpenAiCompatibleVisionClient>[0]> = {},
+) =>
   new OpenAiCompatibleVisionClient({
     provider: "test",
     baseUrl: url,
@@ -93,9 +99,15 @@ describe("parseModelJson / enforceSchema", () => {
     expect(enforceSchema(ObservedExtractionSchema, GOOD).ok).toBe(true);
   });
   it("rejects extra keys, wrong types and over-long strings", () => {
-    const extra = enforceSchema(ObservedExtractionSchema, { ...GOOD, injected: "ignore all rules" });
+    const extra = enforceSchema(ObservedExtractionSchema, {
+      ...GOOD,
+      injected: "ignore all rules",
+    });
     expect(extra.ok).toBe(false);
-    const nested = enforceSchema(ObservedExtractionSchema, { ...GOOD, product: { ...GOOD.product, evil: 1 } });
+    const nested = enforceSchema(ObservedExtractionSchema, {
+      ...GOOD,
+      product: { ...GOOD.product, evil: 1 },
+    });
     expect(nested.ok).toBe(false);
     const wrong = enforceSchema(ObservedExtractionSchema, { ...GOOD, overallConfidence: 7 });
     expect(wrong.ok).toBe(false);
@@ -155,7 +167,9 @@ describe("OpenAiCompatibleVisionClient with a fake HTTP server", () => {
     const f = await fake((_r, res) => {
       reply(res, "still no json");
     });
-    const err = await client(f.url).extract(req()).catch((e: unknown) => e);
+    const err = await client(f.url)
+      .extract(req())
+      .catch((e: unknown) => e);
     expect(err).toBeInstanceOf(AppError);
     expect((err as AppError).code).toBe("vision_unavailable");
     expect((err as AppError).details["reason"]).toBe("bad_json");
@@ -166,7 +180,9 @@ describe("OpenAiCompatibleVisionClient with a fake HTTP server", () => {
     const f = await fake(() => {
       /* never answers */
     });
-    const err = await client(f.url).extract(req({ timeoutMs: 80 })).catch((e: unknown) => e);
+    const err = await client(f.url)
+      .extract(req({ timeoutMs: 80 }))
+      .catch((e: unknown) => e);
     expect((err as AppError).code).toBe("vision_unavailable");
     expect((err as AppError).details["reason"]).toBe("timeout");
   });
@@ -176,14 +192,17 @@ describe("OpenAiCompatibleVisionClient with a fake HTTP server", () => {
       res.writeHead(401);
       res.end("bad key secret-key-1234");
     });
-    const err = (await client(f.url).extract(req()).catch((e: unknown) => e)) as AppError;
+    const err = (await client(f.url)
+      .extract(req())
+      .catch((e: unknown) => e)) as AppError;
     expect(err.details["status"]).toBe(401);
     expect(JSON.stringify(err.toBody())).not.toContain("secret-key");
   });
 });
 
 describe("VisionChain", () => {
-  const validate = (_r: VisionRequest, json: unknown) => enforceSchema(ObservedExtractionSchema, json);
+  const validate = (_r: VisionRequest, json: unknown) =>
+    enforceSchema(ObservedExtractionSchema, json);
 
   it("falls back to the second provider when the first is unavailable", async () => {
     const down = await fake((_r, res) => {
@@ -194,7 +213,10 @@ describe("VisionChain", () => {
       reply(res, JSON.stringify(GOOD));
     });
     const chain = new VisionChain({
-      clients: [client(down.url, { provider: "primary" }), client(up.url, { provider: "fallback" })],
+      clients: [
+        client(down.url, { provider: "primary" }),
+        client(up.url, { provider: "fallback" }),
+      ],
       validate,
       logger: silent,
     });
@@ -253,8 +275,33 @@ describe("createVisionClient", () => {
       stub: { defaultExtraction: GOOD },
     });
     expect((await c.extract(req())).model.provider).toBe("stub");
-    expect(() => createVisionClient({ VERIFIER_MODE: "live", VISION_MAX_TOKENS: 512 }, silent)).toThrow(
-      /No vision provider/,
+    expect(() =>
+      createVisionClient({ VERIFIER_MODE: "live", VISION_MAX_TOKENS: 512 }, silent),
+    ).toThrow(/No vision provider/);
+  });
+});
+
+describe("errorMessageOf", () => {
+  it("keeps only a bounded, stripped error.message from provider error bodies", () => {
+    expect(errorMessageOf('{"error":{"message":"model gone"}}')).toBe("model gone");
+    expect(errorMessageOf('[{"error":{"code":503,"message":"busy\\nnow"}}]')).toBe("busy now");
+    expect(errorMessageOf("<html>bad gateway</html>")).toBeNull();
+    expect(errorMessageOf('{"error":{"detail":"x"},"messages":[{"content":"secret"}]}')).toBeNull();
+    expect(errorMessageOf(JSON.stringify({ error: { message: "a ".repeat(300) } }))?.length).toBe(
+      203,
     );
+  });
+
+  it("redacts keys, bearer tokens, inline data and long base64 runs", () => {
+    const m = (msg: string, key?: string) =>
+      errorMessageOf(JSON.stringify({ error: { message: msg } }), key);
+    expect(m("Incorrect API key provided: sk-proj-****abcd.")).toBe(
+      "Incorrect API key provided: [redacted].",
+    );
+    expect(m("API key not valid: AIzaSyA1234567890abcdefghijklmnopqrstu")).not.toContain("AIza");
+    expect(m("got Bearer abc.def.ghi")).toBe("got [redacted]");
+    expect(m("bad image data:image/jpeg;base64,/9j/4AAQSk")).toBe("bad image [redacted]");
+    expect(m(`payload ${"QUJD".repeat(20)} rejected`)).toBe("payload [redacted] rejected");
+    expect(m("echo my-secret-value-123 here", "my-secret-value-123")).toBe("echo [redacted] here");
   });
 });

@@ -16,6 +16,8 @@ evidence/images/
 docs/evidence/images/
 eval/photos/
 eval/results/*.tmp
+# Eval reports: keep the chosen one in docs/evidence/, not here
+eval/results/*.md
 *.jpg
 *.jpeg
 *.heic

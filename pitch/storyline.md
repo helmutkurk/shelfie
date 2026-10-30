@@ -2,28 +2,33 @@
 
 The narrative spine for the video, the live pitch and the Devfolio text. Every other pitch file must stay consistent with this one. Facts about the product come from `../ideas/decision.md`; anything not verified is marked.
 
-## Persona (fictional, say so if asked)
+## The real request (replaces the fictional persona)
 
-**Katharina Brandl, field-sales manager at Isarquell**, a small Bavarian craft-lemonade brand (invented for the story; no real company). Four people in sales. She sold a new 0.33 l bottle to a regional supermarket chain last month. Today she needs to know: is it on the shelf in this Munich store, at which price, right now? (MVP: one job is one store and one photo; checking ten stores means ten jobs, bundled multi-store jobs are roadmap.) Her options:
+An acquaintance of Isabel's father wants to bring a beverage to Germany. He asked Helmut and Isabel whether they could go to a few shops and photograph comparable products: what they cost and whether they are on the shelf. It is a real request, not a customer: say "a real request", never "our customer", "pilot" or "validated". Isabel tells it in first person (wording: [pitch-plan.md](pitch-plan.md) section 2).
 
-- Drive around herself (an afternoon for a handful of stores).
-- Book a field-marketing agency or a mystery-shopping panel: paid per visit whether or not the photo is usable. A quick merchandising audit visit costs about $30-45 (US vendor rate card) and a German Testkauf about EUR 50-260 per visit (agency price lists); see [market-pricing.md](market-pricing.md). Lead time: [SOURCE NEEDED].
-- Trust the chain's own sales data, which says nothing about the shelf.
+- **Customer type:** a brand entering a market without a field team. Before launch it needs competitor prices and availability in specific stores. Each job buys one verified data point: one store, one product, one photo (ADR-16); a study needs many, multi-store bundles are roadmap.
+- **What we prove:** price and presence (or the empty spot). Never claim placement, facings, share of shelf or "market research".
+- **Privacy:** never name the person, the drink, the brand or the country of origin. Tell the story in public only with his consent (asked via Isabel's father); without it say "an acquaintance of my father" and show no message screenshot.
+- **Facts from Isabel:** when the request came, stores and photos actually done, time spent, usable photos. Real numbers only. [ISABEL]
+- His options today: walk the stores himself or ask friends (he is abroad and cannot check the photos), or book a field-marketing agency or mystery-shopping panel, paid per visit whether or not the photo is usable. A quick merchandising audit visit costs about $30-45 (US vendor rate card), a German Testkauf about EUR 50-260 per visit (agency price lists); see [market-pricing.md](market-pricing.md). Lead time: [SOURCE NEEDED].
 
 ## The spine
 
 | Beat | Line / idea | What the judge sees |
 |---|---|---|
-| Hook | "Last month Katharina sold her lemonade to a supermarket chain. Today she has no idea whether it is on the shelf." | Empty-looking shelf shot, then a phone with a calendar full of calls |
-| Tension | Existing checks are slow, expensive, and you pay even when the photo is blurry, old or from the wrong store. Agents can think but cannot see a shelf. | Agency invoice vs blurry photo |
-| Reveal | "Shelfie: an agent that hires people to look, and pays them only if the photo is true." | Sokosumi task: "Check Isarquell 0.33 l in this Munich store" |
+| Hook | Isabel: "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph the competitors in a few shops." | One of their real shelf photos (brands blurred, no people) |
+| Tension | He is abroad and cannot check their photos; they would walk for hours; an agency bills every visit, usable or not. An AI can write him a report; it cannot see the shelf. | A blurry or wrong-shelf photo from their own walk |
+| Reveal | "Shelfie: an agent that hires people to look, and pays them only if the photo is true." | Sokosumi task: "the question he asked us": one comparable drink, one Munich store |
 | Proof | Escrow locks the fee. A person in a store gets a one-time code, writes it on paper (or holds a printed card) and photographs the tag with the code in frame; a verifier agent (paid per check over x402) reads price and product; green = payout tx on preprod; an old photo with the wrong code = red, no payment. | Real screens, real tx hash on preprod.cardanoscan.io |
 | Result | If the photo passes, the report is delivered and escrow settles. If no photo passes in time, the brand is refunded automatically. | Report table, then (or alternatively) refund tx |
 | Vision | "Anything an AI needs to know about the physical world can be bought this way: proof first, payment second." Next: store-owned QR codes for location, other domain packs (deliveries, outages, accessibility). | One line, one slide |
+| Callback | Isabel: "Next time he doesn't call us. He posts a job. Paid only when the photo is true." | Closing slide |
 
-## Hook line (first 10 seconds)
+Demo order on stage: the cheat first (red, no money), then the true photo (green, payout tx). Run of show: [live-pitch.md](live-pitch.md).
 
-"An AI can write a report about a supermarket shelf. It cannot see the shelf. So we taught an agent to hire someone who can, and to pay only if the photo is true."
+## Hook line (first 28 seconds)
+
+The real request, told by Isabel (word for word in [live-pitch.md](live-pitch.md)), ending on: "An AI can write him a report, but it can't see the shelf. We built an agent that hires someone who can, and pays only if the photo is true."
 
 ## The 3 phrases judges must remember
 
@@ -35,7 +40,7 @@ Rule: these three appear verbatim in the video, in the live pitch and in the Dev
 
 ## The one number (business case)
 
-> **Target: EUR 12 per verified store check, charged only when it passes: about a third of the cheapest agency audit visit (about $30-45), a quarter of the cheapest German Testkauf (from about EUR 50).** Agency visits are booked in advance and paid regardless of usable output. For Katharina's 10 stores: EUR 120 with Shelfie vs about $300-450 for audit visits or EUR 500+ for mystery shops.
+> **Target: EUR 12 per verified store check, charged only when it passes: about a third of the cheapest agency audit visit (about $30-45), a quarter of the cheapest German Testkauf (from about EUR 50).** Agency visits are booked in advance and paid regardless of usable output. For 10 store checks: EUR 120 with Shelfie vs about $300-450 for audit visits or EUR 500+ for mystery shops.
 
 Full benchmarks, Shelfie cost build-up, sources and open items: [market-pricing.md](market-pricing.md). Summary (Shelfie numbers are hypotheses; do not show a number on screen that is not marked as an estimate):
 
@@ -54,6 +59,10 @@ Units, kept apart on purpose: the EUR figures above are **illustrative product p
 Terminology: the **three payment gates** (photo gate pays the human, job gate settles the escrow, fallback refunds) are not the verifier's internal checks G1-G7 in `diseno/verifier-rules.md`; the photo gate is made of those checks.
 
 One-sentence version for the video: "A verified check costs about twelve euros, a fraction of an agency visit, and you pay only for checks that pass."
+
+## Market (one slide, one sentence)
+
+Pain number, TAM, neighbour market and vision ladder, with sources and the framings not to use: [pitch-plan.md](pitch-plan.md) section 4. Rules: say "loss" or "revenue" with every figure, never add markets up, mark forecasts as forecasts, re-check each figure at its source before it goes on a slide.
 
 ## Positioning line
 
@@ -82,5 +91,5 @@ Taglines (pick one, use it everywhere; full list by audience, German versions an
 ## Tone rules
 
 - Neutral, concrete, no hype words ("revolutionary", "disrupt"). Numbers marked as estimates.
-- Always say what is real (preprod, our own printed price tags, teammates as shoppers) and what is roadmap (mainnet, location proof, onboarding of strangers).
+- Always say what is real (preprod, our own printed price tags, teammates as shoppers, one real request but no brand interviews yet) and what is roadmap (mainnet, location proof, onboarding of strangers).
 - Say "preprod" out loud at least once; the Foundation judges will check.

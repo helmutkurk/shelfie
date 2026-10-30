@@ -75,6 +75,20 @@ Answers are short on purpose: lead with the honest limit, then the mitigation. M
 20. **What would you do with another month?** [D]
     Store-owned QR codes for location, multi-verifier checks for high-value jobs, a payout path that does not need workers to hold a wallet, a pilot with 3-5 real brands and one crowd-work partner, and a legal review of the worker model. Domain packs beyond shelf checks (deliveries, outages, accessibility audits) reuse the same task, verifier and settlement engine.
 
+## The real request and the market
+
+21. **Is the man from your story a customer? Did he pay you?** [A]
+    No. It is one real request that made us build this; he has not used Shelfie and has not paid. We have not run brand interviews yet; today we prove the mechanism. Never say customer, pilot or validated.
+
+22. **That is market research. Does your product do that?** [A]
+    It delivers the raw data points: one verified photo with price and availability per product per store. A study needs many of them; each job buys one, and multi-store bundles are roadmap (ADR-16). We do not claim placement, facings or share of shelf.
+
+23. **How big is the market, really?** [C]
+    Three numbers, each from a named publisher, none added up: out-of-stocks cost retail about $1.1T a year (IHL Group 2026 estimate; a loss, not our revenue); brands spend about $6B a year on in-store merchandising (Beroe, 2023 estimate); mystery shopping, paid per visit, is about $2.35B (Straits Research, 2025). Our own price build-up is bottom-up and illustrative (`market-pricing.md`). Agentic-commerce forecasts ($0.1-5T by 2030, depending on the source) are demand context, not our market. Sources: `pitch-plan.md` section 4.
+
+24. **Were you allowed to photograph in those shops?** [D]
+    For the story we photographed price tags from the customer aisle, no people; for the video we ask the manager first. In the product, shelf and tag only, and store permission is an open legal question (see Q11).
+
 ## Bonus questions to rehearse
 
 - "Is this just Streetspotr with a chain?" Answer: the existing crowd-audit apps trust the platform to check photos and pay on their own schedule; here payment is bound to a published rule set and the receipt is public. We are not claiming a better workforce, only a trustable payment gate. [SOURCE NEEDED: confirm what competitors do before saying this]

@@ -1,10 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  AppError,
-  ObservedExtractionSchema,
-  OosExtractionSchema,
-  gatesFor,
-} from "@shelfie/core";
+import { AppError, ObservedExtractionSchema, OosExtractionSchema, gatesFor } from "@shelfie/core";
 import type {
   GateName,
   GateResult,
@@ -58,7 +53,12 @@ export interface EvaluatorDeps {
   nowMs?: () => number;
 }
 
-/** Perceptual hashes seen by this process, keyed by sha256 (feeds near-duplicate detection). */
+/**
+ * Perceptual hashes seen by this process, keyed by sha256: a lookup only. G7 compares just the
+ * photos named in `previousImageSha256` (the engine sends the job's PASSED photos), so a failed
+ * attempt never blocks a similar retry. After a restart, near-duplicates of older photos are
+ * missed; exact sha256 duplicates are still caught.
+ */
 const AHASH_LIMIT = 5000;
 
 export interface Evaluator extends VerifierGate {
@@ -111,7 +111,11 @@ export function createEvaluator(deps: EvaluatorDeps): Evaluator {
     }
     return {
       extraction: checked.data,
-      model: { provider: result.model.provider, id: result.model.id, latencyMs: result.latencyMs || latencyMs },
+      model: {
+        provider: result.model.provider,
+        id: result.model.id,
+        latencyMs: result.latencyMs || latencyMs,
+      },
     };
   }
 
@@ -189,7 +193,10 @@ export function createEvaluator(deps: EvaluatorDeps): Evaluator {
     const extractionOut: Record<string, unknown> =
       extraction === null
         ? {}
-        : { ...(extraction as unknown as Record<string, unknown>), ...(verifierNotes.length ? { verifierNotes } : {}) };
+        : {
+            ...(extraction as unknown as Record<string, unknown>),
+            ...(verifierNotes.length ? { verifierNotes } : {}),
+          };
     if (priceValue !== null) extractionOut["verifierPriceValue"] = priceValue;
 
     return {

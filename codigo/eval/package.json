@@ -13,8 +13,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "dev": "tsx src/cli.ts",
-    "eval": "tsx src/cli.ts"
+    "dev": "tsx --env-file-if-exists=../.env src/cli.ts",
+    "eval": "tsx --env-file-if-exists=../.env src/cli.ts"
   },
   "dependencies": {
     "@shelfie/core": "*",

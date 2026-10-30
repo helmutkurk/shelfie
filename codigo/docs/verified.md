@@ -6,6 +6,14 @@ Answers to every "verify Friday" item from the design. Add a row as soon as an i
 |---|---|---|---|
 | | | | |
 
+## Vision provider (Lorenz C, 2026-10-30)
+
+| Item | Answer | Who | Evidence |
+|---|---|---|---|
+| Gemini OpenAI-compatible endpoint | `VISION_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai` works with `VISION_PROVIDER=gemini` (adapter appends `/chat/completions`, `response_format: json_object`, `max_tokens`) | Lorenz C + Claude | `docs/evidence/eval-2026-10-30-redbull-gemini.md` |
+| Gemini model id | `gemini-2.5-flash` returns 404 "no longer available to new users"; `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-flash-latest` timed out (45-60 s) or 503 "high demand" at 15:50 CET; `gemini-3.5-flash-lite` answered (mean 8.5 s, p95 13.2 s). Current choice: `VISION_MODEL=gemini-3.5-flash-lite`; retry 3.8-flash when load drops | Lorenz C + Claude | same |
+| OpenAI fallback | Not verified: the stored fallback key returned no model list; fallback stays unset (deferred, Lorenz) | Lorenz C | - |
+
 ## Masumi / Sokosumi starter on the hub (Isabel A, 2026-10-30)
 
 Hub = Isabel's laptop, Windows 11 Home x64, 31.5 GB RAM, Node 24.22.1, Postgres 16 as a Windows service (no Docker). Times UTC. Tx hashes: `evidence/tx-hashes.md`.

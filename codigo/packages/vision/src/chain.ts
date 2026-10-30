@@ -44,6 +44,8 @@ export class VisionChain implements VisionClient {
         this.opts.logger?.warn("vision client failed", {
           index: i,
           reason: err instanceof AppError ? (err.details["reason"] ?? err.code) : "unknown",
+          status: err instanceof AppError ? err.details["status"] : undefined,
+          providerMessage: err instanceof AppError ? err.details["providerMessage"] : undefined,
           willFallback: i < this.opts.clients.length - 1,
         });
       }
