@@ -67,7 +67,7 @@ Why making it look bigger than it is backfires: the product claim is "paid only 
 ## 5. Defuse inside the pitch, not in Q&A
 
 1. **Demand is not validated.** "One real request; we have not run brand interviews yet. Today we prove the mechanism."
-2. **Why a blockchain / the verifier is ours.** Name what is on-chain (escrow lock and settle/refund, payout tx, x402 verifier fee) and say "the verifier is a URL the brand can swap".
+2. **Why a blockchain / the verifier is ours.** Name what is on-chain (escrow lock and settle/refund, payout tx, x402 verifier fee) and say "the verifier is a separate paid endpoint; an independent one is just another URL" (a config change today, not a brand setting).
 3. **Location is not proven.** "The hand sign proves the photo is new and made for this task, not where it was taken. Store QR codes are next." Also: "Agencies also fix shelves; we replace only the 'is it there, at what price' check."
 
 Top Q&A to drill (answers in `qa-prep.md`): why blockchain / why not Stripe; GPS spoofing; who the workers are and cold start; Trax, Roamler, BeMyEye exist; what is live vs recorded vs mocked (prepare one honest table on a backup slide); legal: photographing in stores.
@@ -79,7 +79,7 @@ Top Q&A to drill (answers in `qa-prep.md`): why blockchain / why not Stripe; GPS
 | Screen | Homepage (UI team, [homepage-brief.md](homepage-brief.md)), scrolled with Page Down | Offline copy of the homepage; then committed `slides/shelfie.pdf` on USB and phone |
 | Presenting | Homepage in Chrome tab 1, full screen (F11) | Backup deck: `pdfpc` / `evince -s` |
 | Demo switching | One Chrome window: Sokosumi, verifier, explorer, report; `Ctrl+1..9`; homepage in tab 1; zoom 125%, notifications off | Screenshots in the backup deck |
-| Phone on the big screen | The web app's own verifier/dashboard view (no cable). For the claim/code moment: `scrcpy` over USB (Android) | iPhone: QuickTime on a Mac; or the phone's screen recording played from the laptop |
+| Phone on the big screen | The web app (worker verdict card) and the dashboard job page (verdict rows; no per-check view is built), no cable. For the claim and hand-sign moment: `scrcpy` over USB (Android) | iPhone: QuickTime on a Mac; or the phone's screen recording played from the laptop |
 | Video capture / edit | OBS Studio + Kdenlive, 1080p30, one headset mic, one narrator | CapCut on a Windows laptop |
 | Captions | `whisper video.mp4 --model small --output_format srt`, or Kdenlive speech-to-text | CapCut auto captions |
 | Rehearsal | Phone timer at 3:00 + a phone stopwatch held by a non-speaker; `/qa` skill for questions | |
@@ -94,7 +94,7 @@ Install (Ubuntu; OBS is already there): `sudo apt install pdfpc scrcpy adb kdenl
 | 1 | 0:00-0:12 | Real store, hands only, photographing a drinks tag | The request (short form of the hook) |
 | 2 | 0:12-0:24 | Quick cuts: aisles, a blurry photo, a gallery of 40 photos | "Hours of walking, photos nobody can verify, and an agency bills every visit, usable or not." |
 | 3 | 0:24-0:32 | Text card | "An AI can write a report about a shelf. It cannot see it." |
-| 4-9 | 0:32-2:15 | Sokosumi job and lock tx; cheat red; claim, code, photo, green; payout tx; report and refund | As in `video-script.md` shots 4-10 |
+| 4-9 | 0:32-2:15 | Sokosumi job and lock tx; cheat red; claim, hand sign, photo, green; payout tx; report and refund | As in `video-script.md` shots 4-10 |
 | 10 | 2:15-2:28 | Isabel's real photo, then title card | Callback + tagline |
 
 Rules: store footage is story only, never shown as a demo verification. Ask the store manager; shelves only, no people, staff, screens or receipts. Every earlier-run clip carries "recorded earlier". Minimum viable video: same voice-over over six screenshots, about 1:45.
