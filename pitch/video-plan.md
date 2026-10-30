@@ -59,7 +59,7 @@ Hard cut-offs: no usable store run by 09:30 means fallback 1 in section 5 (Frida
 
 ## 3. Edit decision list (16:9, 1920x1080, 30 fps)
 
-Each shot lasts as long as its voice-over take plus 0.7 s, at least the picture minimum below. Dry run with synthetic footage and a 140 wpm read of the 316-word script: 145 s.
+Each shot lasts as long as its voice-over take plus 0.7 s, at least the picture minimum below. Dry run with synthetic footage and a 140 wpm read of the 314-word script: 145 s.
 
 | # | Min (s) | Picture | Title (top left) | Label (top right) | Source files |
 |---|---|---|---|---|---|
