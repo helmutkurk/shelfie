@@ -131,7 +131,8 @@ a:focus-visible {
 /* Room 1: pinned stage, the cart canvas behind the beats */
 .room {
   position: relative;
-  height: 620vh;
+  /* four beats, about one screen of scrolling each */
+  height: 400vh;
 }
 .stage {
   position: sticky;
@@ -157,11 +158,11 @@ a:focus-visible {
   left: clamp(16px, 6vw, 96px);
   top: 50%;
   width: min(42vw, 560px);
-  transform: translateY(calc(-50% + 24px));
+  transform: translateY(calc(-50% + 16px));
   opacity: 0;
   transition:
-    opacity 0.45s ease,
-    transform 0.45s ease;
+    opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .beat.is-active {
   opacity: 1;
@@ -194,14 +195,36 @@ a:focus-visible {
   color: var(--ink);
 }
 .hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px !important;
   font-size: 14px !important;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--green) !important;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .hint::after {
-  content: " ↓";
+  content: "↓";
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--forest);
+  font-size: 18px;
+  animation: nudge 1.4s ease-in-out infinite;
+}
+@keyframes nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
 }
 .eyebrow {
   margin: 0 0 12px;
@@ -534,7 +557,7 @@ a:focus-visible {
     display: none;
   }
   .room {
-    height: 560vh;
+    height: 360vh;
   }
   .beat {
     left: 16px;

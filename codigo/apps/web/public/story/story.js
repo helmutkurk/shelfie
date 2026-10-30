@@ -46,16 +46,17 @@
   ];
   const WHEELS = [
     // back pair first (drawn behind), then the front pair
-    { x: 402, y: 574, r: 26, back: true, from: 0.5, to: 0.58 },
-    { x: 702, y: 574, r: 26, back: true, from: 0.56, to: 0.64 },
-    { x: 338, y: 596, r: 34, back: false, from: 0.38, to: 0.46 },
-    { x: 640, y: 596, r: 34, back: false, from: 0.44, to: 0.52 },
+    { x: 402, y: 574, r: 26, back: true, from: 0.38, to: 0.45 },
+    { x: 702, y: 574, r: 26, back: true, from: 0.42, to: 0.49 },
+    { x: 338, y: 596, r: 34, back: false, from: 0.28, to: 0.35 },
+    { x: 640, y: 596, r: 34, back: false, from: 0.32, to: 0.39 },
   ];
+  // Four beats: basket (0-0.25), wheels (0.25-0.5), products and photo (0.5-0.75), payment (0.75-1).
   const PRODUCTS = [
-    { kind: "bottle", x: 340, w: 58, h: 168, color: C.green, from: 0.66, to: 0.74 },
-    { kind: "box", x: 420, w: 118, h: 112, color: C.leaf, from: 0.69, to: 0.77 },
-    { kind: "can", x: 556, w: 64, h: 104, color: C.forest, from: 0.72, to: 0.8 },
-    { kind: "bottle", x: 626, w: 50, h: 148, color: C.leaf, from: 0.75, to: 0.83 },
+    { kind: "bottle", x: 340, w: 58, h: 168, color: C.green, from: 0.52, to: 0.6 },
+    { kind: "box", x: 420, w: 118, h: 112, color: C.leaf, from: 0.55, to: 0.63 },
+    { kind: "can", x: 556, w: 64, h: 104, color: C.forest, from: 0.58, to: 0.66 },
+    { kind: "bottle", x: 626, w: 50, h: 148, color: C.leaf, from: 0.61, to: 0.69 },
   ];
   const BASKET_FLOOR = 470;
 
@@ -396,7 +397,7 @@
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, width, height);
 
-    const roll = easeInOut(span(p, 0.86, 1));
+    const roll = easeInOut(span(p, 0.76, 0.98));
     ctx.save();
     ctx.translate(cx - 500 * s + roll * 46 * s, cy - 350 * s);
     ctx.scale(s, s);
@@ -408,14 +409,15 @@
     ctx.fill();
 
     drawGhost(ctx);
-    drawSpeedLines(ctx, span(p, 0.86, 1));
+    drawSpeedLines(ctx, span(p, 0.76, 0.96));
     const spin = roll * Math.PI * 6;
     for (const w of WHEELS.filter((x) => x.back)) drawWheel(ctx, w, span(p, w.from, w.to), spin);
-    strokeReveal(ctx, RAIL, easeOut(span(p, 0.34, 0.42)), 14, C.forest);
+    strokeReveal(ctx, RAIL, easeOut(span(p, 0.24, 0.3)), 14, C.forest);
     for (const prod of PRODUCTS) drawProduct(ctx, prod, span(p, prod.from, prod.to));
-    strokeReveal(ctx, HANDLE, easeOut(span(p, 0.02, 0.15)), 18, C.forest);
-    strokeReveal(ctx, BASKET, easeOut(span(p, 0.16, 0.3)), 18, C.forest);
-    drawGrid(ctx, span(p, 0.27, 0.37));
+    // the handle is already half drawn on arrival, so the first scroll visibly builds the cart
+    strokeReveal(ctx, HANDLE, easeOut(clamp(0.45 + span(p, 0, 0.06) * 0.55)), 18, C.forest);
+    strokeReveal(ctx, BASKET, easeOut(span(p, 0.03, 0.15)), 18, C.forest);
+    drawGrid(ctx, span(p, 0.12, 0.22));
     for (const w of WHEELS.filter((x) => !x.back)) drawWheel(ctx, w, span(p, w.from, w.to), spin);
     ctx.restore();
 
@@ -423,8 +425,8 @@
     ctx.save();
     ctx.translate(cx - 500 * s, cy - 350 * s);
     ctx.scale(s, s);
-    drawPhoto(ctx, span(p, 0.7, 0.78), span(p, 0.76, 0.86));
-    drawBlocks(ctx, span(p, 0.88, 1));
+    drawPhoto(ctx, span(p, 0.55, 0.63), span(p, 0.62, 0.72));
+    drawBlocks(ctx, span(p, 0.8, 0.98));
     ctx.restore();
   }
 
@@ -434,25 +436,31 @@
     return clamp((window.scrollY - room.offsetTop) / total);
   }
 
+  // The drawn frame eases toward the scroll position, so the cart moves smoothly between wheel
+  // ticks instead of jumping; the text beats follow the real scroll position.
   let pending = false;
+  let shown = reduced ? 1 : progress();
   function update() {
     pending = false;
-    const p = reduced ? 1 : progress();
-    render(p);
-    if (bar) bar.style.width = `${(p * 100).toFixed(1)}%`;
+    const target = reduced ? 1 : progress();
+    shown += (target - shown) * 0.16;
+    if (Math.abs(target - shown) < 0.0008) shown = target;
+    render(shown);
+    if (bar) bar.style.width = `${(target * 100).toFixed(1)}%`;
     if (!reduced) {
       for (const b of beats) {
-        const on = p >= Number(b.dataset.from) && p < Number(b.dataset.to);
+        const on = target >= Number(b.dataset.from) && target < Number(b.dataset.to);
         b.classList.toggle("is-active", on);
       }
     }
+    if (shown !== target) schedule();
   }
-  const schedule = () => {
+  function schedule() {
     if (!pending) {
       pending = true;
       window.requestAnimationFrame(update);
     }
-  };
+  }
 
   resize();
   update();
