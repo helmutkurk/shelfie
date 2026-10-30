@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en" class="pitch">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F5EFE3" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      name="description"
+      content="Shelfie pitch: six screens, scroll only. Paid only when the photo is true. Prototype on Cardano preprod."
+    />
+    <title>Shelfie pitch: paid only when the photo is true</title>
+    <link rel="icon" href="shelfie-logo.webp" />
+    <link rel="stylesheet" href="home.css" />
+  </head>
+  <body>
+    <main id="main">
+      <!-- 1 Hook (text only until a shelf photo exists) -->
+      <section class="screen" aria-labelledby="s1">
+        <h1 id="s1">An AI can't see a shelf.</h1>
+      </section>
+
+      <!-- 2 Hero -->
+      <section class="screen screen-tint" aria-labelledby="s2">
+        <div class="brandmark">
+          <img src="shelfie-logo.webp" alt="" width="120" height="123" />
+          <h2 id="s2">Shelfie</h2>
+        </div>
+        <p class="tagline">Paid only when the photo is true.</p>
+        <p class="stage-line">For brands entering a market without a field team.</p>
+      </section>
+
+      <!-- 3 How it works -->
+      <section class="screen" aria-labelledby="s3">
+        <h2 id="s3">Proof first, payment second.</h2>
+        <ol class="cards cards-pitch">
+          <li class="card">
+            <h3>Brand posts a job</h3>
+            <p>The fee waits in escrow on Cardano.</p>
+          </li>
+          <li class="card">
+            <h3>A person photographs</h3>
+            <p>In the store, with a one-time hand sign.</p>
+          </li>
+          <li class="card">
+            <h3>A verifier checks</h3>
+            <p>A separate service, paid per check over x402.</p>
+          </li>
+          <li class="card">
+            <h3>Pass or refund</h3>
+            <p>Pass: test ADA paid, report delivered. Fail: brand refunded.</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- 4 Receipts -->
+      <section class="screen screen-dark" aria-labelledby="s4">
+        <h2 id="s4">Receipts on Cardano</h2>
+        <p class="proof-intro">
+          Real test transactions from separate runs. No single job has yet gone through the whole
+          chain with a verified real photo; that is our next milestone.
+        </p>
+        <table class="receipts-table">
+          <caption class="small">Cardano preprod, test ADA, earlier runs</caption>
+          <thead>
+            <tr>
+              <th scope="col">Step</th>
+              <th scope="col">Transaction</th>
+              <th scope="col">Status</th>
+              <th scope="col">Run</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Escrow lock</th>
+              <td><a class="hash" href="https://preprod.cardanoscan.io/transaction/8415ae7d015d981ac14605f796b46ac58da61cf9150f3e710bfa0fd728cdd081" title="8415ae7d015d981ac14605f796b46ac58da61cf9150f3e710bfa0fd728cdd081" rel="noopener noreferrer">8415ae7d...cdd081</a></td>
+              <td><span class="pill pill-none">No photo</span></td>
+              <td>Earlier run, engine on fakes</td>
+            </tr>
+            <tr>
+              <th scope="row">x402 fee</th>
+              <td><a class="hash" href="https://preprod.cardanoscan.io/transaction/cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d" title="cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d" rel="noopener noreferrer">cbc9cb5d...78474d</a></td>
+              <td><span class="pill pill-stub">Stub verdict</span></td>
+              <td>Earlier run, real payment</td>
+            </tr>
+            <tr>
+              <th scope="row">Payout</th>
+              <td><a class="hash" href="https://preprod.cardanoscan.io/transaction/1abef82575d1bfa75e64d9f0d9e40e733fe964e9bc6c9cee333e23a994e510d8" title="1abef82575d1bfa75e64d9f0d9e40e733fe964e9bc6c9cee333e23a994e510d8" rel="noopener noreferrer">1abef825...e510d8</a></td>
+              <td><span class="pill pill-real">Real run</span></td>
+              <td>Earlier run, test ADA</td>
+            </tr>
+            <tr>
+              <th scope="row">Settle</th>
+              <td><a class="hash" href="https://preprod.cardanoscan.io/transaction/0614b337065b50701df9589d47e5c205a43b409c057eeb109d043042b0b752d0" title="0614b337065b50701df9589d47e5c205a43b409c057eeb109d043042b0b752d0" rel="noopener noreferrer">0614b337...b752d0</a></td>
+              <td><span class="pill pill-fake">Engine on fakes</span></td>
+              <td>Escrow test run, synthetic photo</td>
+            </tr>
+            <tr>
+              <th scope="row">Refund</th>
+              <td><a class="hash" href="https://preprod.cardanoscan.io/transaction/ca8f5de9d66a6aa4657d9f8dbf64670f7bbd7e9b66c61355a816ad8ae47fa1d6" title="ca8f5de9d66a6aa4657d9f8dbf64670f7bbd7e9b66c61355a816ad8ae47fa1d6" rel="noopener noreferrer">ca8f5de9...7fa1d6</a></td>
+              <td><span class="pill pill-none">No photo</span></td>
+              <td>Escrow test run, no photo</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 5 Today and next -->
+      <section class="screen" aria-labelledby="s5">
+        <h2 id="s5">Today, then next.</h2>
+        <p class="price-line">Test purchase: EUR 50+. Shelfie check: <b>about EUR 12</b>.</p>
+        <p class="small">Illustrative price, charged only when the photo passes.</p>
+        <div class="split">
+          <div class="card">
+            <h3>Today</h3>
+            <p>One shelf, on Cardano preprod, from one real request.</p>
+          </div>
+          <div class="card card-dark">
+            <h3>Next</h3>
+            <p>Store QR codes for location, and multi-store jobs.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 Close -->
+      <section class="screen screen-close" aria-labelledby="s6">
+        <h2 id="s6">Nobody pays for a photo that isn't true.</h2>
+        <p class="tagline">Paid only when the photo is true.</p>
+      </section>
+
+      <!-- Below the close: Q&A and visitors, scroll only -->
+      <section class="screen q-part" aria-labelledby="q1">
+        <h2 id="q1">Eyes in the physical world.</h2>
+        <p>Agents will need eyes in the physical world. We make those eyes verifiable and paid.</p>
+        <ul class="ladder">
+          <li>Shelf checks</li>
+          <li>Deliveries</li>
+          <li>Opening hours</li>
+          <li>Accessibility</li>
+        </ul>
+      </section>
+
+      <section class="screen screen-tint q-part" aria-labelledby="q2">
+        <h2 id="q2">The market, with sources.</h2>
+        <div class="stats stats-3">
+          <figure class="stat">
+            <p class="stat-num">~20%</p>
+            <figcaption>of CPG revenue goes into trade promotions<span class="stat-src">McKinsey, 2019, global</span></figcaption>
+          </figure>
+          <figure class="stat">
+            <p class="stat-num">$6B</p>
+            <figcaption>in-store merchandising services<span class="stat-src">Beroe estimate, 2023</span></figcaption>
+          </figure>
+          <figure class="stat">
+            <p class="stat-num">$1.7T</p>
+            <figcaption>what inventory distortion costs retail a year; about two thirds is out-of-stocks<span class="stat-src">IHL Group, 2026 estimate</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="screen q-part" aria-labelledby="q3">
+        <h2 id="q3">What the verifier checks.</h2>
+        <ul class="cards cards-gates">
+          <li class="card"><p>The image is usable</p></li>
+          <li class="card"><p>The hand sign matches</p></li>
+          <li class="card"><p>Price and product are readable</p></li>
+          <li class="card"><p>The product matches the order</p></li>
+          <li class="card"><p>The price is plausible</p></li>
+          <li class="card"><p>It arrived in time and is not a duplicate</p></li>
+        </ul>
+        <p class="small">A model reads the photo. Plain code decides pass or fail.</p>
+      </section>
+
+      <section class="screen screen-tint q-part" aria-labelledby="q4">
+        <h2 id="q4">Four TUM students.</h2>
+        <ul class="team">
+          <li class="person"><img src="team/helmut.webp" alt="Portrait of Helmut Kurk" width="240" height="240" loading="lazy" /><h3>Helmut Kurk</h3><p class="person-role">Web app and evidence</p></li>
+          <li class="person"><img src="team/isabel.webp" alt="Portrait of Isabel Sagastume" width="240" height="240" loading="lazy" /><h3>Isabel Sagastume</h3><p class="person-role">Agent and engine</p></li>
+          <li class="person"><img src="team/lorenz.webp" alt="Portrait of Lorenz Hermannstädter" width="240" height="240" loading="lazy" /><h3>Lorenz Hermannstädter</h3><p class="person-role">Verifier</p></li>
+          <li class="person"><img src="team/fernando.webp" alt="Portrait of Fernando Mayo" width="240" height="240" loading="lazy" /><h3>Fernando Mayo</h3><p class="person-role">Payments</p></li>
+        </ul>
+        <p class="q-links">
+          <a href="https://github.com/helmutkurk/shelfie" rel="noopener noreferrer">Repository</a>
+          <a href="index.html">Full homepage</a>
+          <a href="technology.html#receipts">All receipts</a>
+        </p>
+        <p class="small">Prototype on Cardano preprod, test money only. Student project at the TUM Blockchain &amp; AI Hackathon 2026, not an official TUM product.</p>
+      </section>
+    </main>
+  </body>
+</html>
