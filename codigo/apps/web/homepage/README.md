@@ -6,7 +6,6 @@ Public site for Shelfie: a professional home page with the cart-room intro from 
 | File | Role |
 |---|---|
 | `index.html` | Home: cart room (four beats), problem, market, price, how, audiences, trust, receipts, technology, roadmap, developers, build log, team, FAQ, CTA |
-| `pitch.html` | Six scroll-snap screens for the live pitch (`html.pitch`), then the Q&A part. No nav, no footer, no click needed. Screen 1 is text only until a shelf photo exists |
 | `market.html`, `technology.html`, `roadmap.html`, `developers.html` | Depth pages; home sections link to their anchors ("Read more") |
 | `imprint.html`, `privacy.html`, `terms.html` | Legal pages with visible `[TO CONFIRM]` markers to fill before release to `main` |
 | `home.css` | Fork of `story/story.css` (same tokens) plus skip link, phone menu, footer grid, pills, tables, timelines, tech grid, FAQ, pitch screens. Light theme only |
@@ -15,7 +14,7 @@ Public site for Shelfie: a professional home page with the cart-room intro from 
 | `site.js` | Loaded on every page: `html.js` flag, reveal, count-up, bars, `aria-current`. Never returns early; shows everything if nothing animates |
 | `shelfie-logo.webp`, `team/*.webp` | Copies from `public/story/` so the folder is self-contained |
 
-All links inside the folder are relative, so a copy of `public/homepage/` also works from disk (offline pitch copy).
+All links inside the folder are relative, so a copy of `public/homepage/` also works from disk.
 
 ## Facts on the page
 Source of truth: `pitch/homepage-decisions.md` (numbers, wording rules, receipts rule), then `pitch/homepage-debate-accuracy.md`. Market and price figures are only those listed there; every stat caption names publisher, year and scope. Receipt hashes are copied from `codigo/docs/evidence/tx-hashes.md` (short form first 8 and last 6 characters, full hash in the link title, link to the preprod explorer); update rows there first, and replace them once a job settles with a verified real photo. Build-log milestones follow `docs/ai-log.md` and `tx-hashes.md`. No "earn" or "get paid" for checkers (test ADA, no monetary value); no "agreed price".

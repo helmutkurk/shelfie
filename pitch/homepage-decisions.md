@@ -55,3 +55,7 @@ Imprint, privacy and terms per `homepage-debate-accuracy.md` fixes (Art. 13 item
 - Fill `[TO CONFIRM]` markers (Helmut).
 - Hook photo for `pitch.html` screen 1 (Isabel's shelf photo, brands blurred): until then the screen is text only.
 - Replace receipts once a job settles with a verified real photo.
+
+## Update 2026-10-31 (Helmut)
+
+`/homepage` is the startup site after the hackathon; the live pitch uses `/story` (Lorenz and Isabel). `pitch.html` was removed; its CSS in `home.css` is dead code and can go in a later cleanup.
