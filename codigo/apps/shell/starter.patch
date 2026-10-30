@@ -80,6 +80,19 @@ index 99e2329..91b5303 100644
  export async function reply(task){
   assertTaskTarget(task,target);
   const taskId=task.id;
+diff --git a/payment-registration.mjs b/payment-registration.mjs
+index cdfecf0..c7cd31b 100644
+--- a/payment-registration.mjs
++++ b/payment-registration.mjs
+@@ -24,7 +24,7 @@ if(process.argv[2]==='key'){
+  const sources=await request('/payment-source?take=100');
+  const find=(x)=>{if(Array.isArray(x)){for(const y of x){const r=find(y);if(r)return r;}}else if(x&&typeof x==='object'){if(x.id===payment.sourceId)return x;for(const y of Object.values(x)){const r=find(y);if(r)return r;}}};
+  const source=find(sources);if(!source||wallet.walletAddress!==payment.sellerAddress)throw Error('Dedicated source or wallet mismatch');
+- const body={network:'Preprod',type:'Standard',sellingWalletVkey:wallet.walletVkey,supportedPaymentSources:[{chain:'Cardano',network:'Preprod',paymentSourceType:'Web3CardanoV2',address:source.smartContractAddress,pricing:{pricingType:'Dynamic'}}],ExampleOutputs:[],Tags:['hackathon','team-names'],name:'Hackathon Team Name Finder',description:'Suggests hackathon team names from a project topic and style.',Capability:{name:process.env.ZAI_MODEL,version:'1'},Author:{name:author},apiBaseUrl:registrationUrl(process.env.AGENT_API_PORT)};
++ const body={network:'Preprod',type:'Standard',sellingWalletVkey:wallet.walletVkey,supportedPaymentSources:[{chain:'Cardano',network:'Preprod',paymentSourceType:'Web3CardanoV2',address:source.smartContractAddress,pricing:{pricingType:'Dynamic'}}],ExampleOutputs:[],...(process.env.SHELL_TOKEN?.trim()?{Tags:['shelfie','retail','shelf-check','munich','verified-photo'],name:'Shelfie',description:'Verified shelf checks in Munich stores: a person photographs the product price tag with a one-time code, a verifier checks the photo, and you pay only when the photo is true. Pick a product and a store from the catalog.',Capability:{name:'shelfie-shelf-check',version:'1'}}:{Tags:['hackathon','team-names'],name:'Hackathon Team Name Finder',description:'Suggests hackathon team names from a project topic and style.',Capability:{name:process.env.ZAI_MODEL,version:'1'}}),Author:{name:author},apiBaseUrl:registrationUrl(process.env.AGENT_API_PORT)};
+  state.registrationWritePending=true;state.request=body;save();
+  const r=await request('/registry',body);state.registrationId=r.id;state.registrationWritePending=false;state.registration=r;save();console.log(JSON.stringify(r));
+ }else{
 diff --git a/sokosumi-runtime.mjs b/sokosumi-runtime.mjs
 index d95c7c2..7a7f83f 100644
 --- a/sokosumi-runtime.mjs
