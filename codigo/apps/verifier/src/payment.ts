@@ -12,6 +12,8 @@ import type { RequestHandler } from "express";
 
 export const X402_NETWORK = "cardano:preprod" as const; // preprod only (network guard in core env)
 export const ROUTE_KEY = "POST /v1/verify";
+/** L1 confirmations before the paid response (@x402/cardano default is 1). */
+export const SETTLE_L1_CONFIRMATIONS = 0;
 
 export interface SellerPaymentOptions {
   facilitatorUrl: string;
@@ -35,6 +37,11 @@ export function createSellerMiddleware(opts: SellerPaymentOptions): RequestHandl
             network: X402_NETWORK,
             price: { amount: opts.priceLovelace, asset: "lovelace" },
             payTo: opts.payTo,
+            // Answer once the facilitator has submitted the payment tx, without waiting for a block
+            // (default 1 confirmation took ~96 s on preprod, verified.md). Risk is on the seller only:
+            // a tx that never lands leaves W-SELL without the fee, the buyer keeps its funds. A
+            // production verifier chooses its own policy (ADR-18).
+            extra: { confirmationPolicy: { l1Confirmations: SETTLE_L1_CONFIRMATIONS } },
           },
         ],
         description: "One shelf-photo verification",

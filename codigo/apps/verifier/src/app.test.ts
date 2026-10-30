@@ -281,13 +281,21 @@ describe("x402 seller middleware (real @x402/express, fake facilitator)", () => 
     const header = res.headers.get("payment-required");
     expect(header).toBeTruthy();
     const required = JSON.parse(Buffer.from(header ?? "", "base64").toString("utf8")) as {
-      accepts: { scheme: string; network: string; amount?: string; payTo: string }[];
+      accepts: {
+        scheme: string;
+        network: string;
+        amount?: string;
+        payTo: string;
+        extra?: { confirmationPolicy?: { l1Confirmations?: number } };
+      }[];
     };
     const accept = required.accepts[0];
     expect(accept?.scheme).toBe("exact");
     expect(accept?.network).toBe("cardano:preprod");
     expect(accept?.payTo).toBe("addr_test1_PLACEHOLDER_FOR_TESTS");
     expect(JSON.stringify(accept)).toContain("1000000");
+    // paid answer without waiting for a block (default 1 confirmation took ~96 s on preprod)
+    expect(accept?.extra?.confirmationPolicy).toEqual({ l1Confirmations: 0 });
     expect(vision.callCount).toBe(0);
     expect((await fetch(`${url}/health`)).status).toBe(200);
   });
