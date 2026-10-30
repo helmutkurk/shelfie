@@ -1,3 +1,19 @@
+diff --git a/client.mjs b/client.mjs
+index 3a74bb4..98fd6e4 100644
+--- a/client.mjs
++++ b/client.mjs
+@@ -1,7 +1,10 @@
+ import { Client } from 'eve/client';
+ import { writeFileSync } from 'node:fs';
++import { createBridge, createStarterAnswer, loadBridgeConfig } from '../bridge/index.js';
+ export const client=new Client({host:process.env.EVE_URL});
+-export async function answer(input,journal,deadline) {
++// Shelfie: with SHELL_TOKEN set, the Shelfie engine decides through the bridge instead of the model.
++export const answer=process.env.SHELL_TOKEN?.trim()?createStarterAnswer(createBridge(loadBridgeConfig())):modelAnswer;
++async function modelAnswer(input,journal,deadline) {
+  if(typeof input!=='string'||!input.trim()||input.length>16000) throw new Error('Input must contain 1 to 16000 characters');
+  const {session}=await client.sessions.create();
+  writeFileSync(journal,JSON.stringify({sessionId:session.state.sessionId,phase:'sending'}),{mode:0o600});
 diff --git a/sokosumi-runtime.mjs b/sokosumi-runtime.mjs
 index d95c7c2..7a7f83f 100644
 --- a/sokosumi-runtime.mjs
