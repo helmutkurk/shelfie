@@ -17,7 +17,7 @@ The boilerplate is implemented with fakes, regression tests and a browser build.
 
 ## How to run
 
-Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists. The deployment runs on fakes (FAKE_PAYMENTS=1, stub verifier): never use it as evidence. Details: [deploy.md](../docs/deploy.md).
+Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists. Decision (Helmut, 2026-10-30 evening): the shared deployments must not run fakes; they use the real switches below (real Gemini vision, real preprod payments) so the team finds bugs and UI improvements. Fakes stay only for local development and CI (`npm run check`, local `npm run smoke`). Until the hub env carries the payment secrets (A-21, B-14) the deployment may still show `fakes.payments:true`; then it is not evidence. Details: [deploy.md](../docs/deploy.md).
 
 Use Node 24 and npm. The checked local version is 24.22.2; the repo's `.node-version` selects major 24. Keep global Node unchanged if needed:
 
@@ -71,6 +71,8 @@ The eval calls the same `evaluate` function in-process, without HTTP. Stub/synth
 
 ### Fake and real switches
 
+Local development and CI use the Rehearsal column. Shared deployments (dev.shelfieapp.fyi / api-dev, later app / api) use the Real column: `FAKE_PAYMENTS=0`, `VERIFIER_PAYMENT=on`, `VERIFY_CLIENT=real`, `VERIFIER_MODE=live`, `VISION_*` (primary `gemini-3.5-flash-lite` plus a Gemini backup), wallet mnemonics, `BLOCKFROST_PROJECT_ID`, `SELLER_ADDRESS`, `FACILITATOR_URL` and `VERIFY_RUN_CAP_LOVELACE=200000000`. Values only in Helmut's `~/.config/shelfie/dev.env`, never in git or chat. Status: Gemini key being set; payment secrets still to hand over by Isabel (A-21).
+
 | Name | Rehearsal | Real/evidence requirement |
 |---|---|---|
 | `NETWORK` | `preprod` | `preprod` only |
@@ -81,6 +83,7 @@ The eval calls the same `evaluate` function in-process, without HTTP. Stub/synth
 | `VERIFIER_MODE` | `stub` | `live`, evaluated provider/model |
 | `ENABLE_DRY` | implied true by payment off unless explicitly disabled | false |
 | `SELLER_ADDRESS` | unnecessary for fake client | required payee pin for real paid verification |
+| `VERIFY_RUN_CAP_LOVELACE` | default 50000000 | `200000000` on shared deployments (each receipt counts 2 tADA) |
 | `PAYOUT_DAILY_CAP_LOVELACE` | default 50000000 | set the agreed budget; per-payout hard cap remains 5000000 |
 | `VISION_RUN_CAP` | optional positive integer | set a finite agreed call budget |
 | `ALLOW_TEST_UPLOAD`, `ALLOW_DEMO_OVERRIDE` | false by default | false |
@@ -92,7 +95,7 @@ Mnemonics and keys are server-only. Web imports `@shelfie/core/browser` and `@sh
 
 ## Verify Friday status
 
-No on-chain milestone was completed by this pass. Record externally confirmed answers with source/time in [docs/verified.md](docs/verified.md); retain transaction evidence in [docs/evidence](docs/evidence/README.md).
+This pass completed no on-chain milestone itself; Fernando and Isabel have since logged real preprod transactions for M1, M2, M4 and M5 in [docs/evidence/tx-hashes.md](docs/evidence/tx-hashes.md). Missing: a full real cycle through the deployed engine with a store photo (B-14, T-27). Timers (worker execution window, job window, claim TTL, gesture window) are being lengthened by Lorenz (C-17): the values in contracts section 5 and the runbook must be re-read from code after his PR. Record externally confirmed answers with source/time in [docs/verified.md](docs/verified.md); retain transaction evidence in [docs/evidence](docs/evidence/README.md).
 
 | Owner | Item | Current state / next verification |
 |---|---|---|

@@ -4,6 +4,10 @@ Owner: D (Helmut), written 2026-10-30 from the code at `dev` 05c41d1 plus the ge
 
 Stores: REWE `rewe-81671-august-everding-strasse-20` (dropdown label "REWE, Hanne-Hiob-Straße 10"), stage `demo-hoc-friedenstrasse-24`. Defaults used below: geofence 150 m, claim TTL 300 s, answer window 90 s after the hand sign is shown, 3 attempts per task, 3 location tries per claim, job window 900 s, payout 3 tADA, verify fee 1 tADA.
 
+**Timers are changing (owner C, Lorenz, task C-17).** Lorenz is lengthening the worker's time to execute a task and related timers (job window, claim TTL, gesture/answer window). Every timer number in this runbook (90 s gesture window, 300 s claim TTL, about 480 s claimable, 900 s window, 120 s verify budget) is the old default from `dev` 05c41d1. After his PR, re-read the values from code (`pack.ts` `maxSecondsAfterReveal`, claim TTL and window constants in the engine, `RequestForm.tsx` `windowSec`) and update this file before the test. Do not trust the numbers below until then.
+
+**Real mode is the default on the shared deployments (Helmut, 2026-10-30 evening).** api-dev runs real Gemini vision and real preprod payments so the team finds bugs and UI improvements; fakes remain only for local development and CI. The payment secrets are not yet in the hub env (A-21, A-22, B-14); the pre-flight checks below assume they are.
+
 ## 0. Read this first (the five things most likely to hurt)
 
 1. Use `https://api-dev.shelfieapp.fyi/w` on the phones, not `dev.shelfieapp.fyi`. Behind the Vercel rewrite the engine sees one client IP (Vercel's) for every phone: rate limits are per IP (claim 6/min, submit 6/min, other worker calls 90/min, 10 SSE streams) and would be shared by the whole team (unverified; `app.ts` `trust proxy "loopback"`). SSE through Vercel is also unmeasured (D-32). The api host serves the same web build, same origin, real client IPs.
@@ -56,6 +60,26 @@ Per verified submission (pass or fail): 1 tADA to W-SELL plus about 0.17 tADA fe
 | Stress | 40 | 16 | 46.8 tADA | 50.7 tADA | payout daily cap 50 tADA = 16 payouts: queue pauses on the 17th |
 
 Balances on 2026-10-30 (`verified.md`): W-PAY about 10,000 tADA, W-VBUY about 9,600 tADA, so funds are not the limit. The limits are the daily payout cap (UTC day), the x402 run cap (item 2 above), `VISION_RUN_CAP=200` (resets when the verifier restarts) and the Gemini quota.
+
+## 1b. Before leaving for the store
+
+Tick every line before anyone leaves. People: Isabel owns env and payments, Fernando wallets and tx logging, Lorenz verifier and timers, Helmut hub laptop, dashboard and recording.
+
+| # | Item | Who | Done when |
+|---|---|---|---|
+| 1 | Real switches verified by Helmut in `~/.config/shelfie/dev.env`: `FAKE_PAYMENTS=0`, `VERIFIER_PAYMENT=on`, `VERIFY_CLIENT=real`, `VERIFIER_MODE=live`, `VERIFY_RUN_CAP_LOVELACE=200000000` (values never printed or pasted) | Helmut; secrets from Isabel (A-21) | `curl -s https://api-dev.shelfieapp.fyi/api/health \| jq` shows `fakes.payments:false`, `fakes.verifier:false` |
+| 2 | Wallets funded: W-PAY (payouts) and W-VBUY (verifier fees) at least 100 tADA each, more than the "Wallet amounts" table needs | Isabel (A-22) and Fernando | `fund-check.ts` output pasted into `codigo/docs/verified.md` |
+| 3 | Gemini primary `gemini-3.5-flash-lite` and the Gemini backup each tested once with a known photo (see item 8 and 9 of the T-30 table) | Lorenz with Helmut | one verdict from each, `visionConfigured:true` |
+| 4 | Timers re-read from code after Lorenz's PR (C-17) and this runbook's numbers updated | Lorenz | no old 90/300/480/900 value left in this file unless it still matches code |
+| 5 | Auto-update timer paused: `systemctl --user stop shelfie-update@dev.timer`; team told not to push to `dev` | Helmut | timer inactive |
+| 6 | Phones use `https://api-dev.shelfieapp.fyi/w`, not `dev.shelfieapp.fyi` (rate limits are per IP behind Vercel, D-32 unmeasured) | all testers | URL checked on each phone |
+| 7 | Camera and location granted on each phone (T-5 table), one distinct payout address per phone ready to paste (`addr_test1...`) | each tester | location line reads "Location ok" |
+| 8 | Operator token loaded on the dashboard device (laptop tab stays open; a reload loses it) | Helmut | dashboard shows jobs and ledger |
+| 9 | Jobs created just before use (or with a long `windowSec`, section 3) | Helmut | tasks visible in the feed |
+| 10 | Tx logging ready: every tx hash from the test goes into `codigo/docs/evidence/tx-hashes.md` with an explorer screenshot; `evidence-preflight.ts` run | Fernando | script output clean |
+| 11 | Recording: hub laptop on power, OBS tested, dashboard visible | Helmut | test clip exists |
+
+Funds: the client side (the brand) needs no funds for the direct dashboard path. Money moves only from W-PAY (payouts to workers) and W-VBUY (x402 verifier fees). The Sokosumi path needs test USDM or credits in the buyer account (a paid Task cost 100 credits, 16 were left on 2026-10-30, `ai-log.md`): verify the balance before relying on that path. This is not checked yet.
 
 ## 2. Failure catalogue
 
