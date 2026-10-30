@@ -28,6 +28,10 @@ import type { PayoutStore } from "./payout-store.js";
 //     after the settling delay -> QUEUED (the ONLY route back, with proof); otherwise it stays
 //     UNKNOWN and nothing is ever resent.
 //  5. Insufficient funds (or a cap) pauses the queue; payouts stay QUEUED, never dropped.
+//  6. pollConfirmations also re-reconciles UNKNOWN payouts once the settling delay is over (at most
+//     every reconcileIntervalSec each), and raises PAYOUT_STALE once for a SUBMITTED payout still
+//     unconfirmed after staleAfterSec. A stale payout is never resent automatically: the tx can
+//     still land until its validity interval ends (verify Friday: SDK default TTL).
 
 export interface PayoutQueueDeps {
   adapter: PayoutAdapter;
@@ -47,6 +51,10 @@ export interface PayoutQueueDeps {
   settleDelaySec?: number;
   /** Balance must cover amount plus this reserve for fees. Default 500_000. */
   feeReserveLovelace?: string;
+  /** Minimum gap between automatic reconciles of one UNKNOWN payout. Default 30 s. */
+  reconcileIntervalSec?: number;
+  /** SUBMITTED and still unconfirmed after this long -> PAYOUT_STALE alert. Default 600 s. */
+  staleAfterSec?: number;
   /** Observer for the evidence ledger (PAYOUT_QUEUED, PAYOUT_SUBMITTED, ...). */
   onEvent?: (event: PayoutEvent) => void;
 }
@@ -59,6 +67,7 @@ export type PayoutEvent =
   | { kind: "PAYOUT_UNKNOWN"; payout: Payout }
   | { kind: "PAYOUT_RECONCILED"; payout: Payout; result: "found" | "absent" }
   | { kind: "PAYOUT_FAILED_FINAL"; payout: Payout }
+  | { kind: "PAYOUT_STALE"; payout: Payout }
   | { kind: "QUEUE_PAUSED"; reason: string };
 
 export interface QueueStatus {
@@ -79,6 +88,10 @@ export class DefaultPayoutQueue implements PayoutQueue {
   private readonly maxAttempts: number;
   private readonly settleDelayMs: number;
   private readonly feeReserve: bigint;
+  private readonly reconcileIntervalMs: number;
+  private readonly staleAfterMs: number;
+  private readonly lastAutoReconcile = new Map<string, number>();
+  private readonly staleAlerted = new Set<string>();
   private chain: Promise<void> = Promise.resolve();
   private createLock: Promise<unknown> = Promise.resolve();
   private pending = 0;
@@ -94,6 +107,8 @@ export class DefaultPayoutQueue implements PayoutQueue {
     this.maxAttempts = deps.maxAttempts ?? 3;
     this.settleDelayMs = (deps.settleDelaySec ?? 120) * 1000;
     this.feeReserve = BigInt(LovelaceSchema.parse(deps.feeReserveLovelace ?? FEE_RESERVE));
+    this.reconcileIntervalMs = (deps.reconcileIntervalSec ?? 30) * 1000;
+    this.staleAfterMs = (deps.staleAfterSec ?? 600) * 1000;
   }
 
   // ---------------------------------------------------------------- public port
@@ -182,9 +197,22 @@ export class DefaultPayoutQueue implements PayoutQueue {
     });
   }
 
-  /** Poll confirmations of SUBMITTED payouts. */
+  /**
+   * Poll confirmations of SUBMITTED payouts, alert on stale ones, and re-reconcile UNKNOWN
+   * payouts whose settling delay is over (otherwise only a restart or an operator would).
+   */
   pollConfirmations(): Promise<void> {
     return this.serial(async () => {
+      const now = this.deps.clock.nowMs();
+      for (const p of await this.deps.store.list(["UNKNOWN"])) {
+        const since = Date.parse(p.sendingSince ?? new Date(0).toISOString());
+        if (now - since < this.settleDelayMs) continue; // not provable yet; skip the lookup
+        const last = this.lastAutoReconcile.get(p.id);
+        if (last !== undefined && now - last < this.reconcileIntervalMs) continue;
+        this.lastAutoReconcile.set(p.id, now);
+        const next = await this.reconcileOne(p, { skipDelay: false });
+        if (next.state !== "UNKNOWN") this.lastAutoReconcile.delete(p.id);
+      }
       for (const p of await this.deps.store.list(["SUBMITTED"])) {
         if (!p.txHash) continue;
         let confirmations: number;
@@ -193,7 +221,9 @@ export class DefaultPayoutQueue implements PayoutQueue {
         } catch {
           continue; // try again on the next poll
         }
+        if (confirmations === 0) this.alertIfStale(p, now);
         if (confirmations >= 1) {
+          this.staleAlerted.delete(p.id);
           const next = { ...p, state: transition("payout", p.state, "confirmed") };
           await this.deps.store.update(next);
           this.emit({ kind: "PAYOUT_CONFIRMED", payout: next });
@@ -399,6 +429,19 @@ export class DefaultPayoutQueue implements PayoutQueue {
       });
       this.pause("persist_failed");
     }
+  }
+
+  /** Once per payout: SUBMITTED but not on chain after staleAfterSec. Alert only, no resend. */
+  private alertIfStale(p: Payout, now: number): void {
+    if (this.staleAlerted.has(p.id) || !p.sendingSince) return;
+    if (now - Date.parse(p.sendingSince) < this.staleAfterMs) return;
+    this.staleAlerted.add(p.id);
+    this.deps.logger.error("payout submitted but not confirmed; check the explorer", {
+      payoutId: p.id,
+      taskId: p.taskId,
+      txHash: p.txHash,
+    });
+    this.emit({ kind: "PAYOUT_STALE", payout: p });
   }
 
   private async toUnknown(p: Payout, reason: string): Promise<Payout> {

@@ -1,6 +1,7 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { FakeClock } from "@shelfie/core";
 import { LabelsFileSchema, computeMetrics, execute, loadLabels } from "./index.js";
@@ -9,7 +10,7 @@ const tmp = (): string => mkdtempSync(join(tmpdir(), "shelfie-eval-"));
 
 describe("labels", () => {
   it("the committed labels.json is valid and has placeholder entries only", () => {
-    const f = loadLabels(new URL("../labels.json", import.meta.url).pathname);
+    const f = loadLabels(fileURLToPath(new URL("../labels.json", import.meta.url)));
     expect(f.labels.length).toBeGreaterThanOrEqual(2);
     expect(f.labels.length).toBeLessThanOrEqual(3);
     expect(f.labels.every((l) => l.file.startsWith("placeholder-"))).toBe(true);

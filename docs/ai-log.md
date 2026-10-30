@@ -123,3 +123,11 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Failed: `shelfie.pdf` not rebuilt (no LaTeX engine on this machine).
 - TODO: rebuild the slides with `latexmk -xelatex shelfie.tex` in `pitch/slides/` (D). The "10 stores: EUR 120" comparison describes the customer's need; check that it fits the single-store MVP wording (ADR-16) (D). Lead time, unusable-data share and the 5% Masumi fee are still unsourced.
 - Handoff: PR to `main` needs Helmut's review (pitch/ and README are D's; diseno/ is a purpose file, `Purpose-impact: ADR-18`).
+
+## 2026-10-30 (Europe/Berlin) - Claude Opus 5.5 for Fernando (B) - payout auto-reconcile, stale alert, path fix
+- Done: branch `fix/b-payout-reconcile`. `pollConfirmations()` in `packages/payments` now re-reconciles `UNKNOWN` payouts once the settling delay is over (throttled to every 30 s per payout); before, an `UNKNOWN` payout (e.g. a Blockfrost timeout during submit) waited for a restart or an operator. New `PAYOUT_STALE` event, once, for a `SUBMITTED` payout unconfirmed after 600 s; alert only (the engine records it as an operator-alert ADMIN_ACTION). Fixed `new URL(...).pathname` -> `fileURLToPath(...)` in `scripts/smoke.ts`, `apps/engine/src/catalog.ts`, `apps/engine/src/main.ts`, `eval/src/eval.test.ts`: paths with spaces broke smoke and one eval test.
+- Worked: Node 24.22.2 on Fernando's laptop (no sandbox): `npm run check` exit 0, 359/359 tests; `npm run hub-up -- --fake` + `npm run smoke` -> SMOKE OK (23 checks), clean stop, no listeners left on 4000/4021/5173. Fake mode only; no paid request or on-chain tx.
+- Decided: a stale `SUBMITTED` payout is not resent automatically: the tx can still land until its validity interval ends, and the SDK default TTL is unverified.
+- TODO (B, verify Friday): Evolution SDK default TTL; then decide whether stale payouts may move to `UNKNOWN` (needs a core state change, A). Persist `X402VerifyClient` receipts and uncertain keys (lost on engine restart). `find()` matches the tag as a substring; use an exact match.
+- TODO (A, C): review the one-line path fixes in your files (engine catalog/main; eval test).
+- Handoff: PR to `main`; pair review by Isabel (A) first. D-28 smoke evidence: passes on Fernando's laptop in fake mode.
