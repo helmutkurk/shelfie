@@ -9,10 +9,10 @@ import { BridgeError } from "./errors.js";
 // Anything that does not resolve to exactly one store and one product is rejected (no guessing).
 
 /**
- * @typedef {{ id: string, name: string, chain?: string, address?: string }} CatalogStore
+ * @typedef {{ id: string, name: string, chain?: string, address?: string, aliases?: string[] }} CatalogStore
  * @typedef {{ ean: string, name: string }} CatalogProduct
  * @typedef {{ cities: { id: string, name: string, stores: CatalogStore[], products: CatalogProduct[] }[] }} Catalog
- * @typedef {{ id: string, label: string }} Choice
+ * @typedef {{ id: string, label: string, aliases?: string[] }} Choice
  */
 
 const REJECT = "The request must name one product and one store from the Shelfie catalog.";
@@ -47,7 +47,7 @@ export function catalogChoices(catalog) {
   if (!city) throw new BridgeError("dependency_unavailable", "The Shelfie catalog is empty.", { status: 503 });
   const stores = [...city.stores]
     .sort((a, b) => a.id.localeCompare(b.id))
-    .map((s) => ({ id: s.id, label: s.address ? `${s.name}, ${s.address}` : s.name }));
+    .map((s) => ({ id: s.id, label: s.address ? `${s.name}, ${s.address}` : s.name, aliases: s.aliases ?? [] }));
   const products = [...city.products]
     .sort((a, b) => a.ean.localeCompare(b.ean))
     .map((p) => ({ id: p.ean, label: `${p.name} (EAN ${p.ean})` }));
@@ -105,7 +105,7 @@ function bestMatch(text, choices, strong = () => []) {
     if (flat.includes(` ${normalize(c.id)} `)) return c.id;
     const strongTokens = new Set(strong(c).flatMap(tokens));
     let score = 0;
-    for (const t of new Set(tokens(c.label))) if (words.has(t)) score += strongTokens.has(t) ? 2 : 1;
+    for (const t of new Set(tokens([c.label, ...(c.aliases ?? [])].join(" ")))) if (words.has(t)) score += strongTokens.has(t) ? 2 : 1;
     if (score > bestScore) {
       best = c.id;
       bestScore = score;

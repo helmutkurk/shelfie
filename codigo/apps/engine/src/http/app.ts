@@ -117,6 +117,7 @@ export function createApp(opts: AppOptions): express.Express {
         route,
         status: res.statusCode,
         ms: clock.nowMs() - started,
+        ...(typeof res.locals["errorCode"] === "string" ? { errorCode: res.locals["errorCode"] } : {}),
       });
     });
     next();
@@ -366,6 +367,7 @@ export function createApp(opts: AppOptions): express.Express {
         name: err instanceof Error ? err.name : "unknown",
       });
     }
+    res.locals["errorCode"] = app_.code;
     res.status(app_.status).json(app_.toBody());
   });
 

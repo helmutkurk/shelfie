@@ -1,6 +1,6 @@
 # Deploy: auto-rebuild and public test access
 
-Goal (Helmut, 2026-10-30): every push or merge rebuilds automatically and anyone can open the app for testing. Domain: `shelfieapp.fyi` (Student Pack .me). Test deployments run on fakes (`FAKE_PAYMENTS=1`, red banner) until the real switches are authorised; never present them as evidence.
+Goal (Helmut, 2026-10-30): every push or merge rebuilds automatically and anyone can open the app for testing. Domain: `shelfieapp.fyi` (bought on Cloudflare Registrar, 5.20 USD/yr; the Student Pack .me was not available for EU students). Status 2026-10-30 17:00: tunnel `shelfie`, hub services and Vercel project `shelfie` are live. Test deployments run on fakes (`FAKE_PAYMENTS=1`, red banner) until the real switches are authorised; never present them as evidence.
 
 ## Architecture
 
@@ -34,8 +34,8 @@ Consequences and caveats:
 
 ## One-time setup (Helmut)
 
-1. **Domain**: Namecheap via GitHub Student Pack: claim `shelfieapp.fyi`.
-2. **Cloudflare** (free plan): add the site, then in Namecheap set the two Cloudflare nameservers shown. Wait until the site shows Active.
+1. **Domain**: bought `shelfieapp.fyi` on Cloudflare Registrar (done 2026-10-30; it lives in Cloudflare, no nameserver change needed).
+2. **Cloudflare** (free plan): the zone is created automatically with the Registrar purchase; check it shows Active.
 3. **Tunnel** (on the hub laptop, cloudflared installed):
    ```bash
    cloudflared tunnel login

@@ -1519,7 +1519,13 @@ export class Engine {
     for (const s of this.d.catalog.stores) {
       const id = cityIdFromName(s.city);
       const c = byCity.get(id) ?? { id, name: s.city, stores: [] };
-      c.stores.push({ id: s.id, name: s.name, chain: s.chain, address: s.address });
+      c.stores.push({
+        id: s.id,
+        name: s.name,
+        chain: s.chain,
+        address: s.address,
+        ...(s.aliases?.length ? { aliases: s.aliases } : {}),
+      });
       byCity.set(id, c);
     }
     const products = this.d.catalog.products.map((p) => ({ ean: p.ean, name: p.name }));

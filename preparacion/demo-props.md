@@ -30,7 +30,7 @@ Design spec:
 
 ## Stores near House of Communication (Friedenstrasse 24, 81671 Munich) for b-roll
 Lookups were incomplete (search results did not give distances). **Unverified candidates, check on a map Thursday evening or Saturday morning:**
-1. REWE, Hanne-Hiob-Str. 10, 81671 Munich (listed by REWE's market finder).
+1. REWE, Hanne-Hiob-Str. 10, 81671 Munich (listed by REWE's market finder). This is the catalog's REWE (id `rewe-81671-august-everding-strasse-20`, shown as "REWE, Hanne-Hiob-Straße 10, 81671 München"; OSM puts the same store at August-Everding-Straße 20, about 20 m away, kept as alias).
 2. Nahkauf, Melusinenstr. 2, 81671 Munich (small format, listed by REWE).
 3. An Edeka near Hermine-von-Parish-Str. 11 (postal code not confirmed) and a Rossmann in Berg am Laim (Neumarkter Str. 64, 81673) are further candidates; the Ostbahnhof area also has other supermarkets.
 Sources: https://www.rewe.de/marktsuche/ and the store finders of Edeka and Rossmann.
@@ -55,3 +55,8 @@ Rules for b-roll:
 - [ ] 3 stores confirmed on a map and permission asked. [ ] Phones, hotspot, power banks charged Friday night.
 - [ ] Out-of-stock prop ready (shelf, two printed shelf labels, target product removable). [ ] Cheat material: old printed photo of the tag (or on the laptop screen); there is no gallery path in the app.
 - [ ] Backup laptop + recording copied Saturday 14:30.
+
+
+## Stage case: demo store (added 2026-10-30)
+The catalog has a demo-only store `demo-hoc-friedenstrasse-24` ("Shelfie demo shelf, House of Communication, Friedenstraße 24, 81671 München", chain DEMO, geofence 150 m, coordinates from OpenStreetMap, see `investigacion/catalogo/README.md`). It appears in the dashboard dropdown and passes intake like any store. It is NOT a real supermarket check; never present its results as one.
+Props for the stage case: real catalog products (each with its EAN) on a table shelf at the venue, a printed price tag per product with a price inside that product's `priceMinEur`-`priceMaxEur` range in `products.json`, and the challenge prop for the current challenge mode (gesture, ADR-19; a printed card only in `card-pool` mode). The worker must be within 150 m of the venue to pass the location check.

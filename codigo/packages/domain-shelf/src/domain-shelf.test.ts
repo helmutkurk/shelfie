@@ -148,9 +148,18 @@ describe("codes and similarity", () => {
 });
 
 describe("catalog", () => {
+  it("loads the demo-only stage store and the REWE under its finder address", () => {
+    const c = loadCatalog();
+    const demo = c.stores.find((s) => s.id === "demo-hoc-friedenstrasse-24");
+    expect(demo).toMatchObject({ chain: "DEMO", demo: true, geofenceRadiusM: 150 });
+    const rewe = c.stores.find((s) => s.id === "rewe-81671-august-everding-strasse-20");
+    expect(rewe?.address).toBe("Hanne-Hiob-Straße 10, 81671 München");
+    expect(rewe?.aliases).toContain("August-Everding-Straße 20");
+  });
+
   it("loads the research catalog and reports every mismatch with the core schema", () => {
     const c = loadCatalog();
-    expect(c.stores.length).toBe(24);
+    expect(c.stores.length).toBe(25);
     expect(c.stores.every((s) => s.city === "Munich")).toBe(true);
     // 39 records: 23+3 have ean null (dropped), 13 keep their EAN
     expect(c.products.length).toBe(13);

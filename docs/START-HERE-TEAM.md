@@ -15,6 +15,8 @@ Work on `dev` and push to it directly after `git pull --rebase origin dev` and `
 
 Public test URLs and automatic rebuild on every push: [deploy.md](deploy.md) (Vercel + tunnel + pull-based deploy; Helmut operates the hub side).
 
+Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists. The deployment runs on fakes (FAKE_PAYMENTS=1, stub verifier): never use it as evidence. Details: [deploy.md](deploy.md).
+
 Start **every coding-agent session** from [investigacion/cardano/official-agent-prompt.md](../investigacion/cardano/official-agent-prompt.md). Before creating paid/on-chain resources, stop for the role owner's written authorisation: Payment Service databases, seeded wallets, registration and funding are included. On resume, inspect the saved resource/state inventory and reuse existing Vendor, Coworker and wallets. Never blindly retry an uncertain pending write. Personal Workspace first for M3/M4 tests; use the official prompt's TUM Workspace instructions for the demo.
 
 ## A: Isabel (pair: Fernando)

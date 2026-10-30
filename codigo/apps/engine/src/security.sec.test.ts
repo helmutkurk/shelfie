@@ -191,6 +191,15 @@ describe("hardening (E7, E8, E9)", () => {
     expect(rig.logs.join("\n")).not.toContain("sentinel-secret");
   });
 
+  it("access log carries the AppError code on 4xx, never on 2xx", async () => {
+    rig = await makeRig();
+    expect((await rig.call("POST", "/api/jobs", {})).status).toBe(401);
+    expect((await rig.call("GET", "/api/health")).status).toBe(200);
+    const http = rig.logs.filter((l) => l.includes('"http"') || l.includes("http"));
+    expect(http.some((l) => /"status":401/.test(l) && /"errorCode":"[a-z_]+"/.test(l))).toBe(true);
+    expect(http.some((l) => /"status":200/.test(l) && l.includes("errorCode"))).toBe(false);
+  });
+
   it("rate limiting returns 429 with Retry-After", async () => {
     rig = await makeRig({ app: { limits: { worker: 5, claim: 2, submit: 2 } } });
     const statuses: number[] = [];
