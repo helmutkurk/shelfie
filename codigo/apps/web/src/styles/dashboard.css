@@ -54,11 +54,6 @@
   background: var(--text);
   color: var(--bg);
 }
-/* Light: the forest sidebar (text colour is the forest). Dark: --text is cream, so use the forest surface. */
-[data-theme="dark"] .dside {
-  background: var(--surface);
-  color: var(--text);
-}
 .dside .logo img {
   height: 2.5em;
 }
@@ -150,11 +145,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5em 0.75em;
-}
-.dhead-end {
-  display: flex;
-  align-items: center;
-  min-width: 0;
 }
 .dhead .segmented {
   margin: 0;

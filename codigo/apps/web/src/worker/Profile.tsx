@@ -1,6 +1,6 @@
 import type { Profile as ProfileData } from "../lib/storage.js";
 import { S } from "../lib/messages.js";
-import { Button, Group, Row, ThemeSelect } from "../ui/index.js";
+import { Button, Group, Row } from "../ui/index.js";
 import { AddressCopy } from "./AddressCopy.js";
 
 /** Up to two initials from the local name, for the avatar fallback. No photos. */
@@ -10,7 +10,7 @@ export function initialsOf(name: string): string {
   return parts.map((p) => p.charAt(0).toUpperCase()).join("");
 }
 
-/** Profile tab: local name, payout address, privacy status, edit and theme. */
+/** Profile tab: local name, payout address, privacy status and edit. */
 export function Profile(props: {
   profile: ProfileData | null;
   consented: boolean;
@@ -49,12 +49,6 @@ export function Profile(props: {
           Edit name and payout address
         </Button>
       </div>
-
-      <Group label="Appearance" footer="Light, dark, or follow the system setting.">
-        <div className="group-pad">
-          <ThemeSelect />
-        </div>
-      </Group>
     </section>
   );
 }

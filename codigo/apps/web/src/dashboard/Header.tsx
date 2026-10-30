@@ -1,8 +1,6 @@
 import type { HealthResponse } from "@shelfie/core/browser";
 import type { StreamStatus } from "../lib/sse.js";
-import { ThemeSelect } from "../ui/index.js";
-
-/** Top strip: engine status and network on the left, theme on the right. Banners sit below it. */
+/** Top strip: engine status and network. Banners sit below it. */
 export function Header(props: {
   health: HealthResponse | undefined;
   healthError: unknown;
@@ -34,9 +32,6 @@ export function Header(props: {
           {props.stream === "reconnecting" ? " · ledger reconnecting" : ""}
         </span>
         <span className="dnet">Cardano preprod</span>
-      </div>
-      <div className="dhead-end">
-        <ThemeSelect />
       </div>
     </header>
   );

@@ -1,7 +1,8 @@
 /* Design tokens from diseno/ui-design.md section 2 and docs/design-implementation-2026-10-30
    (approved board: forest #0B2E1F, green #2E7D32, light green #6BAF5B, sage #CFE7C1, cream
-   #F5EFE3). Components never use literal colours. Light is :root; dark is [data-theme="dark"],
-   set by src/ui/theme.ts (light, dark or system). Contrast ratios are listed in ui-design.md. */
+   #F5EFE3). Components never use literal colours. The app has one theme: light, on :root
+   (decision 2026-10-30, no dark mode, no theme selector). Contrast ratios are listed in
+   ui-design.md. */
 :root {
   color-scheme: light;
   --bg: #f5efe3;
@@ -52,37 +53,7 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Dark: a deep forest page, slightly lighter forest surfaces, cream text, light-green accent.
-   The accent button keeps the forest green fill so white labels stay at 4.5:1 or better. */
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #0b2e1f;
-  --surface: #143d2a;
-  --surface-2: #1a4a34;
-  --text: #f5efe3;
-  --text-2: #b9c6b6;
-  --separator: #2a5140;
-  --accent: #86c77a;
-  --accent-fill: #2e7d32;
-  --success-text: #9adba4;
-  --success-bg: #1a4a2e;
-  --warning-text: #f5c96b;
-  --warning-bg: #3d2e0a;
-  --error-text: #ffa39d;
-  --error-bg: #4a1f1c;
-  --shadow-float: none;
-  --shadow-card: none;
-  --shadow-frame: 0 0 0 1px #1f4d37;
-  --accent-soft: #24513a;
-  --accent-soft-text: #cfe7c1;
-  --frame-bg: #071d14;
-  --card-line: rgba(245, 239, 227, 0.08);
-  --skeleton-a: #1a4a34;
-  --skeleton-b: #22573f;
-  --scrim: rgba(0, 0, 0, 0.5);
-}
-
-/* Logo on a cream tile so the approved artwork reads the same in light and dark. */
+/* Logo on a cream tile so the approved artwork sits cleanly on the light page. */
 .logo {
   display: inline-flex;
   align-items: center;

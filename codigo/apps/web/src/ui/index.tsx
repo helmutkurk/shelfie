@@ -2,8 +2,6 @@ import { createContext, useContext, useEffect, useId, useRef, useState } from "r
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { useDeps } from "../deps.js";
 import { DEFAULT_EXPLORER_TX_BASE, formatCountdown, shortHash, txLink } from "../lib/format.js";
-import { applyTheme, loadThemePref, saveThemePref } from "./theme.js";
-import type { ThemePref } from "./theme.js";
 
 // The small shared component set from ui-design.md section 3. Semantic element first.
 
@@ -428,35 +426,12 @@ export function Skeleton(props: { lines?: number }) {
   );
 }
 
-/** Approved Shelfie logo (public/shelfie-logo.png) on a cream tile, so it reads on dark too. */
+/** Approved Shelfie logo (public/shelfie-logo.png) on a cream tile, on the light page. */
 export function Logo(props: { size?: "sm" | "md" }) {
   const size = props.size ?? "sm";
   return (
     <span className={`logo logo-${size}`}>
       <img src="/shelfie-logo.png" alt="Shelfie" width={256} height={288} decoding="async" />
     </span>
-  );
-}
-
-const THEME_OPTIONS: readonly { value: ThemePref; label: string }[] = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "system", label: "System" },
-];
-
-/** Light / Dark / System. Saves the choice (theme only) and applies it at once. */
-export function ThemeSelect() {
-  const [pref, setPref] = useState<ThemePref>(() => loadThemePref());
-  return (
-    <Segmented
-      label="Theme"
-      value={pref}
-      options={THEME_OPTIONS}
-      onChange={(next) => {
-        saveThemePref(next);
-        applyTheme(next);
-        setPref(next);
-      }}
-    />
   );
 }
