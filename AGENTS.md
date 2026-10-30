@@ -43,7 +43,7 @@ If code and design disagree, one of them is wrong: fix it in the same PR. Never 
 3. The `diseno/` file for your area (see `diseno/README.md` "Who reads what first").
 4. `diseno/repo-layout.md` sections 2-5 for ownership, conventions, tests and milestone acceptance.
 5. `bash scripts/task.sh next <role>` (your open tasks; SessionStart and the context card print them), then `equipo/README.md`, `equipo/components.md` and your pair's file in `equipo/` (what others are doing and which bots/scripts already exist; reuse before building).
-6. The relevant rule file in `.claude/rules/` (Codex: read it by hand; they are plain Markdown).
+6. The relevant rule file in `.claude/rules/` and your role's skills ([docs/playbook/skills.md](docs/playbook/skills.md); Codex: read the SKILL.md by hand).
 
 ## Ownership (roles A-D)
 Each folder has one owner who merges changes to it; others open a PR or ask. Full table: `diseno/repo-layout.md` section 2.

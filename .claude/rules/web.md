@@ -5,7 +5,7 @@ paths:
 # Web app (worker page and dashboard)
 
 - Two surfaces: `/w` (worker app, **mobile first**, one hand, bad light, one task at a time) and `/dashboard` (stage layout for the live demo, readable from the back of a room). A customer view is a section of the dashboard, not a separate app.
-- Worker page works on iOS Safari and Android Chrome. Camera needs a secure context; keep the file-input fallback.
+- Worker page works on iOS Safari and Android Chrome. Camera needs a secure context; without it, keep the worker app read-only (no file picker or submission).
 - Show PASS or FAIL with the plain-words reason from `diseno/verifier-rules.md`, then the payout hash.
 - Every tx hash is a link to the preprod explorer (helpers from `packages/evidence`).
 - Banners are mandatory and visible when active: "fake payments", "verifier stub", "operator override".
