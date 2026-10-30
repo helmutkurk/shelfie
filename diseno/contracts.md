@@ -209,6 +209,7 @@ Payment requirements (served in the 402 response):
   "description": "One shelf-photo verification", "mimeType": "application/json" }
 ```
 - **Price: 1 tADA** (`VERIFY_PRICE_LOVELACE=1000000`). Lovelace routes need at least 1 tADA (min UTxO, x402 runbook), so this is the floor. If the facilitator rejects 1 tADA (verify Friday), use 2000000 and adjust the budget. Price is per check, regardless of pass or fail.
+- **Settlement: 0 L1 confirmations** (`extra.confirmationPolicy.l1Confirmations: 0`, `apps/verifier/src/payment.ts`). The paid answer comes once the facilitator has submitted the payment tx. The `@x402/cardano` default of 1 confirmation took about 96 s on preprod (M1 run, `codigo/docs/verified.md`), longer than the buyer timeout and the 20 to 60 s verify assumption in section 1.6. The risk is on the seller only (a tx that never lands leaves W-SELL without the fee). A production verifier chooses its own policy (ADR-18).
 - Asset: lovelace, to avoid the two tUSDM token variants (x402 runbook section 1).
 - The buyer caps spend: `maxAmountPerPayment = 2000000` (`VERIFY_MAX_PRICE_LOVELACE`).
 
