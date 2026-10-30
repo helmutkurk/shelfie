@@ -12,6 +12,7 @@ Roles A–D follow [../investigacion/cardano/team-plan.md](../investigacion/card
 | [friday-runbook.md](friday-runbook.md) | Hour by hour, 09:00 to night, with go/no-go checkpoints |
 | [saturday-runbook.md](saturday-runbook.md) | Freeze, video, Devfolio, submission 15:00, judging 15:00-17:00 |
 | [demo-props.md](demo-props.md) | Physical kit, price tags, b-roll stores |
+| [field-test-supermarket.md](field-test-supermarket.md) | Pre-flight, failure catalogue, debug commands, store test script and stage variant (REWE, HoC) |
 | [hub-laptop.md](hub-laptop.md) | The one hub laptop (Isabel's): requirements, setup, pre-demo checklist |
 | [risk-register.md](risk-register.md) | Top 15 risks |
 | [mentor-questions.md](mentor-questions.md) | Prioritised questions |

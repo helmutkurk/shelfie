@@ -29,7 +29,13 @@ export async function startCamera(devices: MediaDevicesLike | undefined): Promis
   if (!devices) throw new CameraError("unsupported");
   try {
     return await devices.getUserMedia({
-      video: { facingMode: { ideal: "environment" } },
+      // Ask for HD: without a size, Chrome/Safari on phones often deliver 640x480, which the
+      // engine rejects (short side < 600 px, jpeg.ts) and which cannot resolve a price tag.
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
       audio: false,
     });
   } catch (err) {

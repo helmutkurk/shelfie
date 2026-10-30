@@ -6,6 +6,7 @@ import { openStream } from "./sse.js";
 import type { StreamStatus } from "./sse.js";
 
 export const POLL_FALLBACK_MS = 3000;
+export const RECONCILE_OPEN_MS = 15_000;
 const LEAVE_MS = 220;
 
 /** Run `fn` now and every `intervalMs`; never overlaps; aborts on unmount. */
@@ -201,14 +202,19 @@ export function useTaskFeed(location: ClaimLocation | undefined): TaskFeed {
   }, [api, createEventSource, lat, lon]);
 
   useEffect(() => {
-    if (lat === undefined || lon === undefined || status === "open") return;
+    if (lat === undefined || lon === undefined) return;
     const loc: ClaimLocation = { lat, lon };
-    const id = setInterval(() => {
-      api
-        .tasks(loc)
-        .then((res) => dispatch({ type: "replace", tasks: res.tasks }))
-        .catch(() => undefined);
-    }, POLL_FALLBACK_MS);
+    // Slow reconcile even while the stream is "open": a proxy that buffers SSE (Vercel rewrite,
+    // D-32) opens the stream but delivers no events, which would freeze the feed silently.
+    const id = setInterval(
+      () => {
+        api
+          .tasks(loc)
+          .then((res) => dispatch({ type: "replace", tasks: res.tasks }))
+          .catch(() => undefined);
+      },
+      status === "open" ? RECONCILE_OPEN_MS : POLL_FALLBACK_MS,
+    );
     return () => clearInterval(id);
   }, [api, lat, lon, status]);
 

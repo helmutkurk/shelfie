@@ -263,3 +263,20 @@ describe("worker app", () => {
     noFileInput();
   });
 });
+
+describe("camera constraints", () => {
+  it("asks for an HD rear camera (a 640x480 default is rejected by the engine)", async () => {
+    const { startCamera } = await import("./lib/camera.js");
+    let seen: MediaStreamConstraints | undefined;
+    await startCamera({
+      getUserMedia: (c) => {
+        seen = c;
+        return Promise.resolve({} as MediaStream);
+      },
+    });
+    const video = seen?.video as MediaTrackConstraints;
+    expect(video.facingMode).toEqual({ ideal: "environment" });
+    expect(video.width).toEqual({ ideal: 1920 });
+    expect(video.height).toEqual({ ideal: 1080 });
+  });
+});
