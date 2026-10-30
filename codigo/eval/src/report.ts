@@ -29,7 +29,10 @@ const ran = (e: EntryResult): e is EntryResult & { actual: NonNullable<EntryResu
 
 export function computeMetrics(entries: readonly EntryResult[]): Metrics {
   const r = entries.filter(ran);
-  const count = (xs: readonly EntryResult[], f: (e: EntryResult) => boolean): { n: number; of: number } => ({
+  const count = (
+    xs: readonly EntryResult[],
+    f: (e: EntryResult) => boolean,
+  ): { n: number; of: number } => ({
     n: xs.filter(f).length,
     of: xs.length,
   });
@@ -45,8 +48,14 @@ export function computeMetrics(entries: readonly EntryResult[]): Metrics {
     for (const c of e.actual.reasonCodes) reasons[c] = (reasons[c] ?? 0) + 1;
     for (const g of e.actual.failedGates) gates[g] = (gates[g] ?? 0) + 1;
   }
-  const lat = r.map((e) => e.actual.model.latencyMs).filter((x) => x > 0).sort((a, b) => a - b);
-  const p95 = lat.length === 0 ? null : (lat[Math.min(lat.length - 1, Math.ceil(lat.length * 0.95) - 1)] as number);
+  const lat = r
+    .map((e) => e.actual.model.latencyMs)
+    .filter((x) => x > 0)
+    .sort((a, b) => a - b);
+  const p95 =
+    lat.length === 0
+      ? null
+      : (lat[Math.min(lat.length - 1, Math.ceil(lat.length * 0.95) - 1)] as number);
   const perCase: Metrics["perCase"] = {};
   for (const e of r) {
     const c = (perCase[e.case] ??= { n: 0, matched: 0, decisionCorrect: 0 });
@@ -70,8 +79,14 @@ export function computeMetrics(entries: readonly EntryResult[]): Metrics {
     falseAcceptOos: count(shouldFailOos, (e) => e.actual?.pass === true),
     falseRejectValid: count(valid, (e) => e.actual?.pass === false),
     falseRejectHard: count(hard, (e) => e.actual?.pass === false),
-    priceExact: count([...valid, ...hard].filter((e) => e.priceExact !== null), (e) => e.priceExact === true),
-    codeRead: count([...valid, ...hard].filter((e) => e.codeReadExact !== null), (e) => e.codeReadExact === true),
+    priceExact: count(
+      [...valid, ...hard].filter((e) => e.priceExact !== null),
+      (e) => e.priceExact === true,
+    ),
+    codeRead: count(
+      [...valid, ...hard].filter((e) => e.codeReadExact !== null),
+      (e) => e.codeReadExact === true,
+    ),
     oosValidAccepted: count(oosValid, (e) => e.actual?.pass === true),
     productPresentAccepted: count(present, (e) => e.actual?.pass === true),
     reasonHistogram: reasons,
@@ -131,7 +146,9 @@ export function acceptance(m: Metrics): Acceptance[] {
       name: "Valid out-of-stock photos accepted",
       value: frac(m.oosValidAccepted),
       target: "at least 2 of 3",
-      ok: na(m.oosValidAccepted) ? null : m.oosValidAccepted.n >= Math.ceil(m.oosValidAccepted.of * 0.67),
+      ok: na(m.oosValidAccepted)
+        ? null
+        : m.oosValidAccepted.n >= Math.ceil(m.oosValidAccepted.of * 0.67),
     },
     {
       name: "Product-present photos accepted as out-of-stock",
@@ -160,23 +177,50 @@ export function renderMarkdown(results: RunResults, m: Metrics): string {
   );
   if (meta.note) lines.push(`- Note: ${meta.note}`);
   if (meta.mode === "stub" || meta.synthetic) {
-    lines.push(``, `> Stub or synthetic run: it exercises the pipeline only. It says nothing about model accuracy and is never used as evidence.`);
+    lines.push(
+      ``,
+      `> Stub or synthetic run: it exercises the pipeline only. It says nothing about model accuracy and is never used as evidence.`,
+    );
   }
   lines.push(``, `## Decision confusion (expected vs actual pass)`, ``);
   lines.push(`| | actual PASS | actual FAIL |`, `|---|---|---|`);
-  lines.push(`| expected PASS | ${String(m.confusion.tp)} | ${String(m.confusion.fn)} (false reject) |`);
-  lines.push(`| expected FAIL | ${String(m.confusion.fp)} (false accept) | ${String(m.confusion.tn)} |`);
-  lines.push(``, `Entries matching their label completely (decision, gates, reason codes): ${String(m.matched)} of ${String(m.ran)}.`);
+  lines.push(
+    `| expected PASS | ${String(m.confusion.tp)} | ${String(m.confusion.fn)} (false reject) |`,
+  );
+  lines.push(
+    `| expected FAIL | ${String(m.confusion.fp)} (false accept) | ${String(m.confusion.tn)} |`,
+  );
+  lines.push(
+    ``,
+    `Entries matching their label completely (decision, gates, reason codes): ${String(m.matched)} of ${String(m.ran)}.`,
+  );
 
-  lines.push(``, `## Acceptance (verifier-rules.md section 7)`, ``, `| Metric | Result | Target | Status |`, `|---|---|---|---|`);
+  lines.push(
+    ``,
+    `## Acceptance (verifier-rules.md section 7)`,
+    ``,
+    `| Metric | Result | Target | Status |`,
+    `|---|---|---|---|`,
+  );
   for (const a of acceptance(m)) {
-    lines.push(`| ${a.name} | ${a.value} | ${a.target} | ${a.ok === null ? "n/a" : a.ok ? "ok" : "MISSED"} |`);
+    lines.push(
+      `| ${a.name} | ${a.value} | ${a.target} | ${a.ok === null ? "n/a" : a.ok ? "ok" : "MISSED"} |`,
+    );
   }
   if (m.falseRejectHard.of > 0) {
-    lines.push(``, `Hard valid photos (glare, angle) rejected: ${frac(m.falseRejectHard)} (counted separately, not a safety failure).`);
+    lines.push(
+      ``,
+      `Hard valid photos (glare, angle) rejected: ${frac(m.falseRejectHard)} (counted separately, not a safety failure).`,
+    );
   }
 
-  lines.push(``, `## Per case`, ``, `| Case | Photos | Decision correct | Fully matched |`, `|---|---|---|---|`);
+  lines.push(
+    ``,
+    `## Per case`,
+    ``,
+    `| Case | Photos | Decision correct | Fully matched |`,
+    `|---|---|---|---|`,
+  );
   for (const [c, v] of Object.entries(m.perCase).sort()) {
     lines.push(`| ${c} | ${String(v.n)} | ${String(v.decisionCorrect)} | ${String(v.matched)} |`);
   }
@@ -188,9 +232,21 @@ export function renderMarkdown(results: RunResults, m: Metrics): string {
     lines.push(`| Reason code | Count |`, `|---|---|`);
     for (const [k, v] of reasons) lines.push(`| ${k} | ${String(v)} |`);
   }
-  lines.push(``, `Failed gates: ${Object.entries(m.gateFailHistogram).map(([k, v]) => `${k} ${String(v)}`).join(", ") || "none"}`);
+  lines.push(
+    ``,
+    `Failed gates: ${
+      Object.entries(m.gateFailHistogram)
+        .map(([k, v]) => `${k} ${String(v)}`)
+        .join(", ") || "none"
+    }`,
+  );
 
-  lines.push(``, `## Latency (model call)`, ``, `mean ${m.latencyMs.mean ?? "n/a"} ms, p95 ${m.latencyMs.p95 ?? "n/a"} ms, max ${m.latencyMs.max ?? "n/a"} ms`);
+  lines.push(
+    ``,
+    `## Latency (model call)`,
+    ``,
+    `mean ${m.latencyMs.mean ?? "n/a"} ms, p95 ${m.latencyMs.p95 ?? "n/a"} ms, max ${m.latencyMs.max ?? "n/a"} ms`,
+  );
 
   const mismatches = results.entries.filter((e) => e.status === "ran" && e.matched === false);
   lines.push(``, `## Mismatches`, ``);
@@ -198,7 +254,9 @@ export function renderMarkdown(results: RunResults, m: Metrics): string {
   else {
     lines.push(`| File | Case | Expected | Actual |`, `|---|---|---|---|`);
     for (const e of mismatches) {
-      const exp = e.expect.pass ? "PASS" : `FAIL ${[...e.expect.reasonCodes, ...e.expect.reasonCodesAnyOf].join("/")}`;
+      const exp = e.expect.pass
+        ? "PASS"
+        : `FAIL ${[...e.expect.reasonCodes, ...e.expect.reasonCodesAnyOf].join("/")}`;
       const act = e.actual?.pass ? "PASS" : `FAIL ${e.actual?.reasonCodes.join("/") ?? ""}`;
       lines.push(`| ${e.file} | ${e.case} | ${exp.trim()} | ${act.trim()} |`);
     }
@@ -206,7 +264,10 @@ export function renderMarkdown(results: RunResults, m: Metrics): string {
   const errs = results.entries.filter((e) => e.status === "error");
   if (errs.length > 0) {
     lines.push(``, `## Errors`, ``);
-    for (const e of errs) lines.push(`- ${e.file}: ${e.error?.code ?? "unknown"}${e.error?.reason ? ` (${e.error.reason})` : ""}`);
+    for (const e of errs)
+      lines.push(
+        `- ${e.file}: ${e.error?.code ?? "unknown"}${e.error?.reason ? ` (${e.error.reason}${e.error.httpStatus ? ` ${e.error.httpStatus}` : ""})` : ""}${e.error?.providerMessage ? `: ${e.error.providerMessage}` : ""}`,
+      );
   }
   const missing = results.entries.filter((e) => e.status === "missing_photo");
   if (missing.length > 0) {

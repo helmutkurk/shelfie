@@ -1,6 +1,6 @@
 # apps/shell
 
-Status: the bridge exists and is tested against a fake engine. The Masumi starter is pinned at `d93783b907a5b0b7008c67496c6e093faa70553f` and ran unpaid (M3) and paid (M4) Tasks on the hub with the starter's own prompt (2026-10-30, `codigo/docs/verified.md`). The bridge is wired in (A-10): with `SHELL_TOKEN` set, an unpaid Sokosumi Task went through the bridge and the engine (on fakes) to COMPLETED with the Shelfie report. The paid path and WITHHOLD on a real Task are not tested yet (A-12). The shell stays JavaScript and is the only exception to the TypeScript rule. Links point to the canonical design in `diseno/` at the repo root.
+Status: the bridge exists and is tested against a fake engine. The Masumi starter is pinned at `d93783b907a5b0b7008c67496c6e093faa70553f` and ran unpaid (M3) and paid (M4) Tasks on the hub with the starter's own prompt (2026-10-30, `codigo/docs/verified.md`). The bridge is wired in (A-10): with `SHELL_TOKEN` set, an unpaid Sokosumi Task went through the bridge and the engine (on fakes) to COMPLETED with the Shelfie report. M5: a paid Task through the bridge got no passing photo, the engine decided WITHHOLD, no result hash was submitted and the escrow refunded the buyer about 30 minutes after the lock (evidence in `codigo/docs/evidence/tx-hashes.md`). The shell stays JavaScript and is the only exception to the TypeScript rule. Links point to the canonical design in `diseno/` at the repo root.
 
 Set up the starter (Windows needs the patch; it is a no-op change on Linux and macOS):
 
@@ -13,7 +13,16 @@ git -C starter apply ../starter.patch
 
 `starter.patch`: on Windows npm installs the CLI as `sokosumi.cmd`, which `execFileSync('sokosumi')` cannot start (`spawnSync sokosumi ENOENT`), so the worker crashed at boot. The patch adds `execSokosumi` in `sokosumi-runtime.mjs` (runs the CLI's JS entry with `node` on `win32`, unchanged elsewhere), uses it in `worker.mjs`, and accepts a `\skills\` path in the `sokosumi skills path` check. It also switches `client.mjs`: when `SHELL_TOKEN` is set, the exported `answer` is `createStarterAnswer(createBridge(loadBridgeConfig()))` from `../bridge/`; otherwise the starter's model call stays. The starter must therefore live at `codigo/apps/shell/starter/`.
 
-Run with the bridge: add the bridge names (`bridge/.env.example`) to the starter's `.env`, start the engine, then `npm start` (Eve, still needed for the worker's health check) and `npm run worker` in the starter. The Sokosumi Task description is the job input, ids only, for example `{"productEan":"5449000000439","storeId":"rewe-81671-august-everding-strasse-20"}`. The worker journal file name carries the Task id, which becomes the engine job's `externalRef`. DELIVER submits the report text; WITHHOLD and intake rejection throw `WithheldError`, so the worker logs "Task blocked" and submits no result.
+Run with the bridge: add the bridge names (`bridge/.env.example`) to the starter's `.env`, start the engine, then `npm start` (Eve, still needed for the worker's health check) and `npm run worker` in the starter. The Sokosumi Task description is the job input. Every channel ends in the same ids-only input the dashboard's dropdowns send (`{ productEan, stores: [{ id }] }`, ADR-17); `bridge/catalog-input.js` resolves the other shapes against the engine's `GET /api/catalog`:
+
+| Request shape | Example | Where it comes from |
+|---|---|---|
+| Catalog ids (passed through) | `{"productEan":"5449000000439","storeId":"rewe-81671-august-everding-strasse-20"}` | dashboard, scripts |
+| MIP-003 dropdown indices | `{"productEan":[1],"storeId":[0]}` | Sokosumi hire form (`agent-api.mjs` `/input_schema` lists the catalog as two single-choice `option` fields; Sokosumi answers with the index) |
+| Dropdown label text | `{"productEan":"Nutella 450 g (EAN 4008400402222)","storeId":"REWE, August-Everding-Straße 20, 81671 München"}` | copy of a label |
+| Free text | `Check Nutella at the REWE on August-Everding-Strasse` | Sokosumi Task description |
+
+Free text must name exactly one catalog product and one store (chain plus street, or the id); ties and unknown names are rejected as `input_schema_violation`, never guessed. The dropdown order is stable (sorted by id), so an index means the same entry in the schema and the resolver as long as the catalog is unchanged. With `SHELL_TOKEN` set, the patched `agent-api.mjs` serves that schema and accepts only `productEan` and `storeId`. The worker journal file name carries the Task id, which becomes the engine job's `externalRef`. DELIVER submits the report text; WITHHOLD and intake rejection throw `WithheldError`: the worker submits no result, logs "Withheld", and posts the bridge's comment on the Task once (`comments.mjs` `postWithheld`, guarded by `.local/<task>-withheld.json`). It is a comment only, with no status change, so a paid Task's escrow still refunds on its own. With `SHELL_TOKEN` set, `payment-registration.mjs register` registers the agent as "Shelfie" (name, description, tags, capability `shelfie-shelf-check`) instead of the template's name.
 
 ## Purpose
 Thin Masumi/Sokosumi bridge: turns a Sokosumi task into an engine job, waits for the engine decision, delivers the report text (the starter hashes and submits it) or withholds it (no hash, so the buyer's no-result auto-refund applies), and reports settlement events. No business logic beyond the bridge.
@@ -67,3 +76,7 @@ M3 hired via marketplace (Fri 13:00, unpaid); M4 paid escrow (Fri 20:00); M5 wit
 - Do not rewrite the starter or add business logic; do not retry uncertain Masumi writes automatically.
 - Do not commit `.env`, keys or mnemonics.
 - Do not create duplicate Vendor, Coworker or wallets on restart.
+
+## ADR-20 order correlation
+
+A Task description may include `{orderId,storeId,productEan}` as ids-only JSON. The bridge keeps the existing catalog-only job input and forwards `orderRef:{orderId,storeId}` separately to `POST /api/jobs`. The engine checks the reserved order/store/product and binds `externalRef` (the actual Task id) once. Older Tasks omit this optional reference. `order-input.test.js` proves the mapping without network sockets. B-15 must verify the real Task id / agent Job id / starter journal identity before real orders are enabled.

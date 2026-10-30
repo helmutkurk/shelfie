@@ -3,7 +3,10 @@ import { GATE_REASON_CODES, ReasonCodeSchema } from "@shelfie/core";
 import type { ReasonCode } from "@shelfie/core";
 import { isValidEan13 } from "@shelfie/domain-shelf";
 import {
+  gateChallenge,
   gateCodeMatch,
+  gateGestureMatch,
+  gateNotScreen,
   gateImageOk,
   gateLabelMatch,
   gateLabelVisible,
@@ -42,6 +45,9 @@ describe("G1 image_ok", () => {
   it("image_too_small", () => {
     expectFail(gateImageOk({ byteLength: 10, info: okInfo({ width: 640, height: 480 }) }, T), "image_too_small");
     expectFail(gateImageOk({ byteLength: 10, info: okInfo({ width: 1600, height: 599 }) }, T), "image_too_small");
+    // portrait photos are fine: same short and long side as landscape
+    expect(gateImageOk({ byteLength: 10, info: okInfo({ width: 720, height: 1280 }) }, T).pass).toBe(true);
+    expectFail(gateImageOk({ byteLength: 10, info: okInfo({ width: 599, height: 1600 }) }, T), "image_too_small");
   });
   it("image_too_large", () => {
     expectFail(gateImageOk({ byteLength: 2_000_001, info: okInfo() }, T), "image_too_large");
@@ -70,6 +76,47 @@ describe("G2 code_match", () => {
   it("edit distance is a pack threshold", () => {
     const loose = { ...T, code: { ...T.code, maxEditDistance: 1 } };
     expect(gateCodeMatch("K7Q-4XM", { text: "K7Q-4XN", confidence: 0.9 }, loose).pass).toBe(true);
+  });
+});
+
+describe("G2 gesture mode (ADR-19)", () => {
+  const expected = { fingers: 3, side: "left" as const };
+  const seen = { handVisible: true, fingers: 3, side: "left" as const, confidence: 0.9 };
+  it("passes the exact count and side", () => {
+    expect(gateGestureMatch(expected, seen, T).pass).toBe(true);
+  });
+  it("gesture_missing", () => {
+    expectFail(gateGestureMatch(expected, null, T), "gesture_missing");
+    expectFail(gateGestureMatch(expected, undefined, T), "gesture_missing");
+    expectFail(gateGestureMatch(expected, { ...seen, handVisible: false }, T), "gesture_missing");
+    expectFail(gateGestureMatch(expected, { ...seen, fingers: null }, T), "gesture_missing");
+    expectFail(gateGestureMatch(expected, { ...seen, side: null }, T), "gesture_missing");
+  });
+  it("gesture_mismatch (count or side)", () => {
+    expectFail(gateGestureMatch(expected, { ...seen, fingers: 4 }, T), "gesture_mismatch");
+    expectFail(gateGestureMatch(expected, { ...seen, side: "right" }, T), "gesture_mismatch");
+  });
+  it("gesture_low_confidence", () => {
+    expectFail(gateGestureMatch(expected, { ...seen, confidence: 0.69 }, T), "gesture_low_confidence");
+  });
+  it("dispatches on the task: gesture when issued, else the code", () => {
+    const x = observed({ gesture: seen });
+    expect(gateChallenge(task({ expectedGesture: expected }), x, T).detail).toMatchObject({ mode: "gesture" });
+    expect(gateChallenge(task(), x, T).pass).toBe(true); // code K7Q-4XM read
+    expect(gateChallenge(task({ expectedGesture: expected }), observed(), T).reasonCode).toBe("gesture_missing");
+  });
+});
+
+describe("G8 not_screen", () => {
+  it("fails only on an explicit true", () => {
+    expect(gateNotScreen({ looksLikeScreenPhoto: false }, T).pass).toBe(true);
+    expect(gateNotScreen({ looksLikeScreenPhoto: null }, T).pass).toBe(true);
+    expect(gateNotScreen(undefined, T).pass).toBe(true);
+    expectFail(gateNotScreen({ looksLikeScreenPhoto: true }, T), "screen_recapture");
+  });
+  it("kill switch: enabled false always passes", () => {
+    const off = { ...T, screen: { enabled: false } };
+    expect(gateNotScreen({ looksLikeScreenPhoto: true }, off).pass).toBe(true);
   });
 });
 
@@ -175,6 +222,13 @@ describe("G6 timing", () => {
   });
   it("claim_expired", () => {
     expectFail(gateTiming(task({ receivedAt: "2026-10-30T10:05:01.000Z" }), T), "claim_expired");
+  });
+  it("challenge_stale: gesture photo more than 90 s after the reveal (engine clock)", () => {
+    const at = (revealed: string) => task({ challengeRevealedAt: revealed });
+    // received 10:01:00; revealed 10:00:30 -> 30 s, ok; 09:59:29 -> 91 s, stale
+    expect(gateTiming(at("2026-10-30T10:00:30.000Z"), T).detail).toMatchObject({ secondsAfterReveal: 30 });
+    expect(gateTiming(at("2026-10-30T09:59:30.000Z"), T).pass).toBe(true);
+    expectFail(gateTiming(at("2026-10-30T09:59:29.000Z"), T), "challenge_stale");
   });
   it("window_closed", () => {
     expectFail(

@@ -5,6 +5,11 @@ import { z } from "zod";
  * `snake_case`, stable, machine-readable. Codes marked "extra" are not listed in contracts.md.
  */
 export const ERROR_STATUS = {
+  brand_token_missing: 401,
+  brand_token_invalid: 401,
+  order_cap_reached: 429,
+  daily_cap_reached: 429,
+  sokosumi_unavailable: 502,
   // 400-level generic
   invalid_request: 400,
   unauthorized: 401,
@@ -22,6 +27,7 @@ export const ERROR_STATUS = {
   already_submitted: 409,
   claim_already_active: 409,
   claim_window_closed: 409,
+  challenge_not_revealed: 409, // gesture mode: submit before POST /api/claims/{id}/challenge
   invalid_transition: 409, // extra: illegal state machine transition
   // 413
   image_too_large: 413,

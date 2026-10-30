@@ -26,7 +26,12 @@ import {
   SubmissionStateSchema,
   TaskStateSchema,
 } from "./states.js";
-import { ExtractionSchema, GateNameSchema, GateResultSchema } from "./verify.js";
+import {
+  ExtractionSchema,
+  GateNameSchema,
+  GateResultSchema,
+  GestureChallengeSchema,
+} from "./verify.js";
 
 // Entities (domain-model.md section 1). Persisted by the engine behind a Store interface.
 
@@ -77,7 +82,7 @@ export const TaskSchema = z.object({
 });
 export type Task = z.infer<typeof TaskSchema>;
 
-export const ChallengeModeSchema = z.enum(["handwritten", "card-pool", "none"]);
+export const ChallengeModeSchema = z.enum(["gesture", "handwritten", "card-pool", "none"]);
 export type ChallengeMode = z.infer<typeof ChallengeModeSchema>;
 
 export const ChallengeCodeSchema = z.object({
@@ -100,6 +105,9 @@ export const ClaimSchema = z.object({
   displayName: z.string().optional(),
   payoutAddress: PayoutAddressSchema,
   challengeCode: z.string(),
+  /** Gesture mode (ADR-19): drawn at claim, shown only after `challengeRevealedAt`. */
+  gesture: GestureChallengeSchema.optional(),
+  challengeRevealedAt: IsoTimestampSchema.optional(),
   issuedAt: IsoTimestampSchema,
   expiresAt: IsoTimestampSchema,
   state: ClaimStateSchema,

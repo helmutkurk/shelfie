@@ -33,7 +33,7 @@ What the sources say drives the price: visit length, photo documentation, author
 ## How it compares
 
 - EUR 12 is about a third of the cheapest US audit visit ($30-45) and a quarter of the cheapest German Testkauf (from EUR 50).
-- Katharina's 10 stores: **EUR 120 with Shelfie** vs about $300-450 for audit visits, EUR 500-2,600 for German test purchases.
+- 10 store checks: **EUR 120 with Shelfie** vs about $300-450 for audit visits, EUR 500-2,600 for German test purchases.
 - Agencies are booked in advance and paid per visit whether or not the data is usable; Shelfie charges only for checks that pass.
 - The EUR 3.50 payout sits at the upper end of what crowd-audit apps pay for a short photo task, which helps worker supply.
 

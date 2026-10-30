@@ -1,10 +1,16 @@
 \documentclass[aspectratio=169,14pt]{beamer}
 \usepackage{iftex}
-\usepackage{fontspec}
-\IfFontExistsTF{Fira Sans}{}{%
-  \setsansfont{Noto Sans}[Ligatures=TeX]\setmainfont{Noto Sans}[Ligatures=TeX]}
+% xelatex/lualatex: Fira Sans, else Noto Sans. pdflatex fallback (no fontspec needed): TeX Gyre Heros.
+\ifPDFTeX
+  \usepackage[T1]{fontenc}\usepackage{textcomp}
+  \usepackage{tgheros}\renewcommand{\familydefault}{\sfdefault}
+\else
+  \usepackage{fontspec}
+  \IfFontExistsTF{Fira Sans}{}{%
+    \setsansfont{Noto Sans}[Ligatures=TeX]\setmainfont{Noto Sans}[Ligatures=TeX]}
+\fi
 \usetheme[progressbar=frametitle,numbering=none,block=fill]{metropolis}
-\IfFontExistsTF{Fira Sans}{}{\setsansfont{Noto Sans}\setmainfont{Noto Sans}}
+\ifPDFTeX\else\IfFontExistsTF{Fira Sans}{}{\setsansfont{Noto Sans}\setmainfont{Noto Sans}}\fi
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
 \usepackage{qrcode}
@@ -35,18 +41,26 @@
 \author{\MemberA \,\textbullet\, \MemberB \,\textbullet\, \MemberC \,\textbullet\, \MemberD}
 \institute{\Event}
 \begin{document}
+% Title: shown before the timer starts. Live deck (pitch/live-pitch.md run of show, review/pitch-jury-2026-10-30.md):
+% hook, flow, demo, receipts, today/next, close.
 \input{sections/00-title}
 \input{sections/01-hook}
+\input{sections/05b-flow}
+\input{sections/07-demo}
+\input{sections/08b-receipts}
+\input{sections/11b-today}
+\input{sections/13-closing}
+% Backup slides for Q&A, after the close. 03-problem and 08-proof are kept in sections/ but not shown
+% (unsourced placeholders; superseded by 08b-receipts).
+\appendix
+\input{sections/14-status}
+\input{sections/03a-market}
+\input{sections/10-cardano}
 \input{sections/02-customer}
-\input{sections/03-problem}
-\input{sections/04-idea}
 \input{sections/05-how}
 \input{sections/06-gates}
-\input{sections/07-demo}
-\input{sections/08-proof}
 \input{sections/09-business}
-\input{sections/10-cardano}
 \input{sections/11-beyond}
+\input{sections/04-idea}
 \input{sections/12-team}
-\input{sections/13-closing}
 \end{document}

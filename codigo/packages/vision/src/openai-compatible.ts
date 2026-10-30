@@ -27,7 +27,8 @@ export interface OpenAiCompatibleConfig {
   clock?: Clock;
 }
 
-type ContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
+type ContentPart =
+  { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string | ContentPart[];
@@ -117,9 +118,16 @@ export class OpenAiCompatibleVisionClient implements VisionClient {
         signal: controller.signal,
       });
       if (!res.ok) {
-        // body is not logged or echoed: it can contain request fragments
-        await res.arrayBuffer().catch(() => undefined);
-        throw this.unavailable("http_status", { status: res.status });
+        // The raw body is never logged (it can contain request fragments); only the provider's
+        // error.message, bounded and stripped, so a wrong model id or quota error is diagnosable.
+        const providerMessage = errorMessageOf(
+          await readCapped(res, 8192).catch(() => ""),
+          this.cfg.apiKey,
+        );
+        throw this.unavailable("http_status", {
+          status: res.status,
+          ...(providerMessage ? { providerMessage } : {}),
+        });
       }
       const payload: unknown = await res.json();
       return extractContent(payload);
@@ -133,6 +141,50 @@ export class OpenAiCompatibleVisionClient implements VisionClient {
   }
 }
 
+/** First `maxBytes` of a response body; the rest is cancelled, never buffered. */
+async function readCapped(res: Response, maxBytes: number): Promise<string> {
+  const reader = res.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (size < maxBytes) {
+    const chunk = (await reader.read()) as { done: boolean; value?: Uint8Array };
+    if (chunk.done || !chunk.value) break;
+    chunks.push(chunk.value);
+    size += chunk.value.byteLength;
+  }
+  await reader.cancel().catch(() => undefined);
+  return Buffer.concat(chunks).subarray(0, maxBytes).toString("utf8");
+}
+
+const SECRET_PATTERNS: readonly RegExp[] = [
+  /sk-[A-Za-z0-9_*-]+/g, // OpenAI keys, also the masked "sk-proj-****abcd" form
+  /AIza[0-9A-Za-z_-]+/g, // Google API keys
+  /Bearer\s+\S+/gi,
+  /data:\S+/g, // inline image data
+  /[A-Za-z0-9+/=_-]{40,}/g, // long tokens or base64 runs
+];
+
+/**
+ * `error.message` of a provider error body (OpenAI or Gemini shape, also as a one-item array),
+ * with keys, tokens and base64 runs redacted, control characters stripped, at most 200 chars.
+ */
+export function errorMessageOf(text: string, apiKey?: string): string | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const root: unknown = Array.isArray(parsed) ? parsed[0] : parsed;
+  const msg = (root as { error?: { message?: unknown } } | null)?.error?.message;
+  if (typeof msg !== "string") return null;
+  let clean = apiKey && apiKey.length >= 8 ? msg.split(apiKey).join("[redacted]") : msg;
+  for (const p of SECRET_PATTERNS) clean = clean.replace(p, "[redacted]");
+  clean = clean.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
+  return clean.length > 200 ? `${clean.slice(0, 200)}...` : clean || null;
+}
+
 function extractContent(payload: unknown): string {
   const choices = (payload as { choices?: unknown } | null)?.choices;
   if (!Array.isArray(choices) || choices.length === 0) return "";
@@ -141,7 +193,11 @@ function extractContent(payload: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content
-      .map((p) => (typeof p === "object" && p !== null && "text" in p ? String((p as { text: unknown }).text) : ""))
+      .map((p) =>
+        typeof p === "object" && p !== null && "text" in p
+          ? String((p as { text: unknown }).text)
+          : "",
+      )
       .join("");
   }
   return "";
@@ -151,10 +207,19 @@ export type PresetConfig = Omit<OpenAiCompatibleConfig, "provider" | "tokenParam
 
 /** Primary: Gemini via its OpenAI-compatible endpoint (base URL from env, verify Friday). */
 export function createGeminiClient(cfg: PresetConfig): OpenAiCompatibleVisionClient {
-  return new OpenAiCompatibleVisionClient({ ...cfg, provider: "gemini", tokenParam: "max_tokens", temperature: cfg.temperature ?? 0 });
+  return new OpenAiCompatibleVisionClient({
+    ...cfg,
+    provider: "gemini",
+    tokenParam: "max_tokens",
+    temperature: cfg.temperature ?? 0,
+  });
 }
 
 /** Fallback: OpenAI chat completions (base URL from env, verify Friday). */
 export function createOpenAiClient(cfg: PresetConfig): OpenAiCompatibleVisionClient {
-  return new OpenAiCompatibleVisionClient({ ...cfg, provider: "openai", tokenParam: "max_completion_tokens" });
+  return new OpenAiCompatibleVisionClient({
+    ...cfg,
+    provider: "openai",
+    tokenParam: "max_completion_tokens",
+  });
 }

@@ -18,7 +18,7 @@ An agent on Sokosumi hires people to check shelf prices in real stores, a verifi
 
 Small consumer brands want to know, within hours, whether their product is on the shelf in a specific store and at what price. Today they either drive around, book a field-marketing agency or a mystery-shopping panel booked days ahead, or trust sales data that says nothing about the shelf. A quick merchandising audit visit costs about $30-45 ([T-ROC Global 2026 guide](https://trocglobal.com/retail-merchandising-services/)), a German Testkauf about EUR 50-260 per visit ([mystery.agency](https://www.mystery.agency/content/testkauf-2/), [mystery-shopping.de](https://www.mystery-shopping.de/produkt/1-testkauf-mystery-shopping/)). Visits are usually paid whether or not the photo is usable, and photos can be old, blurry or from the wrong store. AI agents can write a report about retail but cannot see a shelf, and they have no safe way to pay a stranger for evidence from the physical world.
 
-Our fictional but typical customer: the field-sales manager of a small Bavarian craft-lemonade brand who just got listed by a supermarket chain and needs to know whether the bottle is in a given Munich store today.
+How we got here: an acquaintance of a teammate's father wants to bring a drink to Germany and asked two of us to photograph comparable products in Munich shops, what they cost and whether they are on the shelf. We would have walked for hours, and he could not have checked our photos from abroad. The customer type: a brand entering a market without a field team, which needs competitor prices and availability store by store. (One real request, no brand interviews yet.)
 
 ## Solution
 
@@ -28,7 +28,7 @@ The three things to remember:
 
 1. Paid only when the photo is true.
 2. The code in the photo: each task has a one-time challenge code that must appear next to the price tag.
-3. Agents hire people, and the blockchain pays the bill.
+3. Cardano escrow makes sure nobody pays for a photo that isn't true.
 
 ## How it works
 

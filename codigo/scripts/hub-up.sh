@@ -93,6 +93,28 @@ wait_http() { # url, label, seconds
   return 1
 }
 
+# Tunnel first, so the engine starts with the public URL (origin guard and Host allowlist need it).
+url=""
+if [[ $TUNNEL -eq 1 ]]; then
+  provider="${TUNNEL_PROVIDER:-cloudflared}"
+  case "${provider:-cloudflared}" in
+    cloudflared)
+      command -v cloudflared >/dev/null || die "cloudflared not found in PATH (install it, or run without --tunnel)"
+      start tunnel cloudflared tunnel --url "http://127.0.0.1:${ENGINE_PORT}"   # forwards ONLY the engine port
+      for ((i = 0; i < 30; i++)); do
+        url="$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$RUN_DIR/tunnel.log" 2>/dev/null | head -n1 || true)"
+        [[ -n "$url" ]] && break; sleep 1
+      done
+      [[ -n "$url" ]] || die "tunnel started but no URL found within 30 s; see $RUN_DIR/tunnel.log"
+      printf '%s\n' "$url" >"${TUNNEL_URL_FILE:-./tunnel-url.txt}"
+      export PUBLIC_BASE_URL="$url"
+      host="${url#https://}"
+      export ALLOWED_HOSTS="${ALLOWED_HOSTS:+${ALLOWED_HOSTS},}${host}"
+      printf 'tunnel    %s  (engine gets PUBLIC_BASE_URL and ALLOWED_HOSTS; do not restart the tunnel mid-demo)\n' "$url" ;;
+    *) die "unsupported TUNNEL_PROVIDER (only cloudflared is scripted)" ;;
+  esac
+fi
+
 [[ $VERIFIER -eq 1 ]] && start verifier npm run start -w @shelfie/verifier --if-present
 start engine npm run start -w @shelfie/engine
 [[ $WEB -eq 1 ]] && start web npm run dev -w @shelfie/web --if-present
@@ -107,32 +129,15 @@ if [[ $rc -eq 0 ]]; then
   printf '%s' "$health" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const h=JSON.parse(s);console.log(`health ok=${h.ok} verifier=${h.verifier} fakePayments=${h.fakes.payments} fakeVerifier=${h.fakes.verifier}`);if(h.fakes.payments||h.fakes.verifier)console.log("WARNING: fake mode. Not valid for an evidence run or the live demo.");})' || true
 fi
 
-if [[ $TUNNEL -eq 1 ]]; then
-  provider="${TUNNEL_PROVIDER:-cloudflared}"
-  case "${provider:-cloudflared}" in
-    cloudflared)
-      command -v cloudflared >/dev/null || die "cloudflared not found in PATH (verify Friday: tunnel provider)"
-      start tunnel cloudflared tunnel --url "http://127.0.0.1:${ENGINE_PORT}"   # forwards ONLY the engine port
-      url=""
-      for ((i = 0; i < 30; i++)); do
-        url="$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$RUN_DIR/tunnel.log" 2>/dev/null | head -n1 || true)"
-        [[ -n "$url" ]] && break; sleep 1
-      done
-      if [[ -n "$url" ]]; then
-        printf '%s\n' "$url" >"${TUNNEL_URL_FILE:-./tunnel-url.txt}"
-        printf 'tunnel    %s  (set PUBLIC_BASE_URL to this and restart the engine once; do not restart the tunnel mid-demo)\n' "$url"
-      else
-        printf 'tunnel    started but no URL found yet; see %s/tunnel.log\n' "$RUN_DIR" >&2; rc=1
-      fi ;;
-    *) die "unsupported TUNNEL_PROVIDER (only cloudflared is scripted; verify Friday)" ;;
-  esac
-fi
-
 echo
 echo "URLs"
 echo "  engine / app   http://127.0.0.1:${ENGINE_PORT}   (worker /w, dashboard /dashboard)"
 lan="${HUB_LAN_IP:-}"
 [[ -n "$lan" ]] && echo "  LAN (read-only, http)   http://${lan}:${ENGINE_PORT}   (needs ALLOWED_HOSTS=${lan} for the engine)"
 [[ $VERIFIER -eq 1 ]] && echo "  verifier       http://127.0.0.1:${VERIFIER_PORT}   (loopback only, never public)"
+if [[ -n "$url" ]]; then
+  echo "  PHONE (worker) ${url}/w   (HTTPS, camera allowed; dashboard ${url}/dashboard)"
+  if command -v qrencode >/dev/null; then qrencode -t ansiutf8 "${url}/w"; fi
+fi
 echo "stop with: bash scripts/hub-up.sh stop"
 exit $rc

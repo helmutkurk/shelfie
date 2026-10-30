@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   collectSecretValues,
   createLogger,
@@ -13,13 +14,14 @@ import { domainShelfCatalog, domainShelfPack } from "./domain-pack.js";
 import { Engine } from "./engine.js";
 import { createApp } from "./http/app.js";
 import { MemoryStore } from "./store.js";
-import { wireAdapters } from "./wiring.js";
+import { Orders } from "./orders.js";
+import { wireAdapters, wireSokosumi } from "./wiring.js";
 
 // Entry point: `npm run dev -w @shelfie/engine` (fakes by default) or `npm start -w @shelfie/engine`.
 // Binds 127.0.0.1 only; the tunnel forwards this port, nothing else is public.
 
 const HOST = "127.0.0.1";
-const DEFAULT_WEB_DIST = new URL("../../web/dist", import.meta.url).pathname;
+const DEFAULT_WEB_DIST = fileURLToPath(new URL("../../web/dist", import.meta.url));
 
 async function main(): Promise<void> {
   const env = loadEnv(EngineEnvSchema, process.env);
@@ -77,6 +79,7 @@ async function main(): Promise<void> {
   const webDist = env.WEB_DIST ?? (existsSync(DEFAULT_WEB_DIST) ? DEFAULT_WEB_DIST : undefined);
   const app = createApp({
     engine,
+    orders: new Orders({ engine, env, store, clock, ids, client: wireSokosumi(env, engine, ids) }),
     env,
     logger,
     clock,

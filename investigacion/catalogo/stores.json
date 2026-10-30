@@ -1,10 +1,29 @@
 [
   {
+    "id": "demo-hoc-friedenstrasse-24",
+    "chain": "DEMO",
+    "name": "Shelfie demo shelf",
+    "address": "House of Communication, Friedenstraße 24, 81671 München",
+    "street": "Friedenstraße 24",
+    "postcode": "81671",
+    "city": "Munich",
+    "lat": 48.1275499,
+    "lon": 11.6093703,
+    "geofenceRadiusM": 150,
+    "distanceToVenueM": 0,
+    "demo": true,
+    "note": "Demo-only stage shelf with printed props, NOT a real supermarket check.",
+    "coordSource": "https://www.openstreetmap.org/node/7020339979",
+    "addressSource": "OpenStreetMap Nominatim search 'Friedenstraße 24, 81671 München' (ODbL), 2026-10-30",
+    "chainLocatorVerified": false,
+    "retrievedAt": "2026-10-30"
+  },
+  {
     "id": "rewe-81671-august-everding-strasse-20",
     "chain": "REWE",
     "name": "REWE",
-    "address": "August-Everding-Straße 20, 81671 München",
-    "street": "August-Everding-Straße 20",
+    "address": "Hanne-Hiob-Straße 10, 81671 München",
+    "street": "Hanne-Hiob-Straße 10",
     "postcode": "81671",
     "city": "Munich",
     "lat": 48.125502,
@@ -15,7 +34,11 @@
     "addressSource": "OpenStreetMap node/7009749744 (ODbL), Overpass API 2026-10-29",
     "nominatimCrossCheckDeviationM": 37,
     "chainLocatorVerified": false,
-    "retrievedAt": "2026-10-29"
+    "retrievedAt": "2026-10-29",
+    "aliases": [
+      "August-Everding-Straße 20"
+    ],
+    "addressNote": "Display address from the REWE store finder (what teammates know). OSM node 7009749744 puts the store at August-Everding-Straße 20, about 20 m away; coordinates and id unchanged, the 150 m geofence covers both."
   },
   {
     "id": "lidl-81671-august-everding-strasse-20",

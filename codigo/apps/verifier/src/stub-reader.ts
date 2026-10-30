@@ -11,7 +11,8 @@ import type { Evaluator } from "./evaluate.js";
 // Scenarios for smoke and cheat tests: append the ASCII marker `SHELFIE-STUB:<scenario>` after
 // the end of a valid JPEG/PNG (decoders ignore trailing bytes). Scenarios: wrong_code, no_code,
 // wrong_product, unreadable_price, absurd_price, product_present, no_label, other_label,
-// slot_not_empty. No marker = perfect read.
+// slot_not_empty, screen. No marker = perfect read. In gesture mode wrong_code shows one finger
+// too many and no_code shows no hand.
 
 export type StubScenario =
   | "ok"
@@ -23,7 +24,8 @@ export type StubScenario =
   | "product_present"
   | "no_label"
   | "other_label"
-  | "slot_not_empty";
+  | "slot_not_empty"
+  | "screen";
 
 const MARKER = /SHELFIE-STUB:([a-z_]+)/;
 
@@ -64,10 +66,27 @@ export function perfectExtraction(
     confidence: scenario === "no_code" ? 0 : 0.95,
     location: "paper held next to the tag",
   };
+  const g = task.expectedGesture;
+  const gesture = g
+    ? scenario === "no_code"
+      ? { handVisible: false, fingers: null, side: null, confidence: 0 }
+      : {
+          handVisible: true,
+          fingers: scenario === "wrong_code" ? (g.fingers === 5 ? 4 : g.fingers + 1) : g.fingers,
+          side: g.side,
+          confidence: 0.92,
+        }
+    : null;
+  const advisory = {
+    tamperSuspected: false,
+    looksLikeScreenPhoto: scenario === "screen",
+    exifTime: null,
+  };
   const scene = { peopleVisible: false, glare: "low", blur: "none" };
   if (outcome === "OBSERVED") {
     return {
       code,
+      gesture,
       price: {
         text: priceText,
         value: scenario === "unreadable_price" ? null : value,
@@ -81,13 +100,15 @@ export function perfectExtraction(
       },
       barcode: null,
       scene: { isShelfOrPriceTag: true, ...scene },
-      advisory: { tamperSuspected: false, looksLikeScreenPhoto: false, exifTime: null },
+      advisory,
       overallConfidence: 0.9,
       notes: "stub reader",
     };
   }
   return {
     code,
+    gesture,
+    advisory,
     label: {
       visible: scenario !== "no_label",
       text: scenario === "no_label" ? null : p.name,

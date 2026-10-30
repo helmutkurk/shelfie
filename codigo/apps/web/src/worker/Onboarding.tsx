@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PayoutAddressSchema } from "@shelfie/core/browser";
 import { S } from "../lib/messages.js";
 import type { Profile } from "../lib/storage.js";
-import { Button, Field, Group, LargeTitle, TextButton } from "../ui/index.js";
+import { Button, Field, Group, LargeTitle, TextButton, Wordmark } from "../ui/index.js";
 
 /** W0: payout address + name + consent-v1. CIP-30 "Connect wallet" is not built (verify Friday). */
 export function Onboarding(props: {
@@ -25,7 +25,13 @@ export function Onboarding(props: {
 
   return (
     <main className="screen">
-      <LargeTitle title={S.appName} subtitle="Get paid for photos that prove the shelf." />
+      <div className="onboard-brand">
+        <Wordmark />
+      </div>
+      <LargeTitle
+        title="Get paid for photos that prove the shelf."
+        subtitle="Take a task, photograph one price tag, receive test ADA."
+      />
       <Group footer={`${S.shelvesOnly} Your address is where payouts go; nothing else is stored.`}>
         <div className="group-pad">
           {/* TODO verify Friday: "Connect wallet" via window.cardano (CIP-30) when present; paste is the guaranteed path. */}

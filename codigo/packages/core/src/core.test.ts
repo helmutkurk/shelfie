@@ -24,6 +24,8 @@ import {
   collectSecretValues,
   createLogger,
   gatesFor,
+  GestureChallengeSchema,
+  makeGestureChallenge,
   loadEnv,
   lovelaceToAdaString,
   makeChallengeCode,
@@ -249,12 +251,29 @@ describe("schema round-trips", () => {
     expect(gatesFor("OUT_OF_STOCK")).toEqual([
       "image_ok",
       "code_match",
+      "not_screen",
       "label_visible",
       "label_match",
       "slot_empty",
       "timing",
       "not_duplicate",
     ]);
+  });
+
+  it("gesture challenge: 2-5 fingers, left or right, strict", () => {
+    let i = 0;
+    const seq = [0, 0, 3, 1];
+    const g1 = makeGestureChallenge(() => seq[i++] ?? 0);
+    const g2 = makeGestureChallenge(() => seq[i++] ?? 0);
+    expect(g1).toEqual({ fingers: 2, side: "left" });
+    expect(g2).toEqual({ fingers: 5, side: "right" });
+    expect(GestureChallengeSchema.safeParse(g2).success).toBe(true);
+    expect(GestureChallengeSchema.safeParse({ fingers: 1, side: "left" }).success).toBe(false);
+    expect(GestureChallengeSchema.safeParse({ fingers: 6, side: "left" }).success).toBe(false);
+    expect(GestureChallengeSchema.safeParse({ fingers: 3, side: "up" }).success).toBe(false);
+    expect(GestureChallengeSchema.safeParse({ fingers: 3, side: "left", x: 1 }).success).toBe(
+      false,
+    );
   });
 
   it("ledger event", () => {

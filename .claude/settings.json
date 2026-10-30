@@ -52,7 +52,7 @@
       "WebFetch(domain:www.x402.org)"
     ],
     "ask": [
-      "Bash(git push *)",
+      
       "Bash(git commit *)",
       "Bash(git pull *)",
       "Bash(git merge *)",
@@ -105,9 +105,9 @@
       "Bash(git push * main)",
       "Bash(git push * main:*)",
       "Bash(git push * HEAD:main)",
-      "Bash(git push * dev)",
-      "Bash(git push * dev:*)",
-      "Bash(git push * HEAD:dev)",
+     
+    
+      
       "Bash(git push * master)",
       "Bash(git reset --hard *)",
       "Bash(git config *)",

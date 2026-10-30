@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { AppError, CatalogProductSchema, CatalogStoreSchema } from "@shelfie/core";
 import type { CatalogProduct, CatalogStore } from "@shelfie/core";
 
@@ -57,5 +58,6 @@ export function loadCatalogFromDir(dir: string): Catalog {
 }
 
 /** Default catalog directory relative to this file (ROOT/investigacion/catalogo). */
-export const DEFAULT_CATALOG_DIR = new URL("../../../../investigacion/catalogo/", import.meta.url)
-  .pathname;
+export const DEFAULT_CATALOG_DIR = fileURLToPath(
+  new URL("../../../../investigacion/catalogo/", import.meta.url),
+);

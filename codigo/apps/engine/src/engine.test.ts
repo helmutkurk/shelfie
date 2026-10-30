@@ -14,6 +14,7 @@ import {
   CreateJobResponseSchema,
   SubmitPhotoResponseSchema,
   LedgerListResponseSchema,
+  RevealChallengeResponseSchema,
 } from "@shelfie/core";
 import { verifyLedger } from "@shelfie/evidence";
 import { afterEach, describe, expect, it } from "vitest";
@@ -839,5 +840,48 @@ describe("logging", () => {
     expect(all).not.toContain("dev-admin-token");
     expect(all).not.toContain(String(STORE_POS.lat));
     expect(all).not.toContain("addr_test1qqqq");
+  });
+});
+
+describe("gesture challenge (ADR-19)", () => {
+  it("claim hides the gesture; reveal is idempotent; verify gets gesture and reveal time", async () => {
+    rig = await makeRig({ env: { CHALLENGE_MODE: "gesture" } });
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    const c = await rig.claim(taskId);
+    expect(c.status).toBe(201);
+    const claim = ClaimResponseSchema.parse(c.json);
+    expect(claim.challenge.mode).toBe("gesture");
+    expect(claim.challenge.code).toBe("");
+    expect(JSON.stringify(c.json)).not.toMatch(/fingers/);
+
+    rig.clock.advanceSec(20);
+    const r1 = await rig.call("POST", `/api/claims/${claim.claim.id}/challenge`);
+    expect(r1.status).toBe(200);
+    const reveal = RevealChallengeResponseSchema.parse(r1.json);
+    expect(reveal.answerWithinSec).toBe(90);
+    rig.clock.advanceSec(10);
+    const r2 = await rig.call("POST", `/api/claims/${claim.claim.id}/challenge`);
+    expect(r2.json).toEqual(r1.json); // no re-roll, no restart of the answer window
+
+    rig.clock.advanceSec(10);
+    const s = await rig.submit(taskId, claim.claim.id, { imageBase64: photoB64() });
+    expect(s.status).toBe(202);
+    await rig.engine.idle();
+    const req = rig.verify.calls[0]?.req;
+    expect(req?.task.expectedGesture).toEqual(reveal.gesture);
+    expect(req?.task.challengeRevealedAt).toBe(reveal.revealedAt);
+    expect((await rig.call("GET", "/api/config")).json.challengeMode).toBe("gesture");
+  });
+
+  it("reveal refuses unknown, used and code-mode claims", async () => {
+    await open();
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    const c = await rig.claim(taskId);
+    const code = await rig.call("POST", `/api/claims/${c.json.claim.id}/challenge`);
+    expect(code.json.error.code).toBe("invalid_request");
+    const missing = await rig.call("POST", "/api/claims/clm_nope/challenge");
+    expect(missing.json.error.code).toBe("not_found");
   });
 });

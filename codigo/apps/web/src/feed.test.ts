@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Feed } from "./worker/Feed.js";
 import { emptyFeed, feedReducer, parseFeedEvent } from "./lib/hooks.js";
 import { FakeEventSource, h, makeDeps, renderWithDeps, taskFixture } from "./testing.js";
@@ -36,7 +36,7 @@ describe("live task feed", () => {
     renderFeed();
     expect(await screen.findByText("Example Pale Ale 0.33 l")).toBeTruthy();
     expect(screen.getByText("Other Product 0.5 l")).toBeTruthy();
-    const rewards = [...document.querySelectorAll(".row-value")].map((e) => e.textContent);
+    const rewards = [...document.querySelectorAll(".task-reward-amount")].map((e) => e.textContent);
     expect(rewards).toEqual(["3\u00a0tADA", "3\u00a0tADA"]);
   });
 
@@ -136,5 +136,35 @@ describe("feed reducer", () => {
     );
     expect(parseFeedEvent("task_closed", "not json")).toBeNull();
     expect(parseFeedEvent("task_closed", '{"taskId":"nope"}')).toBeNull();
+  });
+});
+
+describe("feed reconcile while the stream is open", () => {
+  it("re-reads the list periodically even when SSE reports open", async () => {
+    const { deps, calls } = makeDeps({
+      routes: { "GET /api/tasks": { tasks: [taskFixture("tsk_01")] } },
+    });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      renderWithDeps(
+        h(Feed, {
+          location,
+          locationState: "ok",
+          onRequestLocation: () => undefined,
+          onOpen: () => undefined,
+          address: null,
+          onEditProfile: () => undefined,
+        }),
+        deps,
+      );
+      await screen.findByText("Example Pale Ale 0.33 l");
+      FakeEventSource.last("/api/tasks/stream")?.open();
+      const before = calls.filter((c) => c.path === "/api/tasks").length;
+      await vi.advanceTimersByTimeAsync(16_000);
+      const after = calls.filter((c) => c.path === "/api/tasks").length;
+      expect(after).toBeGreaterThan(before);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

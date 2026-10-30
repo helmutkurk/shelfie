@@ -4,6 +4,7 @@ import { AppError, isAppError, systemClock } from "@shelfie/core";
 import type { Clock, EngineEnv, FeedEvent, Logger } from "@shelfie/core";
 import express from "express";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
+import type { Orders } from "../orders.js";
 import type { Engine } from "../engine.js";
 import {
   FailLock,
@@ -11,14 +12,17 @@ import {
   hostGuard,
   isAdminToken,
   originGuard,
+  parseAllowedOrigins,
   rateLimit,
   requireAdmin,
+  requireBrand,
   requireShellOrAdmin,
   securityHeaders,
 } from "./security.js";
 
 export interface AppOptions {
   engine: Engine;
+  orders?: Orders;
   env: EngineEnv;
   logger: Logger;
   clock?: Clock;
@@ -116,13 +120,16 @@ export function createApp(opts: AppOptions): express.Express {
         route,
         status: res.statusCode,
         ms: clock.nowMs() - started,
+        ...(typeof res.locals["errorCode"] === "string"
+          ? { errorCode: res.locals["errorCode"] }
+          : {}),
       });
     });
     next();
   });
   app.use(securityHeaders());
   app.use(hostGuard(hosts));
-  app.use(originGuard(originHosts));
+  app.use(originGuard(originHosts, parseAllowedOrigins(env.ALLOWED_ORIGINS)));
 
   const smallJson = express.json({ limit: "16kb", strict: true });
   const photoLimit = Math.ceil((env.MAX_IMAGE_BYTES * 4) / 3) + 4096;
@@ -130,6 +137,34 @@ export function createApp(opts: AppOptions): express.Express {
   const isSubmission = (req: Request): boolean =>
     req.method === "POST" && /^\/api\/tasks\/[^/]+\/submissions$/.test(req.path);
   app.use((req, res, next) => (isSubmission(req) ? next() : smallJson(req, res, next)));
+
+  // Orders have their own header-only auth and budget-spending rate limit, including reads.
+  const ordersRouter = express.Router();
+  ordersRouter.use(mk(60), requireBrand(env.BRAND_TOKEN));
+  ordersRouter.get(
+    "/",
+    h((_req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      res.json(opts.orders.list());
+    }),
+  );
+  ordersRouter.get(
+    "/:orderId",
+    h((req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      res.json(opts.orders.get(param(req, "orderId")));
+    }),
+  );
+  ordersRouter.post(
+    "/",
+    mk(6),
+    h(async (req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      const order = await opts.orders.create(req.body, req.get("Idempotency-Key"));
+      res.status(201).json(order);
+    }),
+  );
+  app.use("/api/orders", ordersRouter);
 
   // ---------------------------------------------------------------- public reads
   app.get(
@@ -231,6 +266,11 @@ export function createApp(opts: AppOptions): express.Express {
       const out = engine.claimTask(param(req, "taskId"), req.body);
       res.status(out.status).json(out.body);
     }),
+  );
+  app.post(
+    "/api/claims/:claimId/challenge",
+    workerLimit,
+    h((req, res) => res.json(engine.revealChallenge(param(req, "claimId")))),
   );
   app.post(
     "/api/claims/:claimId/release",
@@ -360,6 +400,7 @@ export function createApp(opts: AppOptions): express.Express {
         name: err instanceof Error ? err.name : "unknown",
       });
     }
+    res.locals["errorCode"] = app_.code;
     res.status(app_.status).json(app_.toBody());
   });
 

@@ -351,21 +351,29 @@ export function Countdown(props: { expiresAt: string; onExpire?: () => void }) {
   );
 }
 
-type IconName = "back" | "chevron" | "alert" | "check" | "pin";
-export function Icon(props: { name: IconName }) {
-  const paths: Record<IconName, string> = {
-    back: "M12.5 4 6.5 10l6 6",
-    chevron: "m8 4 6 6-6 6",
-    alert: "M10 3 2.5 16.5h15L10 3Zm0 5v4m0 2.5v.01",
-    check: "m4 10.5 4 4 8-9",
-    pin: "M10 18s5.5-5 5.5-9a5.5 5.5 0 1 0-11 0c0 4 5.5 9 5.5 9Zm0-7.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z",
-  };
+export type IconName =
+  "back" | "chevron" | "alert" | "check" | "pin" | "copy" | "clock" | "close" | "user" | "shelf";
+const ICON_PATHS: Record<IconName, string> = {
+  back: "M12.5 4 6.5 10l6 6",
+  chevron: "m8 4 6 6-6 6",
+  alert: "M10 3 2.5 16.5h15L10 3Zm0 5v4m0 2.5v.01",
+  check: "m4 10.5 4 4 8-9",
+  pin: "M10 18s5.5-5 5.5-9a5.5 5.5 0 1 0-11 0c0 4 5.5 9 5.5 9Zm0-7.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z",
+  copy: "M7 7V4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5v7a1.5 1.5 0 0 1-1.5 1.5H13M4.5 7h7A1.5 1.5 0 0 1 13 8.5v7a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 15.5v-7A1.5 1.5 0 0 1 4.5 7Z",
+  clock: "M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-11v4.5l3 1.5",
+  close: "m5 5 10 10M15 5 5 15",
+  user: "M10 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-6.5 7.5c.6-3 3.2-4.5 6.5-4.5s5.9 1.5 6.5 4.5",
+  shelf: "M3 5h14M3 10h14M3 15h14",
+};
+
+export function Icon(props: { name: IconName; size?: number }) {
+  const size = props.size ?? 20;
   return (
     <svg
       className="icon"
       viewBox="0 0 20 20"
-      width="20"
-      height="20"
+      width={size}
+      height={size}
       aria-hidden="true"
       fill="none"
       stroke="currentColor"
@@ -373,7 +381,47 @@ export function Icon(props: { name: IconName }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d={paths[props.name]} />
+      <path d={ICON_PATHS[props.name]} />
     </svg>
+  );
+}
+
+/** Shelfie wordmark: a small shelf mark plus the name. Inline SVG and text, no external assets. */
+export function Wordmark() {
+  return (
+    <span className="wordmark">
+      <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" className="wordmark-mark">
+        <rect width="28" height="28" rx="8" fill="var(--accent-fill)" />
+        <path d="M7 9.5h14M7 14h14M7 18.5h14" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="19" cy="9.5" r="2.2" fill="#fff" />
+      </svg>
+      <span className="wordmark-text">Shelfie</span>
+    </span>
+  );
+}
+
+/** Live / reconnecting indicator. Word plus dot, never colour alone. */
+export function ConnectionStatus(props: {
+  status: "connecting" | "open" | "reconnecting" | "closed";
+}) {
+  const live = props.status === "open";
+  const label = live ? "Live" : props.status === "connecting" ? "Connecting" : "Reconnecting";
+  return (
+    <span className={`conn ${live ? "conn-live" : "conn-wait"}`} role="status">
+      <span className="conn-dot" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+/** Placeholder block for loading lists. Hidden from assistive tech; the region sets aria-busy. */
+export function Skeleton(props: { lines?: number }) {
+  const lines = props.lines ?? 3;
+  return (
+    <div className="skeleton-card" aria-hidden="true">
+      {Array.from({ length: lines }, (_, i) => (
+        <span key={i} className={`skeleton-line ${i === 0 ? "skeleton-wide" : ""}`} />
+      ))}
+    </div>
   );
 }

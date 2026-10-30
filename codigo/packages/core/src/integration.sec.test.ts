@@ -33,6 +33,8 @@ describe("integration configuration boundaries", () => {
       { PAYOUT_DAILY_CAP_LOVELACE: "1.5" },
       { VERIFY_CLIENT: "typo" },
       { EVIDENCE_RUN_LOCKED: "typo" },
+      { VERIFY_RUN_CAP_LOVELACE: "1000000" }, // below the 2 tADA per-payment cap
+      { VERIFY_RUN_CAP_LOVELACE: "2.5" },
     ]) {
       expect(() => loadEnv(EngineEnvSchema, { ...engineSource, ...extra })).toThrow();
     }
@@ -46,6 +48,28 @@ describe("integration configuration boundaries", () => {
         loadEnv(VerifierEnvSchema, { ENABLE_DRY: "true", VISION_RUN_CAP: cap }),
       ).toThrow();
     }
+  });
+  it("production verifier (evidence runs, P6): paid route only, dry off, engine token required", () => {
+    const prod = {
+      NODE_ENV: "production",
+      ADMIN_TOKEN: "a".repeat(32),
+      ENGINE_TOKEN: "e".repeat(32),
+      SELLER_ADDRESS:
+        "addr_test1qz3edturjtvrytfy933t927942auguhd0wxkrxkdv0mumwph9ehp5qhzatv4x6rpwxs7adkwplkl2gsudfxk052frhcq3tnrpj",
+      FACILITATOR_URL: "https://facilitator.invalid",
+      X_ENGINE_TOKEN_REQUIRED: "true",
+    };
+    expect(loadEnv(VerifierEnvSchema, prod)).toMatchObject({
+      ENABLE_DRY: false,
+      X_ENGINE_TOKEN_REQUIRED: true,
+    });
+    expect(() => loadEnv(VerifierEnvSchema, { ...prod, ENABLE_DRY: "true" })).toThrow(/ENABLE_DRY/);
+    expect(() => loadEnv(VerifierEnvSchema, { ...prod, X_ENGINE_TOKEN_REQUIRED: "false" })).toThrow(
+      /X_ENGINE_TOKEN_REQUIRED/,
+    );
+    expect(() => loadEnv(VerifierEnvSchema, { ...prod, VERIFIER_PAYMENT: "off" })).toThrow(
+      /VERIFIER_PAYMENT/,
+    );
   });
   it("requires the expected seller for real paid verification", () => {
     expect(() =>

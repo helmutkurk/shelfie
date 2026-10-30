@@ -1,5 +1,8 @@
 import {
   AppError,
+  OrderViewSchema,
+  OrderListResponseSchema,
+  OverrideResponseSchema,
   CatalogResponseSchema,
   ClaimResponseSchema,
   ConfigResponseSchema,
@@ -12,11 +15,13 @@ import {
   LedgerListResponseSchema,
   PayoutListResponseSchema,
   ReleaseClaimResponseSchema,
+  RevealChallengeResponseSchema,
   SubmissionViewSchema,
   SubmitPhotoResponseSchema,
   TaskListResponseSchema,
 } from "@shelfie/core/browser";
 import type {
+  CreateOrderRequest,
   ClaimRequest,
   CreateJobRequest,
   ErrorCode,
@@ -146,6 +151,14 @@ export class ApiClient {
       body,
     });
   }
+  /** Gesture mode (ADR-19): reveal the hand sign when the camera opens; idempotent. */
+  revealChallenge(claimId: string) {
+    return this.request(
+      RevealChallengeResponseSchema,
+      `/api/claims/${encodeURIComponent(claimId)}/challenge`,
+      { method: "POST", body: {} },
+    );
+  }
   release(claimId: string) {
     return this.request(
       ReleaseClaimResponseSchema,
@@ -169,6 +182,36 @@ export class ApiClient {
   }
 
   // ---- customer / dashboard
+  createOrder(body: CreateOrderRequest, brandToken: string, key: string) {
+    return this.request(OrderViewSchema, "/api/orders", {
+      method: "POST",
+      body,
+      headers: { "X-Brand-Token": brandToken, "Idempotency-Key": key },
+    });
+  }
+  orders(brandToken: string, signal?: AbortSignal) {
+    return this.request(OrderListResponseSchema, "/api/orders", {
+      ...withSignal(signal),
+      headers: { "X-Brand-Token": brandToken },
+    });
+  }
+  order(id: string, brandToken: string, signal?: AbortSignal) {
+    return this.request(OrderViewSchema, `/api/orders/${encodeURIComponent(id)}`, {
+      ...withSignal(signal),
+      headers: { "X-Brand-Token": brandToken },
+    });
+  }
+  override(submissionId: string, adminToken: string) {
+    return this.request(
+      OverrideResponseSchema,
+      `/api/admin/submissions/${encodeURIComponent(submissionId)}/override`,
+      {
+        method: "POST",
+        body: { pass: true, reason: "Operator demo correction" },
+        headers: { "X-Admin-Token": adminToken },
+      },
+    );
+  }
   jobs(signal?: AbortSignal) {
     return this.request(JobListResponseSchema, "/api/jobs", withSignal(signal));
   }

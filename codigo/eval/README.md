@@ -47,6 +47,8 @@ npm run eval -w @shelfie/eval -- --mode replay --replay results/<file>.json     
 ```
 Stub and synthetic runs are marked "NOT evidence" in the report. Live runs: put photos in `eval/photos/` (shelves and tags only, no people), add one label per photo, run once per provider (set `VISION_PROVIDER`, `VISION_MODEL`, `VISION_BASE_URL`, `VISION_API_KEY`).
 
+Keys once, not per shell: `bash scripts/set-secret.sh VISION_API_KEY VISION_FALLBACK_API_KEY` (from `codigo/`; hidden input, writes the git-ignored `codigo/.env`, mode 600). Put the non-secret `VISION_PROVIDER`, `VISION_MODEL`, `VISION_BASE_URL` in the same file with an editor. `npm run eval` and the verifier's `dev`/`start` load `codigo/.env` (`--env-file-if-exists`); variables already set in the shell win, so you can switch provider for one run with `VISION_PROVIDER=openai ... npm run eval ...`. The mode is never taken from `.env`: without `--mode live` the run is stub.
+
 ## TODO
 - Capture the 20 + 8 photos and write their labels (cases in `CaseSchema`).
 - Cost per check is recorded only if passed with `--cost-per-check`.

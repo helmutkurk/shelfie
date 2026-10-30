@@ -7,7 +7,7 @@ All slogan options in one place, sorted by audience, with a recommendation and w
 | Use | Line | Source |
 |---|---|---|
 | Main tagline (deck, Devfolio, video end card) | **Paid only when the photo is true.** | `slides/facts.tex` (`\Tagline`), `devfolio-description.md`, `video-script.md` |
-| Three phrases judges must remember | "Paid only when the photo is true." · "The code in the photo." · "Agents hire people, and the blockchain pays the bill." | `storyline.md` |
+| Three phrases judges must remember | "Paid only when the photo is true." · "The code in the photo." · "Cardano escrow makes sure nobody pays for a photo that isn't true." | `storyline.md` |
 | Vision line | "Proof first, payment second." | `storyline.md` |
 
 Changing the main tagline means editing `slides/facts.tex` (one line), `devfolio-description.md`, `video-script.md` scene 11 and the three-phrases block in `storyline.md` at the same time.
@@ -31,7 +31,7 @@ Changing the main tagline means editing `slides/facts.tex` (one line), `devfolio
 | A4 | Pay for shelves you can see. | 6 | Brand-side angle; weaker on verification. |
 | A5 | Every shelf check, proven on-chain. | 5 | Strong for the Cardano judges; "on-chain" covers the payments and evidence ledger, not the photo itself. |
 
-### B. Brand-facing (Katharina, the customer)
+### B. Brand-facing (the customer)
 
 | # | Slogan | Notes |
 |---|---|---|
@@ -46,7 +46,7 @@ Changing the main tagline means editing `slides/facts.tex` (one line), `devfolio
 |---|---|---|
 | C1 | Agents that hire eyes. | Existing option 3; strong image, needs context. |
 | C2 | AI thinks. People look. Cardano pays. | Three roles in three beats; good for the architecture slide or the video. |
-| C3 | Agents hire people, and the blockchain pays the bill. | Existing phrase 3; keep verbatim. |
+| C3 | Cardano escrow makes sure nobody pays for a photo that isn't true. | Phrase 3 since the jury review (2026-10-30); keep verbatim. Old: "Agents hire people, and the blockchain pays the bill." |
 | C4 | The agent can't see the shelf. So it hires someone who can. | Hook variant; good opening line, too long for a tagline. |
 
 ### D. Worker-facing (QR poster, worker page `/w`)

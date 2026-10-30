@@ -4,7 +4,7 @@ import { useDeps } from "../deps.js";
 import { formatAda } from "../lib/format.js";
 import { usePolling } from "../lib/hooks.js";
 import { describeError } from "../lib/messages.js";
-import { Button, Group, Pill, Row, TextButton, TxLink } from "../ui/index.js";
+import { Button, Group, Icon, Pill, Row, TextButton, TxLink } from "../ui/index.js";
 
 const TERMINAL_PAYOUT = new Set(["CONFIRMED", "FAILED_FINAL", "UNKNOWN"]);
 
@@ -59,7 +59,8 @@ export function VerdictView(props: {
 
   if (view.state === "RECEIVED" || view.state === "VERIFYING" || view.state === "VERIFY_RETRY") {
     return (
-      <section className="result" aria-live="polite">
+      <section className="result result-wait" aria-live="polite">
+        <span className="spinner" aria-hidden="true" />
         <h1 className="title">Checking your photo</h1>
         <p className="body">
           {props.queuePosition && props.queuePosition > 1
@@ -75,7 +76,10 @@ export function VerdictView(props: {
     const oos = view.verdict?.outcome === "OUT_OF_STOCK";
     const payout = view.payout;
     return (
-      <section className="result" aria-live="polite">
+      <section className={`result ${oos ? "result-oos" : "result-pass"}`} aria-live="polite">
+        <span className="result-badge result-badge-success" aria-hidden="true">
+          <Icon name={oos ? "shelf" : "check"} size={36} />
+        </span>
         <Pill tone="success">{oos ? "Not on the shelf" : "Verified"}</Pill>
         <h1 className="title">{oos ? "Verified: not on the shelf" : "Verified"}</h1>
         <Group>
@@ -96,7 +100,7 @@ export function VerdictView(props: {
             trailing={payout ? (PAYOUT_WORDS[payout.state] ?? payout.state) : "Payment pending"}
           />
           {payout?.txHash ? (
-            <div className="row">
+            <div className="row tx-row">
               <TxLink hash={payout.txHash} explorerUrl={payout.explorerUrl} label="Tx" />
             </div>
           ) : null}
@@ -111,10 +115,15 @@ export function VerdictView(props: {
   // REJECTED or ERROR_FINAL
   const attemptsLeft = view.task.attemptsLeft;
   return (
-    <section className="result" aria-live="polite">
+    <section className="result result-fail" aria-live="polite">
+      <span className="result-badge result-badge-error" aria-hidden="true">
+        <Icon name="close" size={36} />
+      </span>
       <Pill tone="error">Rejected</Pill>
       <h1 className="title">Not accepted</h1>
-      <p className="body">{view.verdict?.workerMessage ?? "We could not verify this photo."}</p>
+      <p className="reason-card">
+        {view.verdict?.workerMessage ?? "We could not verify this photo."}
+      </p>
       <Group>
         <Row title="Attempts left" trailing={String(attemptsLeft)} />
       </Group>
@@ -151,7 +160,8 @@ export function Result(props: {
   if (!data) {
     return (
       <main className="screen">
-        <section className="result" aria-live="polite">
+        <section className="result result-wait" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
           <h1 className="title">Checking your photo</h1>
           {error ? (
             <p className="error-text" role="alert">

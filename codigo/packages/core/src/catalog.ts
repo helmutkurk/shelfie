@@ -12,6 +12,10 @@ export const CatalogStoreSchema = z.object({
   lat: z.number(),
   lon: z.number(),
   geofenceRadiusM: z.number().positive().optional(),
+  /** Other addresses people know the store by (e.g. the OSM street when the display address is the chain finder's). */
+  aliases: z.array(z.string()).optional(),
+  /** Stage/demo shelf, not a real supermarket. */
+  demo: z.boolean().optional(),
 });
 export type CatalogStore = z.infer<typeof CatalogStoreSchema>;
 
@@ -34,7 +38,13 @@ export const CatalogResponseSchema = z.object({
       id: z.string(),
       name: z.string(),
       stores: z.array(
-        z.object({ id: z.string(), name: z.string(), chain: z.string(), address: z.string() }),
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          chain: z.string(),
+          address: z.string(),
+          aliases: z.array(z.string()).optional(),
+        }),
       ),
       products: z.array(z.object({ ean: z.string(), name: z.string() })),
     }),

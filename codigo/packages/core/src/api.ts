@@ -31,9 +31,77 @@ import {
   SubmissionStateSchema,
   TaskStateSchema,
 } from "./states.js";
-import { ExtractionSchema, GateNameSchema } from "./verify.js";
+import { ExtractionSchema, GateNameSchema, GestureChallengeSchema } from "./verify.js";
 
 // Request/response schemas for contracts.md sections 1 (engine). Verifier schemas: ./verify.ts.
+
+// ---------------------------------------------------------------- Orders (ADR-20)
+export const OrderIdSchema = z.string().regex(/^ord_[A-Za-z0-9]+$/);
+export const OrderStoreIdSchema = z
+  .string()
+  .min(1)
+  .max(160)
+  .regex(/^[A-Za-z0-9_-]+$/);
+export const OrderRefSchema = z.strictObject({
+  orderId: OrderIdSchema,
+  storeId: OrderStoreIdSchema,
+});
+export const CreateOrderRequestSchema = z.strictObject({
+  productEan: z.string().regex(/^\d{8,14}$/),
+  storeIds: z
+    .array(OrderStoreIdSchema)
+    .min(1)
+    .max(100)
+    .refine((ids) => new Set(ids).size === ids.length, "Duplicate stores"),
+  note: z.string().max(500).optional(),
+});
+export type CreateOrderRequest = z.infer<typeof CreateOrderRequestSchema>;
+export const OrderIdempotencyKeySchema = z
+  .string()
+  .min(8)
+  .max(100)
+  .regex(/^[A-Za-z0-9_-]+$/);
+export const OrderPurchaseStatusSchema = z.enum([
+  "SUBMITTING",
+  "AWAITING_SHELL",
+  "SOKOSUMI_UNAVAILABLE",
+]);
+export const OrderJobSchema = z.strictObject({
+  storeId: OrderStoreIdSchema,
+  sokosumiTaskId: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .nullable(),
+  jobId: JobIdSchema.nullable(),
+  status: z.enum([
+    ...OrderPurchaseStatusSchema.options,
+    ...JobStateSchema.options,
+    ...TaskStateSchema.options,
+  ]),
+});
+export const OrderViewSchema = z.strictObject({
+  orderId: OrderIdSchema,
+  productEan: z.string().regex(/^\d{8,14}$/),
+  createdAt: IsoTimestampSchema,
+  fake: z.boolean(),
+  jobs: z.array(OrderJobSchema),
+});
+export type OrderView = z.infer<typeof OrderViewSchema>;
+export const OrderListResponseSchema = z.strictObject({ orders: z.array(OrderViewSchema) });
+/** Durable purchase reservations; note deliberately not retained. */
+export const OrderRecordSchema = z.strictObject({
+  id: OrderIdSchema,
+  productEan: z.string().regex(/^\d{8,14}$/),
+  createdAt: IsoTimestampSchema,
+  fake: z.boolean(),
+  idempotencyKey: OrderIdempotencyKeySchema,
+  requestHash: z.string().regex(/^[a-f0-9]{64}$/),
+  reservedCredits: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  jobs: z.array(OrderJobSchema),
+});
+export type OrderRecord = z.infer<typeof OrderRecordSchema>;
 
 // ---------------------------------------------------------------- 1.1 Jobs
 /** POST /api/jobs. Strict: free-text fields (product.name, store.address ...) are a 422. */
@@ -42,6 +110,7 @@ export const CreateJobRequestSchema = z.strictObject({
   source: JobSourceSchema,
   externalRef: z.string().min(1),
   input: JobInputSchema,
+  orderRef: OrderRefSchema.optional(),
   windowSec: z.number().int().positive().optional(),
 });
 export type CreateJobRequest = z.infer<typeof CreateJobRequestSchema>;
@@ -224,6 +293,20 @@ export const ClaimResponseSchema = z.object({
 });
 export type ClaimResponse = z.infer<typeof ClaimResponseSchema>;
 
+/**
+ * POST /api/claims/{claimId}/challenge (gesture mode, ADR-19). Reveals the gesture once; later
+ * calls return the same gesture and reveal time (no re-roll). The photo must reach the engine
+ * within `answerWithinSec` of `revealedAt` (G6 `challenge_stale`).
+ */
+export const RevealChallengeResponseSchema = z.object({
+  claimId: ClaimIdSchema,
+  gesture: GestureChallengeSchema,
+  revealedAt: IsoTimestampSchema,
+  answerWithinSec: z.number().int().positive(),
+  instruction: z.string(),
+});
+export type RevealChallengeResponse = z.infer<typeof RevealChallengeResponseSchema>;
+
 /** POST /api/claims/{claimId}/release. Response shape not fixed in contracts. // verify Friday */
 export const ReleaseClaimResponseSchema = z.object({
   claim: z.object({ id: ClaimIdSchema, state: ClaimStateSchema }),
@@ -320,10 +403,26 @@ export const ConfigResponseSchema = z.object({
   challengeMode: ChallengeModeSchema,
   secureContext: z.boolean(),
   demoOverrideEnabled: z.boolean(),
+  orders: z
+    .strictObject({
+      fake: z.boolean(),
+      enabled: z.boolean(),
+      realReady: z.boolean().optional(),
+      maxStores: z.number().int().positive(),
+      maxCreditsPerTask: z.number().int().positive(),
+    })
+    .optional(),
 });
 export type ConfigResponse = z.infer<typeof ConfigResponseSchema>;
 
 // ---------------------------------------------------------------- 1.5 Admin
+export const OverrideResponseSchema = z.strictObject({
+  verdict: z.strictObject({
+    id: z.string(),
+    pass: z.boolean(),
+    source: z.literal("MANUAL_OVERRIDE"),
+  }),
+});
 export const OverrideRequestSchema = z.object({ pass: z.boolean(), reason: z.string().min(1) });
 export const MarkPaidRequestSchema = z.object({ txHash: z.string().min(1) });
 export const AdminPayoutResponseSchema = z.object({ payout: PayoutListItemSchema });

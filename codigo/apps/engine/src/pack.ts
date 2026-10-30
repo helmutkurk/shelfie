@@ -32,6 +32,7 @@ export function defaultShelfPack(opts: {
   payoutLovelace: string;
   maxAttempts: number;
   claimTtlSec: number;
+  challengeMode?: "gesture" | "handwritten" | "card-pool";
 }): EnginePack {
   const config = PackConfigSchema.parse({
     id: "shelf-check",
@@ -41,7 +42,7 @@ export function defaultShelfPack(opts: {
       kind: "human",
       capture: "photo",
       challenge: {
-        mode: "handwritten",
+        mode: opts.challengeMode ?? "handwritten",
         alphabet: "ABCDEFGHJKMNPQRSTUVWXYZ23456789",
         length: 6,
         ttlSec: opts.claimTtlSec,

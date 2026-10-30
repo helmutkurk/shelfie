@@ -236,31 +236,15 @@ Out-of-stock failure uses W5 with the O-gate messages (verifier-rules.md section
 
 ### 3.2 Journey
 
-1. MVP order path: hire the lead agent on Sokosumi (product and one Munich store; ids from the catalogs, option fields if Sokosumi supports them, *verify Friday*); escrow locks the fee. The shell creates the job in the engine (`POST /api/jobs`, source `shell`), which first applies the intake filter against the seeded store and product catalogs; a rejected request gets a clear reason (contracts.md section 1.1a) and the escrow refunds without a worker.
-2. Open `/dashboard`; the new job appears (`GET /api/jobs`).
-3. Watch the task status turn from open to claimed, verifying, passed or failed (retries show as further attempts), with the payout and verification spend.
-4. Job leaves `COLLECTING`: decision `DELIVER` (the observation passed: a price photo, or an out-of-stock photo reported as "out of stock at store X, time T") or `WITHHOLD` (no passing photo by the window end).
-5. Read the report (table of store, price, verdict, evidence tx, payout tx). On `WITHHOLD`, see the refund path.
-6. Open the ledger and click explorer links.
-
-Demo shortcut: a "demo job" button on the dashboard creates a job through the admin path (design README: fake shell via `POST /api/jobs` from the dashboard's button). That button needs the admin token and is an operator tool, not a customer feature.
+1. Open `/dashboard`, enter the brand access code (tab memory only), select a product and several stores from the Munich catalog, optionally filtering stores by chain. No free-text order fields and no file inputs.
+2. Place `POST /api/orders`. Intake runs for every store before any Sokosumi call. Shelfie buys one Task per store with its own account and bounded credits (ADR-20, amended Helmut 2026-10-30).
+3. Watch the order's per-store statuses through authenticated `GET /api/orders` and `GET /api/orders/{id}` (3 s polling). A pending Task has no engine job until the shell picks it up; the fake client creates it immediately through the same `Engine.createJob` path.
+4. Open a linked job for its existing timeline, payouts, receipts and report. Deliver means a passing price or out-of-stock observation; withhold means no passing observation. Settlement/refund is shown only when observed.
+5. Operator-only demo job and override stay in a collapsed **Operator** section, gated by the operator token. Stage mode hides that section.
 
 ### 3.3 Screens
 
-**C1 New request** (brand dashboard; the operator/demo path in the MVP, the customer-facing form later)
-```
-+--------------------------------------------------------+
-| New shelf check                                        |
-| City     [ Munich                              v ]      |
-| Store    [ Select a store                      v ]      |
-| Product  [ Select a product                    v ]      |
-|                                                        |
-| Time to complete  15 min (fixed in MVP)                |
-| Price: shown by the Sokosumi quote (verify Friday)     |
-|                              [ Request check ]         |
-+--------------------------------------------------------+
-```
-ADR-17: the three fields are dropdowns fed by `GET /api/catalog`; there is **no free-text field**, so an unknown store, product or city cannot be requested. Store is enabled after city, product after store (list filtered by the catalog). The button stays disabled until all three are chosen. The form sends `input = { productEan, stores: [{ id }] }` and `windowSec` (contracts.md section 1.1). The operator "Demo job" button uses the same ids. In MVP the real order is placed on Sokosumi; this form is the operator/demo path, and a customer-facing create needs customer auth and payment, which the contracts do not have. The Sokosumi hire form is outside our control: if its input schema has no option/select fields, a free-text value reaches the shell and the intake filter is the backstop (*verify Friday*).
+**C1 New order**: a product dropdown, chain filter and native multi-select of stores from `GET /api/catalog` (including the demo shelf and REWE). Read-only price information when available; unknown price is explicit. The brand access code sits outside the catalog-only form and is never stored in browser storage. Submit sends `{productEan, storeIds}`. After success, the order list shows each store's status and a link to the existing job timeline/report. Fake orders are labelled as rehearsals with no real escrow. The separate `/brand` route is dropped.
 
 **C2 Job progress with live per-store status**
 ```
@@ -370,11 +354,11 @@ Example values are placeholders, not market claims.
 
 None exist for this flow. Proposed (not in contracts yet): `POST /api/briefs` (create brief and its field jobs), `GET /api/briefs/{id}`, `GET /api/briefs/{id}/report`, `GET /api/observations?...` (aggregated shelf observations). The existing `POST /api/jobs` with `packId: "shelf-check"` would be reused per store group.
 
-## 5. Proposed customer routes and APIs, not in contracts yet
+## 5. Customer routes and APIs
 
 | Proposed | Purpose | Needs |
 |---|---|---|
-| `/dashboard/new` | Customer creates a job | customer auth, payment link to escrow or invoice; contracts have only shell/admin `POST /api/jobs` |
+| `/dashboard` | Customer places and follows orders | `X-Brand-Token`; POST/GET `/api/orders`, GET `/api/orders/{id}`; contracts Orders |
 | `/dashboard/jobs/:id` | Deep link to one job | none beyond existing GETs |
 | `/dashboard/jobs/:id/report` | Printable report | `reportMd` rendering |
 | `/dashboard/ledger` | Full-screen ledger | existing ledger endpoints |
@@ -391,7 +375,7 @@ Rule: do not add any of these to the engine without updating `contracts.md` in t
 | Worker app: list, claim, code, capture, result, payout link | Yes | Accounts, reputation, onboarding, push notifications |
 | Worker i18n | English | German, Spanish |
 | Customer dashboard: job progress, ledger, report view | Yes (stage layout) | Customer auth, job history, filters |
-| Customer places order | Via Sokosumi and shell; operator demo button | In-app order form, payment |
+| Customer places order | Dashboard; Shelfie account places one Sokosumi Task per store (ADR-20) | Customer accounts and payment |
 | Per-store status with live updates | Yes (SSE plus polling) | Map view, notifications |
 | Task dispatch | Feed to all workers in the city, first claim wins | Assignment by distance, reputation, push notifications |
 | Out-of-stock observation | Yes (secondary action, separate gates, same payout) | Second-worker sampling, per-worker OOS ratio flag |

@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
+  OrderRecordSchema,
   ClaimSchema,
   JobSchema,
   PayoutSchema,
@@ -9,7 +10,16 @@ import {
   TaskSchema,
   VerdictSchema,
 } from "@shelfie/core";
-import type { Claim, Job, Payout, Settlement, Submission, Task, Verdict } from "@shelfie/core";
+import type {
+  OrderRecord,
+  Claim,
+  Job,
+  Payout,
+  Settlement,
+  Submission,
+  Task,
+  Verdict,
+} from "@shelfie/core";
 import type { z } from "zod";
 
 /** A keyed collection. Values are treated as immutable: `put` a new object to change one. */
@@ -24,6 +34,7 @@ export interface Collection<T extends { id: string }> {
  * the journal-backed memory store without touching the engine.
  */
 export interface Store {
+  readonly orders: Collection<OrderRecord>;
   readonly jobs: Collection<Job>;
   readonly tasks: Collection<Task>;
   readonly claims: Collection<Claim>;
@@ -31,11 +42,12 @@ export interface Store {
   readonly verdicts: Collection<Verdict>;
   readonly payouts: Collection<Payout>;
   readonly settlements: Collection<Settlement>;
-  /** Drop all engine state (admin reset). The evidence ledger is a different file and is never touched. */
+  /** Drop job/worker state (admin reset). Order credit reservations and evidence ledger are preserved. */
   clear(): void;
 }
 
 const SCHEMAS = {
+  orders: OrderRecordSchema,
   jobs: JobSchema,
   tasks: TaskSchema,
   claims: ClaimSchema,
@@ -79,6 +91,7 @@ class MemCollection<T extends { id: string }> implements Collection<T> {
  */
 export class MemoryStore implements Store {
   private readonly sink: Sink;
+  readonly orders: MemCollection<OrderRecord>;
   readonly jobs: MemCollection<Job>;
   readonly tasks: MemCollection<Task>;
   readonly claims: MemCollection<Claim>;
@@ -97,6 +110,7 @@ export class MemoryStore implements Store {
         });
       }
     };
+    this.orders = new MemCollection<OrderRecord>("orders", this.sink);
     this.jobs = new MemCollection<Job>("jobs", this.sink);
     this.tasks = new MemCollection<Task>("tasks", this.sink);
     this.claims = new MemCollection<Claim>("claims", this.sink);
@@ -137,7 +151,9 @@ export class MemoryStore implements Store {
   }
 
   private resetAll(): void {
-    for (const name of Object.keys(SCHEMAS) as CollectionName[]) this[name].reset();
+    for (const name of Object.keys(SCHEMAS) as CollectionName[]) {
+      if (name !== "orders") this[name].reset();
+    }
   }
 
   clear(): void {

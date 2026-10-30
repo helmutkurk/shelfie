@@ -16,8 +16,17 @@
   --error-text: #b3261e;
   --error-bg: #fce8e6;
   --camera-chrome: #000000;
+  --accent-soft: #e8f1fb;
+  --accent-soft-text: #004c99;
+  --frame-bg: #e4e4ea;
+  --card-line: rgba(0, 0, 0, 0.06);
+  --skeleton-a: #ececf0;
+  --skeleton-b: #f6f6f8;
   --scrim: rgba(0, 0, 0, 0.4);
   --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-frame: 0 24px 64px rgba(0, 0, 0, 0.14);
+  --app-width: 430px;
 
   --s-1: 4px;
   --s-2: 8px;
@@ -56,5 +65,13 @@
     --error-text: #ff9c96;
     --error-bg: #4a1f1c;
     --shadow-float: none;
+    --shadow-card: none;
+    --shadow-frame: 0 0 0 1px #2a2a2d;
+    --accent-soft: #0f2a44;
+    --accent-soft-text: #8ec5ff;
+    --frame-bg: #101012;
+    --card-line: rgba(255, 255, 255, 0.08);
+    --skeleton-a: #26262a;
+    --skeleton-b: #323237;
   }
 }

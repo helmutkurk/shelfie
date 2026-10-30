@@ -1,51 +1,71 @@
 # Live judging script
 
-Assumption (not confirmed by the organisers): each partner track gets a 3-minute pitch plus 2-3 minutes of Q&A at the team's table or stage, inside the live-judging window. Confirm the format at the opening and adjust. If only 2 minutes are given, drop the "vision" paragraph and shorten the cheat attempt.
+Assumption (not confirmed by the organisers): each partner track gets a 3-minute pitch plus 2-3 minutes of Q&A at the team's table or stage, inside the live-judging window. Confirm the format at the opening and adjust. If only 2 minutes are given, use the 2-minute version below.
+
+Challenge: the hand sign of ADR-19 (`../diseno/decisions.md`), default `CHALLENGE_MODE=gesture`. If the ADR-19 kill criteria trigger before Saturday, the engine runs `card-pool` and the code-card lines at the end of this file replace the hand-sign lines.
 
 ## Roles
 
 | Role | Speaker | Job |
 |---|---|---|
-| D | Storyteller / pitch lead | Hook, persona, business case, close; answers business, vision, UX and privacy questions |
-| B | Operator | Drives the laptop: Sokosumi, escrow, explorer; answers Cardano and payment questions |
-| A | Field shopper | Holds the phone and the printed price tag or code card, performs the photo and the cheat; one spoken line; also answers architecture and scale questions; holds the backup device |
-| C | Verifier narrator | Narrates the verifier screen; answers verifier, fraud and security questions |
+| A | Isabel: storyteller and field shopper | Tells the real request (her own story), holds the phone and the printed tag, performs the cheat and the photo with the hand sign, says the callback; answers architecture and scale questions |
+| C | Lorenz: pitch lead and verifier narrator | Product sentence, verifier narration, business and limits; answers verifier, fraud and security questions |
+| B | Fernando: operator | Drives the laptop (Sokosumi, escrow, explorer), one line each on the lock and the payout tx; answers Cardano and payment questions |
+| D | Helmut: backup and time | Timekeeper, backup laptop and video, holds the cheat screen, hands over props; answers business, UX and privacy questions |
 
-These are stage roles. Letters are the same build roles as `../diseno/repo-layout.md` section 2 (A shell and engine, B payments, C verifier, D web, evidence and pitch), so each person speaks about what they built. Everyone knows the whole script. Q&A: D takes business, vision, UX and privacy, B takes Cardano and payments, C takes verifier, fraud and security, A takes architecture and scale.
+Two main voices (Isabel, Lorenz); handoffs eat time. Letters are the build roles of `../diseno/repo-layout.md` section 2, so each person speaks about what they built. Everyone knows the whole script. If a judge asks the "wrong" person, that person answers and the others add.
 
 ## Setup before the table is called
 
-- [ ] Laptop on power; second tab strips: Sokosumi, verifier view, preprod.cardanoscan.io (payout address pre-opened), terminal with ledger.
+- [ ] Laptop on power; second tab strips: Sokosumi, verifier view, preprod.cardanoscan.io (verifier fee address and payout address pre-opened), terminal with ledger.
 - [ ] A fresh job pre-created but not started; one earlier completed job open in a tab (escrow settled) and one earlier refunded job open in a tab.
-- [ ] Phone with the web app logged in, brightness max, do-not-disturb on, screen recording running as insurance.
-- [ ] Printed price tag with a known product, the printed challenge-code cards (card-pool mode) and paper plus marker (handwritten mode), an old printed photo of the same tag (or the old photo open on the laptop screen) to aim the live camera at, for the cheat; there is no gallery path in the app.
+- [ ] Phone with the web app logged in, brightness max, do-not-disturb on, screen recording running as insurance. Camera permission already granted (no prompt on stage).
+- [ ] Printed price tag with a known product. For the cheat: an old photo of the same tag full-screen on the backup laptop or a tablet (Helmut holds it); there is no gallery path in the app.
+- [ ] Fallback props only for `card-pool` mode: the printed challenge-code cards.
 - [ ] Offline backup: a USB stick/phone with the video, screenshots of each step, and a text file with tx hashes.
 - [ ] Hotspot ready as a backup network. Preprod wallet balances checked (tADA in `W-VBUY` for verifier fees and in `W-PAY` for payouts).
 - [ ] Browser zoom 125%; notifications off; no secret in any visible tab.
 
-## Run of show (3:00 pitch)
+## Run of show (3:00 slot, planned to 2:45)
 
-| Time | Speaker | Says / does | Demo step |
+| Time | Speaker | Says / does | Screen |
 |---|---|---|---|
-| 0:00-0:20 | D | "An AI can write a report about a shelf. It cannot see the shelf. This is Katharina; she sells craft lemonade in Bavaria and needs to know whether her bottle is on the shelf in this Munich store today. Agencies take days and bill her even when the photo is useless." | Slide 1: persona + shelf |
-| 0:20-0:40 | D | "Shelfie: paid only when the photo is true. Three payment gates: the photo gate decides if each photo is real and pays the person, the job gate settles the escrow when the photo passes (one store, one photo), and otherwise the brand gets an automatic refund." | Slide 2: three gates |
-| 0:40-1:05 | B | "She hires our lead agent on Sokosumi. The fee is locked in Masumi escrow on preprod. Here is the lock transaction from a run we started before coming up." | Demo 1: Sokosumi job, lock tx on explorer |
-| 1:05-1:45 | A + C | A: "I am a person near the shop. I claim the task and the page gives me a one-time code; here it is on a printed card." C: "The photo must contain the price tag and this code. It proves the photo is new and made for this task, not where it was taken." A shoots with the tag and the card in frame. | Demo 2: challenge-code photo |
-| 1:45-2:10 | C then B | C: "Our lead agent pays the verifier per check over x402. It reads product and price, matches the code, the time window. Green." B: "And the person is paid now. Here is the payout transaction." Click through to the explorer. | Demo 3: verifier green, payout tx |
-| 2:10-2:30 | A then C | A: aims the live camera at the old photo and shoots. C: "Same tag, old photo, no valid code. No payment." | Demo 4: cheat attempt, red |
-| 2:30-2:50 | D | "If the photo passes, the brand gets the report and the escrow settles; otherwise it is refunded. Illustrative pricing: about twelve euros per verified check, and only passing checks are paid. An agency audit visit costs from about 30 to 45 dollars, a German test purchase from 50 euros, and is paid regardless." | Slide 3: report + refund tab, one number |
-| 2:50-3:00 | D | "Shelfie: agents hire people to look, and the blockchain pays the bill. Preprod today; store QR codes and other proof-of-real-world tasks next." | Slide 4: close |
+| 0:00-0:27 | Isabel | "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph his competitors in a few shops: the price, and is it on the shelf. He can't check our photos, and an AI can't see a shelf. So we built an agent that hires a person, and pays only if the photo is true." No "hello, we are team Shelfie" before it. | Slide 1: their real shelf photo |
+| 0:27-0:35 | Lorenz | "Shelfie. Paid only when the photo is true. For brands entering a market without a field team." | Slide 2: four-step flow |
+| 0:35-0:52 | Fernando | "His question as a Sokosumi job: one drink, one Munich store. The fee sits in escrow on Cardano preprod; this lock is from an earlier run. Photo, check and payout are live." | Slide 3, then Sokosumi job and lock tx |
+| 0:52-1:15 | Isabel, Lorenz | Isabel claims the task and opens the camera (a hand sign appears), aims it at the old photo on Helmut's screen, no fingers, and shoots. While it runs, Lorenz: "The verifier is a separate service, paid per check over x402. Today we run it; the brand can swap its URL." On the verdict: "Red. No money moves." (read the reason on screen: screen photo or sign missing) | Verifier red |
+| 1:15-1:45 | Isabel, Lorenz | Isabel: "This is what I did by hand for him." She claims again; the camera shows a new sign. She shows the phone for one second, holds the fingers next to the tag and shoots. Lorenz: "The sign appears only when the camera opens; she has ninety seconds. An old photo can't show a sign that didn't exist. It reads product, price and sign. Green." | Hand-sign photo, verifier green |
+| 1:45-2:00 | Fernando | "Two transactions on preprod: the verifier's fee, and her payout. Here is the hash." Hash in the app first, then the explorer tab (refresh once). | App payout row, then explorer |
+| 2:00-2:17 | Lorenz | "The photo passed, so the report is delivered and escrow settles; if it fails, the brand is refunded. Earlier runs, here. Lock, fee, payout, settle or refund: every step is a public receipt on Cardano." | Slide 4: receipts; settled and refunded tabs |
+| 2:17-2:35 | Lorenz | "One test purchase costs fifty euros; a Shelfie check, about twelve. Today: one shelf, preprod, one real request, no brand interviews yet. The sign stops stale photos, not the wrong shop; store QR codes are next." | Slide 5: today / next |
+| 2:35-2:45 | Isabel | "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true." | Slide 6: close |
 
-If a judge wants to participate: A hands the phone and the card to the judge for demo steps 2-4. This is the best moment; only offer it when time allows and the network is behaving.
+281 spoken words: about 1:56 at 145 words per minute, about 2:10 at 130 (stage pace). With two verifier runs (about 10 s each: p95 8 s plus x402), two shots, tab switches and the explorer, about 2:45; 15 s of slack in a 3:00 slot. The tagline appears three times (hook, 0:27, close). Decisions behind this version: [../review/pitch-jury-2026-10-30.md](../review/pitch-jury-2026-10-30.md).
+
+Optional market sentence, only if the timer shows 2:00 or earlier at the receipts beat: "Brands spend six billion dollars a year on in-store merchandising." It goes first in the 2:17 beat (about 5 s).
+
+Verify before Saturday (B): the x402 verifier fee shows as its own preprod tx on the explorer. If not, Fernando says "The verifier's fee is logged; her payout is live on preprod" and slide 4 marks the fee row "logged".
+
+Why the cheat comes first: fail, then pass, then pay is a stronger arc than green first, and the red step costs nothing if the network is slow. The cheat uses one claim (a claim takes one verified photo; the task reopens on a fail), so the true photo needs a second claim with a new sign. That leaves one of the three attempts (`MAX_ATTEMPTS`) as a spare. The engine waits 5 s after a claim before it accepts a photo (`minSecondsAfterClaim`); Isabel's line covers it.
+
+Why no fingers in the cheat: the red verdict then does not depend on the screen check (G8 fails open when the model omits the flag); it fails on `screen_recapture` or on the missing sign. Lorenz reads whichever reason the screen shows.
+
+If the verifier takes more than 10 s: Lorenz fills with "It checks product, price, sign and time window", then "Green". If behind at 1:45, Fernando shows only the payout hash; if still behind at 2:17, drop "One test purchase ... about twelve".
+
+2-minute version: drop Fernando's lock beat (Lorenz adds "The fee is locked in escrow on Cardano" inside the 2:00 beat), drop the x402 line during the cheat, drop the price sentence at 2:17.
+
+If a judge wants to participate: Isabel hands the phone to the judge for the true photo (1:15); the judge shows the fingers. Offer it only when ahead of time and the network is behaving.
 
 ## Demo choreography detail
 
-1. **Escrow (B):** show the pre-started job. Do not wait for settlement on stage; the cycle can exceed 60 minutes. Say so: "escrow runs for about an hour, so this one finished earlier", and click the settled job.
-2. **Challenge-code photo (A):** the code (card number in card-pool mode) appears on the phone only after A claims the task. A shows the screen to the judges for one second, then puts the matching printed card (or the code written on paper) next to the tag; the phone that takes the photo cannot show its own screen. Both code and tag must be in frame.
-3. **Verifier (C):** the verifier page highlights the extracted price and product, then each check turns green; C reads only the code and the price.
-4. **Payout (B):** show the payout tx hash, amount, status. Zoom in.
-5. **Cheat (A/C):** point the live camera at the old photo (printout or laptop screen) and shoot; the app has no upload path (ADR-17), so say plainly that the live camera can be aimed at anything and that the code, not the camera, is the defence. Verifier shows red with "code missing". Payout counter stays unchanged, and the verification fee is still shown as spend.
-6. **Close (D):** switch to the report and the refund tab.
+1. **Escrow (B):** show the pre-started job. Do not wait for settlement on stage; the cycle can exceed 60 minutes. Say so: "this lock is from an earlier run", and click the settled job.
+2. **Cheat (A, C, D):** A claims the task and opens the camera; the sign is revealed and the 90 s window starts. A points the camera at the old photo on Helmut's screen, shows no fingers, and shoots. The verifier shows red with the reason; the payout counter stays unchanged and the verification fee is still shown as spend. The app has no upload path (ADR-17); if asked, say the live camera can be aimed at anything and the late sign plus the 90 s window, not the camera, is the defence (Q&A, not on stage).
+3. **Hand-sign photo (A):** A claims the task again; the camera reveals a new sign (2-5 fingers, left or right of the tag). A shows the phone screen to the judges for one second, then holds the fingers on the named side of the tag and shoots within 90 s. Tag and hand must both be in frame.
+4. **Verifier (C):** the verifier page highlights the extracted price and product, then each check turns green; C reads only price and sign.
+5. **Fee and payout (B):** the payout row with its hash in the app first, then the x402 fee tx and the payout tx on the explorer. A fresh payout may need one refresh (preprod blocks about every 20 s); if it is not indexed yet, keep the app hash on screen and say "the explorer catches up in a few seconds".
+6. **Result (C):** slide 4 (receipts), then the settled and the refunded job tabs, each labelled "earlier run".
+
+Screen tooling: slides in `pdfpc` on one workspace, one Chrome window with the demo tabs in order (Sokosumi, verifier, explorer, report) switched with `Ctrl+1..9`; no OBS scenes live. Details: [pitch-plan.md](pitch-plan.md) section 6.
 
 ## Backup plan for each demo step
 
@@ -53,12 +73,13 @@ If a judge wants to participate: A hands the phone and the card to the judge for
 |---|---|---|
 | Escrow job start | Sokosumi down or slow | Open the earlier completed job; show recorded lock clip |
 | Lock tx | Explorer slow | Pre-loaded tab; screenshot of the lock tx in the slide deck |
-| Phone shoot | Camera/permission/network failure | Second phone (A) with the same page; or use the flagged admin test upload with a pre-shot photo of the correct tag and a code already issued (off in evidence runs; state this honestly) |
-| Challenge code | Page does not show code | Reload; if still failing, use the backup task link with a pre-issued code |
+| Phone shoot | Camera/permission/network failure | Second phone (A) with the same page; or use the flagged admin test upload with a pre-shot photo of the correct tag and sign (off in evidence runs; state this honestly) |
+| Hand sign | "Loading your hand sign..." does not end | Close and reopen the camera (the reveal is idempotent, same sign, same window); if still failing, release and claim again |
+| Hand sign | Verifier misreads the fingers (`gesture_mismatch`, `gesture_low_confidence`) | Claim again (last spare attempt), fingers spread, hand flat against a plain background; then the override below |
 | Verifier | Vision model slow or misreads | Turn on the admin-only manual override (off by default, red "DEMO OVERRIDE" badge, ledger entry) and say what it is; or play the 20-second verifier clip |
 | x402 payment | Facilitator or network error | Show the ledger of earlier x402 payments with tx hashes; play the clip |
-| Payout tx | Not confirmed in time | Show the previous payout tx from the earlier run; explain the preprod block time |
-| Cheat | Old photo not readable by the camera | Have the cheat image on the laptop screen and a printout; or shoot the real tag with a wrong code; or play the clip |
+| Payout tx | Not confirmed in time | Show the hash in the app; then the previous payout tx from the earlier run; explain the preprod block time |
+| Cheat | Verifier passes the screen photo | Cannot pass without the sign; if it does, say so plainly ("the screen check is model-based, here it missed") and move on |
 | Whole demo | Venue network down | Hotspot; then the 2:20 video with live commentary; then the screenshots deck |
 | Refund | No refund yet | Open the earlier refunded job or its recording |
 
@@ -67,12 +88,21 @@ Rule: never present a recording or a pre-existing transaction as if it was live.
 ## Q&A plan (2-3 minutes)
 
 - Take the first question in one sentence, then redirect to the relevant speaker if needed.
-- If asked what is not built: say plainly (preprod only, location proof is roadmap, we use teammates as shoppers).
+- If asked what is not built: say plainly (preprod only, location proof is roadmap, we use teammates as shoppers, one real request but no brand interviews yet).
+- If asked about traction: "one real request, which inspired the product"; never "customer" or "pilot".
+- If asked about the hand sign: 8 combinations, so a blind guess passes the sign check 1 time in 8; the late reveal, the 90 s window, single use, the other gates and location still apply (ADR-19).
 - Use `qa-prep.md`; the top five to rehearse: fraud/GPS spoofing, why blockchain, why Cardano instead of Stripe, custody/who holds the money, what was built in 30 hours.
 
-## Timing marks (for the timekeeper, a fifth person or a phone)
+## Timing marks (Helmut, phone timer)
 
-0:20, 0:40, 1:05, 1:45, 2:10, 2:30, 2:50, 3:00. If behind at 1:45, skip the escrow detail in the 2:30 section; if ahead, offer the judge the phone.
+0:27, 0:35, 0:52, 1:15, 1:45, 2:00, 2:17, 2:35, 2:45. Ahead at 2:00: add the market sentence. Ahead at 1:15: offer the judge the phone. Behind at 1:45: payout hash only. Behind at 2:17: drop the price sentence.
+
+## Card-pool fallback lines
+
+Only if the engine runs `CHALLENGE_MODE=card-pool` (ADR-19 kill criteria). Setup: printed code cards next to the tag.
+- 0:52 cheat: Isabel claims, opens the camera, aims at the old photo, shoots. Lorenz on the verdict: "Same tag, old photo, no code. Red. No money moves."
+- 1:15 true photo: Isabel claims again, shows the code for a second, holds the matching card next to the tag and shoots. Lorenz: "The code proves this photo is new, made for this task. It reads product, price and code. Green."
+- 2:17: "The code stops stale photos, not the wrong shop."
 
 ## Multiple tracks
 

@@ -16,13 +16,13 @@ Two independent rounds, with different methods, ranked the **same concept first*
 1. **Lead agent** (Sokosumi Coworker) validates the job against the catalogs (intake), turns it into one micro-task and posts the bounty.
 2. **Humans** in the city see the task in a mobile web page; the first to claim it gets it (soft city check), and takes the photo with the live in-app camera only (no gallery), with browser location checked against the store at the shutter (ADR-17). If the product is not on the shelf, the worker photographs the empty spot with its shelf label instead (verdict OUT_OF_STOCK, same pay, the brand gets an out-of-stock report).
 3. **Verifier agent** (separate service, paid **per check via x402**) runs a deterministic gate:
-   - **Freshness:** the photo must show the task's **one-time challenge code** (shown on the worker page, then written on paper, or a printed card, held next to the tag; the phone that shoots cannot show its own screen). This proves the photo is new and for this task: Shelfie's signature anti-fraud trick.
+   - **Freshness:** the photo must show the task's **one-time hand sign** (2-5 raised fingers left or right of the tag), revealed only when the worker opens the camera and answered within 90 s; a photo of a screen is rejected. No pen or paper (ADR-19; printed or hand-written codes stay as a fallback mode). This proves the photo is new and for this task: Shelfie's signature anti-fraud trick.
    - **Readability:** a vision model extracts product name and price → both parse.
    - **Match:** the product matches the requested EAN/name.
    - **Sanity:** the price is within a plausible range.
    - **Timing:** server-side timestamp inside the task window.
 4. **Pass →** the lead pays the human **on-chain right away** (preprod), and the row lands in the brand's report. **Fail →** no payout, and the task is reopened.
-5. **Delivery:** if the photo passes, the report is submitted and the escrow settles. Fail → the worker may retry with a new code; no passing photo by the window end → the result is withheld → **automatic refund** to the brand.
+5. **Delivery:** if the photo passes, the report is submitted and the escrow settles. Fail → the worker may retry with a new hand sign; no passing photo by the window end → the result is withheld → **automatic refund** to the brand.
 
 **Why it wins on the Cardano rubric (inference):**
 
@@ -32,10 +32,10 @@ Two independent rounds, with different methods, ranked the **same concept first*
 | Payment tied to result | Three gates: verifier pass → human payout; passing photo → report delivered and escrow settles; else refund |
 | Agents hire agents / act in the real world | Lead hires a verifier agent (x402) **and** humans in physical stores |
 | Live paid task + explorer tx | A photo is taken on stage → green check → payout tx appears live |
-| Originality | Agents as employers of people, with a cryptographic-ish freshness code; nothing similar visible on Sokosumi |
+| Originality | Agents as employers of people, with a one-time hand sign as freshness challenge; nothing similar visible on Sokosumi |
 | Beyond the hackathon | Retail audits, then generalises to any "proof-of-real-world" micro-task (deliveries, outages, accessibility checks) |
 
-**Live moment:** one teammate stands up holding a product with a price tag. The challenge code appears on their phone; they shoot; the verifier highlights the price; it goes green; the payout tx shows on Cardanoscan. Then a "cheat" attempt (the live camera aimed at an old photo, or a wrong code; there is no gallery path) is rejected live with no payment. Optional bonus: invite a judge to do it.
+**Live moment:** one teammate stands up holding a product with a price tag. The hand sign appears on their phone; they hold up the fingers and shoot; the verifier highlights the price; it goes green; the payout tx shows on Cardanoscan. Then a "cheat" attempt (the live camera aimed at a laptop showing an old photo, or the wrong hand sign; there is no gallery path) is rejected live with no payment. Optional bonus: invite a judge to do it.
 
 ## Why not the others
 
@@ -51,7 +51,7 @@ Two independent rounds, with different methods, ranked the **same concept first*
 | Escrow cycle ≥ 60 min | Run the escrow job early Saturday; on stage show the lock tx + the settlement/refund from earlier runs; the live part is the x402 + payout leg |
 | Human payout is a plain transfer, not x402 | Pay from the lead's own wallet with the Cardano SDK (verify Friday morning); fallback: the human's phone page is a tiny x402 seller |
 | Vision misreads tags | Demo uses price tags we print; the video uses real stores; the gate also accepts manual override **for the demo only**, clearly labelled |
-| Location spoofing | Be explicit: the challenge code proves freshness, not location; roadmap: store-owned QR codes |
+| Location spoofing | Be explicit: the hand sign proves freshness, not location; roadmap: store-owned QR codes |
 | Privacy in stores | No people in frame; shelves only; ask store permission for the video, or use our own shelf |
 | Humans need wallets | Demo: teammates' preprod wallets; product: payout address or custodial-free wallet onboarding as roadmap |
 

@@ -39,8 +39,40 @@ export function hostGuard(allowedHostnames: ReadonlySet<string>): RequestHandler
   };
 }
 
-/** State-changing requests with a foreign `Origin` are refused (same-origin app, no CORS). */
-export function originGuard(allowedOriginHosts: ReadonlySet<string>): RequestHandler {
+/**
+ * Parses `ALLOWED_ORIGINS`: comma-separated exact origins (`https://app.example.me`). No wildcards,
+ * no paths, http(s) only; anything else throws so the engine fails at boot (security.md E9).
+ */
+export function parseAllowedOrigins(raw: string | undefined): Set<string> {
+  const out = new Set<string>();
+  for (const part of (raw ?? "").split(",")) {
+    const item = part.trim();
+    if (item.length === 0) continue;
+    let u: URL;
+    try {
+      u = new URL(item);
+    } catch {
+      throw new Error(`ALLOWED_ORIGINS: not an origin: ${item}`);
+    }
+    const plain = /^https?:\/\/[^/*?#@\s]+$/i.test(item);
+    if (!plain || item.includes("*") || (u.protocol !== "https:" && u.protocol !== "http:")) {
+      throw new Error(
+        `ALLOWED_ORIGINS: exact http(s) origins only (no wildcard, path or userinfo): ${item}`,
+      );
+    }
+    out.add(u.origin.toLowerCase());
+  }
+  return out;
+}
+
+/**
+ * State-changing requests with a foreign `Origin` are refused (same-origin app, no CORS).
+ * `allowedOrigins` is an exact allow-list of extra full origins (Vercel frontend proxying /api).
+ */
+export function originGuard(
+  allowedOriginHosts: ReadonlySet<string>,
+  allowedOrigins: ReadonlySet<string> = new Set(),
+): RequestHandler {
   return (req, _res, next) => {
     if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
       next();
@@ -48,6 +80,10 @@ export function originGuard(allowedOriginHosts: ReadonlySet<string>): RequestHan
     }
     const origin = req.headers.origin;
     if (origin === undefined) {
+      next();
+      return;
+    }
+    if (allowedOrigins.has(origin.toLowerCase())) {
       next();
       return;
     }
@@ -189,3 +225,19 @@ export const requireShellOrAdmin = (tokens: Tokens, lock: FailLock): RequestHand
     },
     "Shell",
   );
+
+/** Orders accept only the header; a missing server configuration fails closed. */
+export function requireBrand(token: string | undefined): RequestHandler {
+  return (req, _res, next) => {
+    const supplied = headerValue(req, "x-brand-token");
+    if (!supplied) {
+      next(new AppError("brand_token_missing", "Brand access code required."));
+      return;
+    }
+    if (!token || !safeEqual(supplied, token)) {
+      next(new AppError("brand_token_invalid", "Brand access code was not accepted."));
+      return;
+    }
+    next();
+  };
+}

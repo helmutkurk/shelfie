@@ -19,7 +19,7 @@ Venue: House of Communication, Friedenstraße 24, 81671 München (Nominatim: 48.
 ### Limitations
 - The chains' official store locators were not queried (REWE blocks scripted access with 403; others not tried), so `chainLocatorVerified` is false for every store. Verify the demo stores on the chain locator or on site before Friday.
 - OSM coordinates are building or entrance points, not necessarily the shelf. Chains and opening hours can have changed.
-- `preparacion/demo-props.md` lists REWE at Hanne-Hiob-Str. 10 (from the REWE finder); OSM puts the REWE at August-Everding-Straße 20 and an Asia Center at Hanne-Hiob-Straße 10. Both points are about 20 m apart. The catalog follows OSM; reconcile on site.
+- `preparacion/demo-props.md` lists REWE at Hanne-Hiob-Str. 10 (from the REWE finder); OSM puts the REWE at August-Everding-Straße 20 and an Asia Center at Hanne-Hiob-Straße 10. Both points are about 20 m apart. Resolved 2026-10-30: the REWE keeps its id and OSM coordinates (the 150 m geofence covers both) but is displayed as "REWE, Hanne-Hiob-Straße 10, 81671 München" (the address teammates know), with `aliases: ["August-Everding-Straße 20"]`; the Lidl stays at August-Everding-Straße 20.
 - `address` has the form `Street No, PLZ München`; the contract says the address must match the catalog entry exactly, so the shell must use the same string.
 
 ## Products
@@ -40,3 +40,7 @@ cp investigacion/catalogo/stores.json codigo/packages/domain-shelf/catalog/store
 cp investigacion/catalogo/products.json codigo/packages/domain-shelf/catalog/products.json
 ```
 The zod schemas should ignore or strip the extra fields (or the copy step should keep only contract fields plus lat/lon/geofenceRadiusM/category). Filter out products with `ean: null` before seeding, and add the real demo product and store (contract: both must exist in the catalogs).
+
+
+## Demo store (2026-10-30)
+`demo-hoc-friedenstrasse-24` (chain DEMO, `demo: true`) is the stage shelf at the venue, House of Communication, Friedenstraße 24, 81671 München, for the live demo with props (`preparacion/demo-props.md`). It is NOT a real supermarket. Coordinates 48.1275499, 11.6093703 from OpenStreetMap Nominatim (node 7020339979, "Serviceplan - House Of Communication", ODbL, queried 2026-10-30; the earlier venue point 48.12755, 11.60937 agrees). Geofence 150 m.

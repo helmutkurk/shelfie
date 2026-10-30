@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { GateNameSchema, OutcomeSchema, ReasonCodeSchema } from "@shelfie/core";
+import { GateNameSchema, GestureChallengeSchema, OutcomeSchema, ReasonCodeSchema } from "@shelfie/core";
 import { z } from "zod";
 
 // eval/labels.json (verifier-rules.md section 7). Photos live in eval/photos/ (git-ignored).
@@ -9,6 +9,8 @@ export const CaseSchema = z.enum([
   "valid_hard",
   "wrong_code",
   "no_code",
+  "wrong_gesture",
+  "no_gesture",
   "wrong_product",
   "unreadable_tag",
   "absurd_price",
@@ -27,8 +29,10 @@ export const LabelSchema = z.object({
   file: z.string().regex(/^[A-Za-z0-9_.-]+$/),
   outcome: OutcomeSchema.default("OBSERVED"),
   case: CaseSchema,
-  /** The throwaway challenge code that was written on paper for this photo. */
-  expectedCode: z.string().min(1),
+  /** The throwaway challenge code that was written on paper for this photo (code modes). */
+  expectedCode: z.string().min(1).default("XXX-XXX"),
+  /** Gesture mode (ADR-19): the hand sign the photo was meant to show; G2 then checks it. */
+  expectedGesture: GestureChallengeSchema.optional(),
   product: z.object({
     name: z.string(),
     ean: z.string(),
@@ -40,7 +44,11 @@ export const LabelSchema = z.object({
   store: z.object({ id: z.string(), name: z.string() }).default({ id: "eval", name: "Eval shelf" }),
   /** Ground truth read by a human from the photo. */
   truth: z
-    .object({ code: z.string().nullable().optional(), priceValue: z.number().nullable().optional() })
+    .object({
+      code: z.string().nullable().optional(),
+      gesture: GestureChallengeSchema.nullable().optional(),
+      priceValue: z.number().nullable().optional(),
+    })
     .default({}),
   expect: z.object({
     pass: z.boolean(),

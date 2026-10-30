@@ -155,6 +155,73 @@ describe("camera sheet", () => {
   });
 });
 
+describe("camera sheet, gesture mode (ADR-19)", () => {
+  const gestureClaim = () => ({
+    ...claimFixture(),
+    challenge: { code: "", mode: "gesture" as const, instruction: "Open the camera." },
+  });
+  const reveal = {
+    claimId: "clm_01",
+    gesture: { fingers: 3, side: "left" },
+    revealedAt: "2026-10-30T10:00:00.000Z",
+    answerWithinSec: 90,
+    instruction: "Hold up 3 fingers, hand on the left side.",
+  };
+
+  it("reveals the hand sign on open and enables the shutter only then", async () => {
+    const { deps, calls } = makeDeps({ routes: { "POST /api/claims/clm_01/challenge": reveal } });
+    renderWithDeps(
+      h(CameraSheet, {
+        open: true,
+        mode: "OBSERVED",
+        onModeChange: () => undefined,
+        claim: gestureClaim(),
+        task: taskFixture(),
+        onClose: () => undefined,
+        onSubmitted: () => undefined,
+        onClaimLost: () => undefined,
+      }),
+      deps,
+    );
+    const sign = await screen.findByTestId("gesture-sign");
+    expect(sign.getAttribute("aria-label")).toBe("Hold up 3 fingers to the left of the price tag");
+    expect(calls.some((c) => c.path === "/api/claims/clm_01/challenge")).toBe(true);
+    await waitFor(() =>
+      expect(screen.getByRole<HTMLButtonElement>("button", { name: "Take photo" }).disabled).toBe(
+        false,
+      ),
+    );
+    expect(screen.queryByText("K7Q-4XM")).toBeNull();
+    noFileInput();
+  });
+
+  it("keeps the shutter disabled while the sign is not revealed", async () => {
+    const { deps } = makeDeps({
+      routes: {
+        "POST /api/claims/clm_01/challenge": () =>
+          errorResponse("dependency_unavailable", "Engine busy.", 503),
+      },
+    });
+    renderWithDeps(
+      h(CameraSheet, {
+        open: true,
+        mode: "OBSERVED",
+        onModeChange: () => undefined,
+        claim: gestureClaim(),
+        task: taskFixture(),
+        onClose: () => undefined,
+        onSubmitted: () => undefined,
+        onClaimLost: () => undefined,
+      }),
+      deps,
+    );
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Take photo" }).disabled).toBe(
+      true,
+    );
+  });
+});
+
 describe("worker app", () => {
   it("never renders a file input across onboarding, feed and claimed screens", async () => {
     const { deps } = makeDeps({
@@ -194,5 +261,22 @@ describe("worker app", () => {
     fireEvent.click(screen.getByRole("checkbox"));
     expect(next.disabled).toBe(false);
     noFileInput();
+  });
+});
+
+describe("camera constraints", () => {
+  it("asks for an HD rear camera (a 640x480 default is rejected by the engine)", async () => {
+    const { startCamera } = await import("./lib/camera.js");
+    let seen: MediaStreamConstraints | undefined;
+    await startCamera({
+      getUserMedia: (c) => {
+        seen = c;
+        return Promise.resolve({} as MediaStream);
+      },
+    });
+    const video = seen?.video as MediaTrackConstraints;
+    expect(video.facingMode).toEqual({ ideal: "environment" });
+    expect(video.width).toEqual({ ideal: 1920 });
+    expect(video.height).toEqual({ ideal: 1080 });
   });
 });

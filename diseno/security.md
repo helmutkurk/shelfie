@@ -240,7 +240,7 @@ Controller: the hackathon team (Helmut as contact). Data subjects: workers who t
 | Payout address | send the payout | consent (consent screen) | event end + 7 days, then deleted from store; on-chain record remains (public ledger, stated) | address shortened in UI/logs |
 | Coarse location at claim | city check | consent | request only, nothing stored but `cityMatch` | not logged |
 | Precise location at capture | geofence check | consent | request only, nothing stored but `distanceM`, `accuracyM`, `withinGeofence` | not logged |
-| Photo | verification and dispute during the event | consent | on the hub until the end of the event (Sat 2026-10-31 evening), then deleted by Helmut (`scripts/purge-evidence.sh`, B); photos selected for the pitch are kept only if no person is visible and the author agreed | EXIF stripped, never in git, shelves only |
+| Photo | verification and dispute during the event | consent | on the hub until the end of the event (Sat 2026-10-31 evening), then deleted by Helmut (`scripts/purge-evidence.ts`, B); photos selected for the pitch are kept only if no person is visible and the author agreed | EXIF stripped, never in git, shelves only |
 | Session/display name | operate the app | consent | event end | opaque id |
 
 Consent text shown on the first run of `/w` (D; wording to be reviewed by Helmut; version id `consent-v1`): "Shelfie checks shelf prices for a hackathon demo. If you continue: (1) your phone location is read when you claim a task and when you take the photo, only to check you are in the store's city and near the store; exact coordinates are not saved. (2) Your photo is sent to our server and to an AI vision service (Google or OpenAI) to read the price tag; photograph shelves and price tags only, no people. (3) Your payout address is stored to send your test payment and is visible on the public Cardano preprod ledger. Photos are deleted after the event. Contact: Helmut." The UI must offer "decline" which leaves the app read-only. Right to erasure: Helmut deletes a worker's records on request during the event window; on-chain data cannot be erased (stated). Real third-party personal data stays out (AGENTS.md never-do list); only team and invited testers photograph shelves.
@@ -251,7 +251,7 @@ At boot of every process, before any other work: `NETWORK` must equal `preprod`;
 
 ## 5. Evidence runs and operational rules
 
-- Evidence run preconditions (checked by one command, `scripts/evidence-preflight.sh`, B): `FAKE_PAYMENTS=0`, `VERIFIER_MODE` not stub, `ENABLE_DRY=false`, `ALLOW_DEMO_OVERRIDE=false`, `ALLOW_TEST_UPLOAD=false`, network preprod, `/api/health` shows no fake flag, no flagged ledger entry in the run.
+- Evidence run preconditions (checked by one command, `scripts/evidence-preflight.ts`, B): `FAKE_PAYMENTS=0`, `VERIFIER_MODE` not stub, `ENABLE_DRY=false`, `ALLOW_DEMO_OVERRIDE=false`, `ALLOW_TEST_UPLOAD=false`, network preprod, `/api/health` shows no fake flag, no flagged ledger entry in the run.
 - Incident (leaked key, wrong payout): stop the queue (admin pause), rotate per `docs/github-setup.md` section 8, log "rotated at HH:MM" in `docs/ai-log.md`.
 - Review gates: `security-reviewer` before every push touching payments, env, scripts, CI, upload, auth; Helmut checks `security.yml` green before M4 (first escrow) and before the final smoke run.
 
@@ -268,3 +268,9 @@ At boot of every process, before any other work: `NETWORK` must equal `preprod`;
 9. Optional Socket Firewall availability and free-tier terms.
 10. GitHub plan features actually active (branch protection API answer, Dependabot alerts) (Helmut).
 11. Sokosumi hire form option fields (select) so free text never reaches the engine (A).
+
+## Orders trust boundary (ADR-20, 2026-10-30)
+
+Dashboard -> engine -> Sokosumi spends Shelfie's credits. `X-Brand-Token` header only, constant-time hash comparison, 32+ characters, no default, no query acceptance. Rate limits before auth and purchases; Host/Origin guards continue to apply. Both order reads require auth. No credentials, note, request bodies or upstream responses in logs. Token env values are redacted by the existing logger; browser stores access codes in memory only. Real adapter accepts only the preprod HTTPS origin, refuses redirects, times out and bounds/validates JSON replies. It currently probes only the agent schema and refuses mutations until B-15 proves one capped Task purchase mechanism and starter authority. READY Task plus attached agent Job is forbidden (two purchase paths). Intake all stores before calls. Persist worst-case credit reservation before I/O; concurrent orders and restarts cannot evade the UTC-day cap. Uncertain requests stay reserved and are never automatically retried; operator reconciles B-15 first. Reset preserves reservations. Fake orders require fake payment/verifier adapters and are refused in evidence-locked runs. Their ledger entries carry fakeSokosumi, which evidence-preflight rejects.
+
+Proof: `apps/engine/src/orders-http.sec.test.ts` (actual Express middleware without listening sockets), `apps/engine/src/orders.sec.test.ts` (missing/wrong/query token, caps, catalog refusal without calls, safe logs, env fail closed); `orders.test.ts` (concurrency, replay, uncertain purchases, correlation, lifecycle); shell bridge tests; web order form/status tests. Security-reviewer pass required before integration.

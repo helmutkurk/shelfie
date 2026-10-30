@@ -91,9 +91,43 @@ export type SharedEnv = z.output<typeof SharedEnvSchema>;
 const engineBase = z.object({
   ...sharedEnvShape,
   ENGINE_PORT: intVar(4000),
+  BRAND_TOKEN: z
+    .string()
+    .min(32)
+    .refine((v) => v !== "CHANGE_ME", "placeholder refused")
+    .optional(),
+  SOKOSUMI_CLIENT: z.enum(["fake", "real"]).default("fake"),
+  SOKOSUMI_API_URL: z
+    .literal("https://api.preprod.sokosumi.com")
+    .default("https://api.preprod.sokosumi.com"),
+  SOKOSUMI_API_TOKEN: z
+    .string()
+    .min(8)
+    .refine((v) => v !== "CHANGE_ME", "placeholder refused")
+    .optional(),
+  SOKOSUMI_AGENT_ID: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
+  SOKOSUMI_MAX_CREDITS_PER_TASK: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(100),
+  ORDER_MAX_STORES: z.coerce.number().int().min(1).max(100).default(5),
+  ORDER_DAILY_CREDIT_CAP: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(500),
   SELLER_ADDRESS: optStr(),
   PAYOUT_DAILY_CAP_LOVELACE: lovelaceVar("50000000"),
   ALLOWED_HOSTS: optStr(),
+  ALLOWED_ORIGINS: optStr(),
   CATALOG_DIR: optStr(),
   WEB_DIST: optStr(),
   VERIFY_CLIENT: z.enum(["fake", "real"]).optional(),
@@ -114,6 +148,8 @@ const engineBase = z.object({
   CLAIM_TTL_SEC: intVar(300),
   VERIFY_BUDGET_SEC: intVar(120),
   LOCATION_CHECK: z.enum(["on", "off"]).default("on"),
+  // ADR-19: overrides the pack's challenge mode (kill switch: "card-pool" or "handwritten").
+  CHALLENGE_MODE: z.enum(["gesture", "handwritten", "card-pool"]).optional(),
   MAX_ATTEMPTS: intVar(3),
   MAX_IMAGE_BYTES: intVar(2_000_000),
   PAYOUT_LOVELACE: lovelaceVar("3000000"),
@@ -131,17 +167,27 @@ const engineBase = z.object({
   VBUY_MNEMONIC_1: optStr(),
   VBUY_MNEMONIC_2: optStr(),
   VERIFY_MAX_PRICE_LOVELACE: lovelaceVar("2000000"),
+  // Total x402 verify spend per engine run (security.md P5); each attempt reserves the per-payment cap.
+  VERIFY_RUN_CAP_LOVELACE: lovelaceVar("50000000"),
   FACILITATOR_URL: optUrl(),
 });
 
 export const EngineEnvSchema = withDevTokens(
   refineWith(engineBase, (v, add) => {
     guardPreprod(v, add);
+    if (v.SOKOSUMI_CLIENT === "real") {
+      if (!v.BRAND_TOKEN) add("BRAND_TOKEN", "required for real orders");
+      if (!v.SOKOSUMI_API_TOKEN) add("SOKOSUMI_API_TOKEN", "required for real orders");
+      if (!v.SOKOSUMI_AGENT_ID) add("SOKOSUMI_AGENT_ID", "required for real orders");
+    }
     if (v.CLAIM_TTL_SEC + v.VERIFY_BUDGET_SEC >= v.JOB_WINDOW_SEC) {
       add("JOB_WINDOW_SEC", "must exceed CLAIM_TTL_SEC + VERIFY_BUDGET_SEC (claim cutoff)");
     }
     if (BigInt(v.PAYOUT_LOVELACE) > BigInt(MAX_PAYOUT_LOVELACE)) {
       add("PAYOUT_LOVELACE", "exceeds the hard payout cap (MAX_PAYOUT_LOVELACE)");
+    }
+    if (BigInt(v.VERIFY_RUN_CAP_LOVELACE) < BigInt(v.VERIFY_MAX_PRICE_LOVELACE)) {
+      add("VERIFY_RUN_CAP_LOVELACE", "must be at least VERIFY_MAX_PRICE_LOVELACE");
     }
     if (!v.FAKE_PAYMENTS) {
       if (v.BLOCKFROST_PROJECT_ID === undefined) {
@@ -202,6 +248,11 @@ export const VerifierEnvSchema = withDevTokens(
   refineWith(verifierBase, (v, add) => {
     if (v.NODE_ENV === "production" && v.VERIFIER_PAYMENT === "off")
       add("VERIFIER_PAYMENT", "must be on in production");
+    // security.md P6: evidence runs use NODE_ENV=production; no unpaid route, engine token required
+    if (v.NODE_ENV === "production" && v.ENABLE_DRY === true)
+      add("ENABLE_DRY", "must be off in production (dry and extract routes stay absent)");
+    if (v.NODE_ENV === "production" && !v.X_ENGINE_TOKEN_REQUIRED)
+      add("X_ENGINE_TOKEN_REQUIRED", "must be on in production");
     guardPreprod(v, add);
     if (!(v.ENABLE_DRY ?? v.VERIFIER_PAYMENT === "off")) {
       if (v.SELLER_ADDRESS === undefined) add("SELLER_ADDRESS", "required unless ENABLE_DRY is on");

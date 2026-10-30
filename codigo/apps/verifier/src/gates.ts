@@ -1,5 +1,6 @@
 import type {
   GateResult,
+  GestureChallenge,
   ObservedExtraction,
   OosExtraction,
   ReasonCode,
@@ -41,7 +42,8 @@ export function gateImageOk(input: G1Input, t: Thresholds): GateResult {
   }
   if (!input.info.ok) return fail("image_ok", "image_undecodable");
   const { width, height, variance } = input.info;
-  if (width < t.image.minWidth || height < t.image.minHeight) {
+  // Orientation-agnostic (like the engine's jpeg.ts): a portrait phone photo is 900x1600.
+  if (Math.max(width, height) < t.image.minWidth || Math.min(width, height) < t.image.minHeight) {
     return fail("image_ok", "image_too_small", {
       width,
       height,
@@ -73,6 +75,57 @@ export function gateCodeMatch(
     return fail("code_match", "code_low_confidence", detail);
   }
   return pass("code_match", { distance, confidence: code.confidence });
+}
+
+/**
+ * G2 in gesture mode (ADR-19): the model reports the hand it sees; code compares it with the issued
+ * gesture. Exact finger count and side, confidence at least `minGestureConfidence`.
+ */
+export function gateGestureMatch(
+  expected: GestureChallenge,
+  seen: { handVisible: boolean | null; fingers: number | null; side: string | null; confidence: number } | null | undefined,
+  t: Thresholds,
+): GateResult {
+  // no `expected` in the detail: gate results reach the worker's submission view (ADR-19)
+  const detail = {
+    seen: seen ? { fingers: seen.fingers, side: seen.side } : null,
+    confidence: seen?.confidence ?? 0,
+  };
+  if (!seen || seen.handVisible === false || seen.fingers === null || seen.side === null) {
+    return fail("code_match", "gesture_missing", detail);
+  }
+  if (seen.fingers !== expected.fingers || seen.side !== expected.side) {
+    return fail("code_match", "gesture_mismatch", detail);
+  }
+  if (seen.confidence < t.code.minGestureConfidence) {
+    return fail("code_match", "gesture_low_confidence", detail);
+  }
+  return pass("code_match", { mode: "gesture", confidence: seen.confidence });
+}
+
+/** G2 dispatcher: gesture when the task carries one, else the written/printed code. */
+export function gateChallenge(
+  task: Pick<VerifyTask, "expectedCode" | "expectedGesture">,
+  extraction: Pick<ObservedExtraction, "code" | "gesture">,
+  t: Thresholds,
+): GateResult {
+  return task.expectedGesture
+    ? gateGestureMatch(task.expectedGesture, extraction.gesture, t)
+    : gateCodeMatch(task.expectedCode, extraction.code, t);
+}
+
+// ---------------------------------------------------------------- G8
+/**
+ * G8 not_screen: fails only on an explicit `looksLikeScreenPhoto === true` (null or missing pass,
+ * so a model that omits the flag never blocks a payout). Disabled by pack param `enabled: false`.
+ */
+export function gateNotScreen(
+  advisory: { looksLikeScreenPhoto?: boolean | null | undefined } | undefined,
+  t: Thresholds,
+): GateResult {
+  if (!t.screen.enabled) return pass("not_screen", { enabled: false });
+  if (advisory?.looksLikeScreenPhoto === true) return fail("not_screen", "screen_recapture");
+  return pass("not_screen");
 }
 
 // ---------------------------------------------------------------- G3
@@ -222,6 +275,17 @@ export function gateTiming(task: VerifyTask, t: Thresholds): GateResult {
   if (received > claimEnd) return fail("timing", "claim_expired", { claimExpiresAt: task.claimExpiresAt });
   if (received > windowEnd) {
     return fail("timing", "window_closed", { taskWindowEndsAt: task.taskWindowEndsAt });
+  }
+  if (task.challengeRevealedAt) {
+    // Gesture mode: the photo must follow the reveal closely (server clocks only, ADR-19).
+    const secondsAfterReveal = (received - Date.parse(task.challengeRevealedAt)) / 1000;
+    if (secondsAfterReveal > t.timing.maxSecondsAfterReveal) {
+      return fail("timing", "challenge_stale", {
+        secondsAfterReveal,
+        max: t.timing.maxSecondsAfterReveal,
+      });
+    }
+    return pass("timing", { secondsAfterClaim, secondsAfterReveal });
   }
   return pass("timing", { secondsAfterClaim });
 }

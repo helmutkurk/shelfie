@@ -1,5 +1,11 @@
 import { TaskSpecSchema } from "@shelfie/core/browser";
-import type { CatalogResponse, JobState, JobView, LedgerEvent, TaskState } from "@shelfie/core/browser";
+import type {
+  CatalogResponse,
+  JobState,
+  JobView,
+  LedgerEvent,
+  TaskState,
+} from "@shelfie/core/browser";
 import type { Tone } from "../ui/index.js";
 
 export const ACTIVE_JOB_STATES: readonly JobState[] = [

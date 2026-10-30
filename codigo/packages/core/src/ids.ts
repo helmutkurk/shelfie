@@ -2,6 +2,7 @@ import { z } from "zod";
 
 /** Id prefixes (contracts: "IDs are prefixed strings"). */
 export const ID_PREFIXES = {
+  order: "ord",
   job: "job",
   task: "tsk",
   claim: "clm",
@@ -126,4 +127,15 @@ export function makeChallengeCode(randomInt: (maxExclusive: number) => number): 
 /** Uppercase, strip spaces and hyphen (verifier-rules G2 normalisation). */
 export function normalizeChallengeCode(code: string): string {
   return code.toUpperCase().replace(/[\s-]/g, "");
+}
+
+/**
+ * Gesture challenge (ADR-19): 2-5 raised fingers, hand left or right of the tag in the photo.
+ * 8 combinations; freshness comes from the late reveal plus the short answer window (G6).
+ */
+export function makeGestureChallenge(randomInt: (maxExclusive: number) => number): {
+  fingers: number;
+  side: "left" | "right";
+} {
+  return { fingers: 2 + randomInt(4), side: randomInt(2) === 0 ? "left" : "right" };
 }

@@ -1,3 +1,4 @@
+import { resolveCatalogInput } from "./catalog-input.js";
 import { BridgeError, WithheldError } from "./errors.js";
 
 // The only shell code of ours (contracts.md section 1.6). The starter's job handler calls
@@ -131,6 +132,30 @@ export function createBridge(config, deps = {}) {
   }
 
   /**
+   * Ids pass straight through (the dashboard format); dropdown indices, labels and free text are
+   * resolved against the engine catalog (catalog-input.js). Unresolvable input stays an
+   * `input_schema_violation`, which `run` turns into a withhold with a comment.
+   * @param {unknown} sokosumiInput
+   */
+  async function toJobInput(sokosumiInput) {
+    let violation;
+    try {
+      return parseSokosumiInput(sokosumiInput);
+    } catch (err) {
+      if (!(err instanceof BridgeError) || err.code !== "input_schema_violation") throw err;
+      violation = err;
+    }
+    let catalog;
+    try {
+      ({ json: catalog } = await withRetry(() => engine("GET", "/api/catalog")));
+    } catch (err) {
+      if (err instanceof BridgeError && err.code === "dependency_unavailable") throw err;
+      throw violation; // no catalog to resolve against: keep the plain rejection
+    }
+    return resolveCatalogInput(sokosumiInput, catalog);
+  }
+
+  /**
    * Create the engine job from a Sokosumi task. Idempotent: `externalRef` = Sokosumi task id.
    * @param {unknown} sokosumiInput
    * @param {string} sokosumiTaskId
@@ -140,9 +165,18 @@ export function createBridge(config, deps = {}) {
     if (typeof sokosumiTaskId !== "string" || sokosumiTaskId === "") {
       throw new BridgeError("bridge_input", "The Sokosumi task id is required for an idempotent create.");
     }
-    const input = parseSokosumiInput(sokosumiInput);
+    const input = await toJobInput(sokosumiInput);
     /** @type {Record<string, unknown>} */
     const body = { packId: config.packId, source: "shell", externalRef: sokosumiTaskId, input };
+    // ADR-20 correlation is separate from job input; engine validates it against the reservation.
+    let value = sokosumiInput;
+    if (typeof value === "string") { try { value = JSON.parse(value); } catch { value = null; } }
+    if (typeof value === "object" && value !== null && typeof value.orderId === "string") {
+      if (!/^ord_[A-Za-z0-9]+$/.test(value.orderId) || value.storeId !== input.stores[0].id) {
+        throw new BridgeError("input_schema_violation", "Invalid order correlation.");
+      }
+      body.orderRef = { orderId: value.orderId, storeId: value.storeId };
+    }
     if (config.windowSec !== undefined) body.windowSec = config.windowSec;
     const { status, json } = await withRetry(() => engine("POST", "/api/jobs", body));
     const jobId = json?.job?.id;

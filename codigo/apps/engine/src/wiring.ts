@@ -1,3 +1,6 @@
+import type { Engine } from "./engine.js";
+import { FakeSokosumiClient, RealSokosumiClient } from "./sokosumi.js";
+import type { SokosumiClient } from "./sokosumi.js";
 import { dirname, join } from "node:path";
 import type {
   Clock,
@@ -147,6 +150,8 @@ export async function wireAdapters(
     const pay = await loadPayments();
     verifyClient = pay.createVerifyClient(env, deps.logger, {
       ...(env.SELLER_ADDRESS ? { expectedPayTo: env.SELLER_ADDRESS } : {}),
+      // receipts and unclear x402 payments survive a restart (B-13); next to the payout queue file
+      statePath: join(dirname(env.STORE_PATH), "verify-client.json"),
     });
   }
 
@@ -165,4 +170,11 @@ export async function wireAdapters(
     probe,
     fakes: { payments: useFakePayments, verifier: useFakeVerifier },
   };
+}
+
+/** Separate switch: local order transport can be fake independently of verifier/payout adapters. */
+export function wireSokosumi(env: EngineEnv, engine: Engine, ids: IdGenerator): SokosumiClient {
+  return env.SOKOSUMI_CLIENT === "real"
+    ? new RealSokosumiClient(env)
+    : new FakeSokosumiClient(engine, env, ids);
 }

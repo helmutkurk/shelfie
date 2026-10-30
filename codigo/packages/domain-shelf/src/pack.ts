@@ -15,7 +15,7 @@ const rawPack = {
     kind: "human",
     capture: "photo",
     challenge: {
-      mode: "handwritten",
+      mode: "gesture",
       alphabet: CHALLENGE_ALPHABET,
       length: 6,
       ttlSec: 300,
@@ -24,9 +24,9 @@ const rawPack = {
     maxAttempts: 3,
     instructions: [
       "Find the product",
-      "Write the code on paper",
-      "Hold it next to the price tag",
-      "Take one photo, tag and code readable",
+      "Open the camera: it shows your hand sign",
+      "Hold up that many fingers on that side of the price tag",
+      "Take one photo, tag and hand in frame",
     ],
   },
   extraction: {
@@ -36,22 +36,30 @@ const rawPack = {
   },
   rules: [
     { name: "image_ok", params: { minWidth: 800, minHeight: 600, maxBytes: 2_000_000 } },
-    { name: "code_match", params: { maxEditDistance: 0, minConfidence: 0.7 } },
+    {
+      name: "code_match",
+      params: { maxEditDistance: 0, minConfidence: 0.7, minGestureConfidence: 0.7 },
+    },
+    { name: "not_screen", params: { enabled: true } },
     { name: "readable", params: { minConfidence: 0.6, requirePrice: true } },
     { name: "product_match", params: { minTokenScore: 0.8, eanOverrides: true } },
     { name: "price_sanity", params: { minEur: 0.2, maxEur: 60, maxDeviationFromRef: 0.6 } },
-    { name: "timing", params: { minSecondsAfterClaim: 5 } },
+    { name: "timing", params: { minSecondsAfterClaim: 5, maxSecondsAfterReveal: 90 } },
     { name: "not_duplicate", params: {} },
   ],
   outOfStock: {
     enabled: true,
     rules: [
       { name: "image_ok", params: {} },
-      { name: "code_match", params: { maxEditDistance: 0, minConfidence: 0.7 } },
+      {
+        name: "code_match",
+        params: { maxEditDistance: 0, minConfidence: 0.7, minGestureConfidence: 0.7 },
+      },
+      { name: "not_screen", params: { enabled: true } },
       { name: "label_visible", params: { minConfidence: 0.6 } },
       { name: "label_match", params: { minTokenScore: 0.8, eanOverrides: true } },
       { name: "slot_empty", params: { minConfidence: 0.7 } },
-      { name: "timing", params: { minSecondsAfterClaim: 5 } },
+      { name: "timing", params: { minSecondsAfterClaim: 5, maxSecondsAfterReveal: 90 } },
       { name: "not_duplicate", params: {} },
     ],
     payoutLovelace: "3000000",
@@ -89,6 +97,7 @@ export const shelfPack: PackConfig = PackConfigSchema.parse(rawPack);
 export const KNOWN_RULES = [
   "image_ok",
   "code_match",
+  "not_screen",
   "readable",
   "product_match",
   "price_sanity",
@@ -108,11 +117,12 @@ assertKnownRules(shelfPack);
 
 export interface Thresholds {
   image: { minWidth: number; minHeight: number; maxBytes: number; minVariance: number };
-  code: { maxEditDistance: number; minConfidence: number };
+  code: { maxEditDistance: number; minConfidence: number; minGestureConfidence: number };
+  screen: { enabled: boolean };
   readable: { minConfidence: number; requirePrice: boolean };
   product: { minTokenScore: number; eanOverrides: boolean; minBarcodeConfidence: number };
   price: { minEur: number; maxEur: number; maxDeviationFromRef: number };
-  timing: { minSecondsAfterClaim: number };
+  timing: { minSecondsAfterClaim: number; maxSecondsAfterReveal: number };
   label: { minConfidence: number; minTokenScore: number; eanOverrides: boolean };
   slot: { minConfidence: number };
   duplicate: { maxHashDistance: number };
@@ -132,6 +142,7 @@ export function thresholdsFromPack(pack: PackConfig = shelfPack): Thresholds {
   const prod = params(pack.rules, "product_match");
   const price = params(pack.rules, "price_sanity");
   const timing = params(pack.rules, "timing");
+  const screen = params(pack.rules, "not_screen");
   const lvis = params(oos, "label_visible");
   const lmat = params(oos, "label_match");
   const slot = params(oos, "slot_empty");
@@ -146,7 +157,10 @@ export function thresholdsFromPack(pack: PackConfig = shelfPack): Thresholds {
     code: {
       maxEditDistance: num(code["maxEditDistance"], 0),
       minConfidence: num(code["minConfidence"], 0.7),
+      minGestureConfidence: num(code["minGestureConfidence"], 0.7),
     },
+    // G8 kill switch: false turns the screen-recapture gate into a pass (stage fallback)
+    screen: { enabled: bool(screen["enabled"], true) },
     readable: {
       minConfidence: num(read["minConfidence"], 0.6),
       requirePrice: bool(read["requirePrice"], true),
@@ -162,7 +176,11 @@ export function thresholdsFromPack(pack: PackConfig = shelfPack): Thresholds {
       maxEur: num(price["maxEur"], 60),
       maxDeviationFromRef: num(price["maxDeviationFromRef"], 0.6),
     },
-    timing: { minSecondsAfterClaim: num(timing["minSecondsAfterClaim"], 5) },
+    timing: {
+      minSecondsAfterClaim: num(timing["minSecondsAfterClaim"], 5),
+      // gesture mode: seconds from reveal (camera opened) to the engine receiving the photo
+      maxSecondsAfterReveal: num(timing["maxSecondsAfterReveal"], 90),
+    },
     label: {
       minConfidence: num(lvis["minConfidence"], 0.6),
       minTokenScore: num(lmat["minTokenScore"], 0.8),

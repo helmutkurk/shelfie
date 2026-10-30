@@ -40,7 +40,14 @@ Everyone pushes directly to `dev` (agents peer-review each other's commits, `scr
 | Who is doing what, extra bots and scripts | [equipo/](equipo/README.md) · [equipo/components.md](equipo/components.md) |
 | Open-source libraries we may use | [docs/open-source-libraries.md](docs/open-source-libraries.md) |
 | License, authors and draft team IP agreement | [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AUTHORS.md](AUTHORS.md) · [docs/ip-agreement.md](docs/ip-agreement.md) |
+| Auto-deploy and public test URLs (Vercel + tunnel) | [docs/deploy.md](docs/deploy.md) |
 | Decisions and daily log | [docs/adr/](docs/adr/) · [docs/ai-log.md](docs/ai-log.md) |
+
+## Real mode and evidence (2026-10-30)
+
+Shared deployments (dev/api-dev, later app/api) run real Gemini vision and real preprod payments, not fakes (decision by Helmut, evening of 2026-10-30); fakes stay only for local development and CI. Status: the Gemini key is being set; payment secrets are not yet in the hub env (tasks A-21, A-22, B-14). Details and switches: [docs/START-HERE-TEAM.md](docs/START-HERE-TEAM.md), [codigo/README.md](codigo/README.md), [docs/deploy.md](docs/deploy.md); store runbook: [preparacion/field-test-supermarket.md](preparacion/field-test-supermarket.md).
+
+On-chain evidence is in [codigo/docs/evidence/tx-hashes.md](codigo/docs/evidence/tx-hashes.md): M1, M2, M4 and M5 have real preprod transactions. Missing: a full real cycle through the deployed engine with a store photo (B-14, T-27). Timers (worker execution window, job window, claim TTL, gesture window) are being lengthened by Lorenz (C-17); re-read them from code.
 
 ## License
 

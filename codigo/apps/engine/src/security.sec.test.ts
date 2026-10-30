@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- test and smoke code reads untyped JSON responses */
 import type { Router } from "express";
 import { afterEach, describe, expect, it } from "vitest";
+import { parseAllowedOrigins } from "./http/security.js";
 import { ADMIN, EAN, SHELL, STORE_ID, makeRig } from "./testkit.js";
 import type { Rig } from "./testkit.js";
 
@@ -190,6 +191,15 @@ describe("hardening (E7, E8, E9)", () => {
     expect(rig.logs.join("\n")).not.toContain("sentinel-secret");
   });
 
+  it("access log carries the AppError code on 4xx, never on 2xx", async () => {
+    rig = await makeRig();
+    expect((await rig.call("POST", "/api/jobs", {})).status).toBe(401);
+    expect((await rig.call("GET", "/api/health")).status).toBe(200);
+    const http = rig.logs.filter((l) => l.includes('"http"') || l.includes("http"));
+    expect(http.some((l) => /"status":401/.test(l) && /"errorCode":"[a-z_]+"/.test(l))).toBe(true);
+    expect(http.some((l) => /"status":200/.test(l) && l.includes("errorCode"))).toBe(false);
+  });
+
   it("rate limiting returns 429 with Retry-After", async () => {
     rig = await makeRig({ app: { limits: { worker: 5, claim: 2, submit: 2 } } });
     const statuses: number[] = [];
@@ -223,6 +233,46 @@ describe("hardening (E7, E8, E9)", () => {
   });
 });
 
+describe("ALLOWED_ORIGINS exact allow-list (E9)", () => {
+  const job = (n: string) => ({
+    packId: "shelf-check",
+    source: "demo",
+    externalRef: n,
+    input: { productEan: EAN, stores: [{ id: STORE_ID }] },
+  });
+
+  it("passes the exact listed origin and refuses any other vercel.app origin", async () => {
+    rig = await makeRig({ env: { ALLOWED_ORIGINS: "https://shelfie.vercel.app" } });
+    const ok = await rig.call("POST", "/api/jobs", job("a1"), {
+      "x-shell-token": SHELL,
+      origin: "https://shelfie.vercel.app",
+    });
+    expect(ok.status).toBe(201);
+    for (const origin of [
+      "https://evil.vercel.app",
+      "https://shelfie.vercel.app.evil.example",
+      "http://shelfie.vercel.app",
+    ]) {
+      const bad = await rig.call("POST", "/api/jobs", job("a2"), {
+        "x-shell-token": SHELL,
+        origin,
+      });
+      expect(bad.status, origin).toBe(403);
+    }
+  });
+
+  it("refuses wildcard, path and non-http entries at parse time", () => {
+    expect(() => parseAllowedOrigins("*")).toThrow();
+    expect(() => parseAllowedOrigins("https://*.vercel.app")).toThrow();
+    expect(() => parseAllowedOrigins("https://a.example/path")).toThrow();
+    expect(() => parseAllowedOrigins("ftp://a.example")).toThrow();
+    expect([...parseAllowedOrigins(" https://A.example , http://b.example:3000 ")]).toEqual([
+      "https://a.example",
+      "http://b.example:3000",
+    ]);
+  });
+});
+
 describe("input hygiene (E10, E12)", () => {
   it("ids in paths are validated (garbage ids are 404, never reach keys or paths)", async () => {
     rig = await makeRig();
@@ -250,5 +300,60 @@ describe("input hygiene (E10, E12)", () => {
     rig = await makeRig();
     const res = await rig.createJob({ extra: "field" });
     expect(res.status).toBe(422);
+  });
+});
+
+describe("gesture challenge (ADR-19)", () => {
+  it("no gesture leaks before the reveal: claim response, task list and config", async () => {
+    rig = await makeRig({ env: { CHALLENGE_MODE: "gesture" } });
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    const c = await rig.claim(taskId);
+    const leaks = [
+      c.json,
+      (await rig.call("GET", "/api/tasks")).json,
+      (await rig.call("GET", "/api/config")).json,
+      (await rig.call("GET", `/api/jobs/${job.json.job.id}`)).json,
+    ].map((j) => JSON.stringify(j));
+    for (const text of leaks) expect(text).not.toMatch(/fingers|"side"/);
+    expect(rig.logs.join("\n")).not.toMatch(/fingers/);
+  });
+
+  it("refuses a submission before the reveal: no verify call, no fee, no attempt", async () => {
+    rig = await makeRig({ env: { CHALLENGE_MODE: "gesture" } });
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    const c = await rig.claim(taskId);
+    const s = await rig.submit(taskId, c.json.claim.id as string);
+    expect(s.status).toBe(409);
+    expect(s.json.error.code).toBe("challenge_not_revealed");
+    await rig.engine.idle();
+    expect(rig.verify.calls).toHaveLength(0);
+    // after the reveal the same claim can submit
+    await rig.call("POST", `/api/claims/${c.json.claim.id}/challenge`);
+    expect((await rig.submit(taskId, c.json.claim.id as string)).status).toBe(202);
+  });
+
+  it("reveal refuses malformed, released and used claims", async () => {
+    rig = await makeRig({ env: { CHALLENGE_MODE: "gesture" } });
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    expect((await rig.call("POST", "/api/claims/..%2F..%2Fetc/challenge")).status).toBe(404);
+    const c = await rig.claim(taskId);
+    const id = c.json.claim.id as string;
+    await rig.call("POST", `/api/claims/${id}/challenge`);
+    await rig.submit(taskId, id);
+    await rig.engine.idle();
+    expect((await rig.call("POST", `/api/claims/${id}/challenge`)).json.error.code).toBe(
+      "already_submitted",
+    );
+    const job2 = await rig.createJob({ externalRef: "sec-gesture-2" });
+    const t2 = job2.json.tasks[0].id as string;
+    const c2 = await rig.claim(t2, "B");
+    const id2 = c2.json.claim.id as string;
+    await rig.call("POST", `/api/claims/${id2}/release`);
+    expect((await rig.call("POST", `/api/claims/${id2}/challenge`)).json.error.code).toBe(
+      "claim_expired",
+    );
   });
 });

@@ -127,6 +127,10 @@ Response 201:
 ```
 Errors: 409 `task_not_open`, 409 `claim_already_active`, 422 `invalid_payout_address` (must parse as a preprod address), 403 `location_required` (permission denied or missing `location`), 403 `wrong_city` (worker is not in the store's city; `details.storeCity`), 409 `claim_window_closed` (after the claim cutoff, see section 1.6), 429. Repeating the call by the same worker while the claim is active returns the same claim.
 
+Gesture mode (ADR-19, pack default): `challenge` is `{ "code": "", "mode": "gesture", "instruction": "Open the camera when you stand at the product: it shows a hand sign, then you have 90 s for the photo." }`; the gesture is not in the claim response.
+
+**POST /api/claims/{claimId}/challenge** (gesture mode) reveals the hand sign when the worker opens the camera. Response `200 { "claimId", "gesture": { "fingers": 2-5, "side": "left"|"right" }, "revealedAt", "answerWithinSec": 90, "instruction" }`. The first call stores `revealedAt` (engine clock); later calls return the same body (no re-roll, the window does not restart). Errors: 404 `not_found`, 409 `already_submitted`, 409 `claim_expired` (claim not active), 400 `invalid_request` (claim in a code mode). The photo must reach the engine within `answerWithinSec` of `revealedAt` (G6 `challenge_stale`, a normal rejection). A submission before the reveal gets 409 `challenge_not_revealed` (no verify, no fee, no attempt).
+
 **POST /api/claims/{claimId}/release** gives the task back (worker taps cancel).
 
 ### 1.3 Submissions
@@ -209,8 +213,9 @@ Payment requirements (served in the 402 response):
   "description": "One shelf-photo verification", "mimeType": "application/json" }
 ```
 - **Price: 1 tADA** (`VERIFY_PRICE_LOVELACE=1000000`). Lovelace routes need at least 1 tADA (min UTxO, x402 runbook), so this is the floor. If the facilitator rejects 1 tADA (verify Friday), use 2000000 and adjust the budget. Price is per check, regardless of pass or fail.
+- **Settlement: 0 L1 confirmations** (`extra.confirmationPolicy.l1Confirmations: 0`, `apps/verifier/src/payment.ts`). The paid answer comes once the facilitator has submitted the payment tx. The `@x402/cardano` default of 1 confirmation took about 96 s on preprod (M1 run, `codigo/docs/verified.md`), longer than the buyer timeout and the 20 to 60 s verify assumption in section 1.6. The risk is on the seller only (a tx that never lands leaves W-SELL without the fee). A production verifier chooses its own policy (ADR-18).
 - Asset: lovelace, to avoid the two tUSDM token variants (x402 runbook section 1).
-- The buyer caps spend: `maxAmountPerPayment = 2000000` (`VERIFY_MAX_PRICE_LOVELACE`).
+- The buyer caps spend: `maxAmountPerPayment = 2000000` (`VERIFY_MAX_PRICE_LOVELACE`). Total per engine run: `VERIFY_RUN_CAP_LOVELACE` (default 50000000); every attempt reserves the per-payment cap, released only when nothing was signed; when the next reservation would exceed the cap the buyer refuses (`run_cap_reached`) without signing. With the durable buyer state (`verify-client.json`) the cap survives a restart: every stored receipt and frozen key counts at the per-payment cap.
 
 Request headers: `Content-Type: application/json`, `Idempotency-Key: verify:<submissionId>`, optional `X-Engine-Token`.
 
@@ -226,6 +231,8 @@ Request body:
     "product": { "name": "Example Pale Ale 0.33l", "ean": "4000000000000", "aliases": ["example pale ale"] },
     "store": { "id": "s1", "name": "Store A" },
     "expectedCode": "K7Q-4XM",
+    "expectedGesture": { "fingers": 3, "side": "left" },
+    "challengeRevealedAt": "2026-10-30T10:00:30Z",
     "outcome": "OBSERVED",
     "claimIssuedAt": "...", "taskWindowEndsAt": "...", "receivedAt": "..."
   },
@@ -298,9 +305,9 @@ Fake adapters: `FakePayoutAdapter` (instant fake hashes, can inject timeouts, du
 
 ### 5.2 Engine
 
-`ENGINE_PORT`, `PUBLIC_BASE_URL`, `DEFAULT_GEOFENCE_M` (150), `ACCURACY_CAP_M` (100), `LOCATION_MAX_TRIES` (3), `ALLOW_TEST_UPLOAD` (false), `SHELL_TOKEN`, `ENGINE_TOKEN`, `VERIFIER_URL`, `VERIFIER_PAYMENT` (`on` or `off`), `FAKE_PAYMENTS`, `JOB_WINDOW_SEC`, `CLAIM_TTL_SEC`, `VERIFY_BUDGET_SEC`, `LOCATION_CHECK` (`on` or `off`), `MAX_ATTEMPTS`, `MAX_IMAGE_BYTES`, `PAYOUT_LOVELACE`, `PAYOUT_MAX_ATTEMPTS`, `PAYOUT_WALLETS`, `VBUY_WALLETS`, `MIN_WALLET_LOVELACE`, `ALLOW_DEMO_OVERRIDE`, `STORE_PATH`, `LEDGER_PATH`, `BLOCKFROST_PROJECT_ID`, `PAY_MNEMONIC_1`, `PAY_MNEMONIC_2` (one variable per payout wallet, never a list), `VBUY_MNEMONIC_1`, `VBUY_MNEMONIC_2`, `VERIFY_MAX_PRICE_LOVELACE`, `FACILITATOR_URL`.
+`ENGINE_PORT`, `PUBLIC_BASE_URL`, `DEFAULT_GEOFENCE_M` (150), `ACCURACY_CAP_M` (100), `LOCATION_MAX_TRIES` (3), `ALLOW_TEST_UPLOAD` (false), `SHELL_TOKEN`, `ENGINE_TOKEN`, `VERIFIER_URL`, `VERIFIER_PAYMENT` (`on` or `off`), `FAKE_PAYMENTS`, `JOB_WINDOW_SEC`, `CLAIM_TTL_SEC`, `VERIFY_BUDGET_SEC`, `LOCATION_CHECK` (`on` or `off`), `CHALLENGE_MODE` (optional: `gesture` | `card-pool` | `handwritten`, overrides the pack, ADR-19), `MAX_ATTEMPTS`, `MAX_IMAGE_BYTES`, `PAYOUT_LOVELACE`, `PAYOUT_MAX_ATTEMPTS`, `PAYOUT_WALLETS`, `VBUY_WALLETS`, `MIN_WALLET_LOVELACE`, `ALLOW_DEMO_OVERRIDE`, `STORE_PATH`, `LEDGER_PATH`, `BLOCKFROST_PROJECT_ID`, `PAY_MNEMONIC_1`, `PAY_MNEMONIC_2` (one variable per payout wallet, never a list), `VBUY_MNEMONIC_1`, `VBUY_MNEMONIC_2`, `VERIFY_MAX_PRICE_LOVELACE`, `VERIFY_RUN_CAP_LOVELACE` (50000000), `FACILITATOR_URL`.
 
-Additional engine names: `SELLER_ADDRESS` (public preprod payee pin, required for real paid verification), `PAYOUT_DAILY_CAP_LOVELACE` (integer lovelace, default 50000000), `ALLOWED_HOSTS` (comma-separated hostnames), `CATALOG_DIR` (catalog directory), `WEB_DIST` (built web directory), `VERIFY_CLIENT` (`fake` or `real`; defaults to fake with fake payments), `PAYMENTS_IMPL` (`package` or `engine-fake`; default package), `PAYOUT_STORE_PATH` (queue file, default `payout-queue.json` beside `STORE_PATH`), `EVIDENCE_RUN_LOCKED` (false; locks admin reset).
+Additional engine names: `SELLER_ADDRESS` (public preprod payee pin, required for real paid verification), `PAYOUT_DAILY_CAP_LOVELACE` (integer lovelace, default 50000000), `ALLOWED_HOSTS` (comma-separated hostnames), `ALLOWED_ORIGINS` (comma-separated exact origins such as `https://app.example.me`, no wildcards, no paths; extra browser origins accepted by the Origin guard on state-changing requests, for a Vercel frontend that proxies `/api`; invalid entries fail boot), `CATALOG_DIR` (catalog directory), `WEB_DIST` (built web directory), `VERIFY_CLIENT` (`fake` or `real`; defaults to fake with fake payments), `PAYMENTS_IMPL` (`package` or `engine-fake`; default package), `PAYOUT_STORE_PATH` (queue file, default `payout-queue.json` beside `STORE_PATH`), `EVIDENCE_RUN_LOCKED` (false; locks admin reset).
 
 ### 5.3 Verifier
 
@@ -333,7 +340,7 @@ Declarative `pack.config.json` plus a TypeScript module for logic. Illustrative:
   "worker": {
     "kind": "human",
     "capture": "photo",
-    "challenge": { "mode": "handwritten", "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "length": 6, "ttlSec": 300, "cardPool": null },
+    "challenge": { "mode": "gesture", "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "length": 6, "ttlSec": 300, "cardPool": null },
     "maxAttempts": 3,
     "instructions": ["Find the product", "Write the code on paper", "Hold it next to the price tag", "Take one photo, tag and code readable"]
   },
@@ -378,3 +385,20 @@ Declarative `pack.config.json` plus a TypeScript module for logic. Illustrative:
 Rule names map to functions exported by the pack module (`rules.ts`); unknown names fail startup. Thresholds are tuned from the 20-photo run (verifier-rules.md section 7), not guessed.
 
 For Plan B the same shape holds with `worker.kind = "agent"`, `challenge = null`, other rules and `payout.amountLovelace = "0"` (queue idle).
+
+## Orders (ADR-20, amended Helmut 2026-10-30)
+
+All three endpoints require `X-Brand-Token` in the header, never query/body. Shared demo access code; no per-customer isolation yet. Reads/writes rate limited; no-store responses.
+
+- `POST /api/orders {productEan, storeIds: string[], note?: string}` -> 201 `{orderId, productEan, createdAt, fake, jobs:[{storeId, sokosumiTaskId:null|string, jobId:null|string, status}]}`. Unique catalog store ids, one product, bounded note (500 characters; API only, never forwarded to Sokosumi or logs). Optional `Idempotency-Key` (8-100 URL-safe characters) deduplicates identical orders; different input with the same key returns 409 `invalid_request`.
+- `GET /api/orders/{id}` -> same order view, status derived from engine job and settlement observations.
+- `GET /api/orders` -> `{orders:[<order view>]}`, newest first.
+- Errors: 401 `brand_token_missing` / `brand_token_invalid`; 422 `intake_rejected` with `details.stores:[{storeId,reasons}]` (entire order rejected before purchase); 429 `order_cap_reached` / `daily_cap_reached`; 502 `sokosumi_unavailable` with `details.orderId`. Generic abuse throttling remains 429 `rate_limited`.
+- Status before a job exists: `SUBMITTING`, `AWAITING_SHELL`, `SOKOSUMI_UNAVAILABLE` (outcome unknown; no automatic repurchase). While collecting, show the worker task state (`OPEN`, `CLAIMED`, `VERIFYING`, etc.); after decision, use the engine job state including `DELIVERED`, `SETTLED`, `WITHHELD`, `REFUNDED`. A delivery decision alone is not proof of settlement.
+- Persist orders and worst-case credit reservations in the engine Store journal **before** outbound requests. UTC-day cap counts all reserved credits, including ambiguous failures, across restarts; no automatic retries/release. Admin reset clears jobs but preserves order credit reservations. One engine process only.
+- Each Task description contains ids-only JSON `{orderId, storeId, productEan}`. Bridge forwards correlation as optional `orderRef:{orderId,storeId}` on `POST /api/jobs`; `externalRef` remains the Sokosumi Task id. Engine validates order/product/store and binds the Task id once; legacy jobs omit `orderRef`. Fake client invokes this same engine creation method with visibly fake Task ids; no synthetic escrow events or tx hashes.
+- Real client currently performs only authenticated `GET /v1/agents/{agentId}/input-schema`, with bounded JSON, no redirects and a 10 s timeout, then returns 502 without any mutating request. **B-15 blocks real purchases**: the runbook's agent Job and the starter's coworker Task are different surfaces. Creating a READY Task and attaching an agent Job can buy twice. Do not enable both. `verified.md` records the exact spike needed before implementing one verified capped purchase mechanism. Future mutation idempotency key is `orderId:storeId` (plus operation suffix if required by that one mechanism); never treat an agent Job id as a Task id.
+- Fake orders require fake payments and verifier and are refused in evidence-locked runs. All their engine ledger entries carry `fakeSokosumi:true`, rejected by evidence preflight. `/api/config.orders` exposes `fake`, `enabled`, `realReady:false`, `maxStores` and `maxCreditsPerTask`. Real mode leaves the dashboard purchase button disabled until B-15 is resolved.
+- Operator override response: `{verdict:{id,pass,source:"MANUAL_OVERRIDE"}}`; uses the existing authenticated admin endpoint.
+
+Engine-only env (names also in `codigo/.env.example`): `SOKOSUMI_CLIENT=fake|real` (default fake), `SOKOSUMI_API_URL` (default `https://api.preprod.sokosumi.com`), `SOKOSUMI_API_TOKEN`, `SOKOSUMI_AGENT_ID`, `SOKOSUMI_MAX_CREDITS_PER_TASK` (positive safe integer, default 100 ceiling, not a quote), `ORDER_MAX_STORES` (default 5), `ORDER_DAILY_CREDIT_CAP` (default 500), `BRAND_TOKEN` (32+ characters when configured; required for real mode, no default). Missing brand config disables orders. Real mode requires token and agent id and refuses non-preprod URLs. There is no verified quote in the current catalog; show price unavailable. Future quotes must retain their source; credit ceilings are labelled ceilings, never advertised as actual prices. Client mode is public in `/api/config` as `orders.fake`; all credentials remain server side.
