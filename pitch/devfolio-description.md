@@ -16,7 +16,7 @@ An agent on Sokosumi hires people to check shelf prices in real stores, a verifi
 
 ## Problem
 
-Small consumer brands want to know, within hours, whether their product is on the shelf in a specific store and at what price. Today they either drive around, book a field-marketing agency or a mystery-shopping panel booked days ahead, or trust sales data that says nothing about the shelf. [SOURCE NEEDED: price per visit and lead time] Visits are usually paid whether or not the photo is usable, and photos can be old, blurry or from the wrong store. AI agents can write a report about retail but cannot see a shelf, and they have no safe way to pay a stranger for evidence from the physical world.
+Small consumer brands want to know, within hours, whether their product is on the shelf in a specific store and at what price. Today they either drive around, book a field-marketing agency or a mystery-shopping panel booked days ahead, or trust sales data that says nothing about the shelf. A quick merchandising audit visit costs about $30-45 ([T-ROC Global 2026 guide](https://trocglobal.com/retail-merchandising-services/)), a German Testkauf about EUR 50-260 per visit ([mystery.agency](https://www.mystery.agency/content/testkauf-2/), [mystery-shopping.de](https://www.mystery-shopping.de/produkt/1-testkauf-mystery-shopping/)). Visits are usually paid whether or not the photo is usable, and photos can be old, blurry or from the wrong store. AI agents can write a report about retail but cannot see a shelf, and they have no safe way to pay a stranger for evidence from the physical world.
 
 Our fictional but typical customer: the field-sales manager of a small Bavarian craft-lemonade brand who just got listed by a supermarket chain and needs to know whether the bottle is in a given Munich store today.
 
@@ -67,9 +67,10 @@ Primary: field-sales and category managers of small and mid-size consumer-goods 
 
 All EUR figures below are illustrative product pricing (hypotheses), not the preprod test amounts the demo moves (1 tADA per verifier check, 3 tADA per payout, no market value).
 
-- Brand pays per verified check (illustrative EUR 5, estimate); failed checks are free for the brand.
-- Worker payout per passed check (illustrative EUR 2.50-3.00); verifier and model cost under EUR 0.10 (estimate); escrow/network fee about 5% [VERIFY].
-- Margin roughly EUR 1.65-2.15 per check (5.00 less payout, less 0.10, less 0.25) before support, disputes and the verifier fees spent on rejected photos (estimate). Agency/mystery-shop price per visit: [SOURCE NEEDED].
+- Brand pays per verified check: illustrative EUR 12 pay-as-you-go, EUR 399/month for 50 checks (about EUR 8 each), EUR 5-6 at volume later (estimates); failed checks are free for the brand.
+- Worker payout per passed check (illustrative EUR 3.50, in line with crowd-audit apps such as BeMyEye and Roamler, about GBP 1.5-6 and GBP 3-20 per task); verifier and model cost under EUR 0.10 (estimate); escrow/network fee about 5% [VERIFY].
+- Margin roughly EUR 7.80 (65%) per pay-as-you-go check (12.00 less 3.50, less 0.10, less 0.60) before support, disputes and the verifier fees spent on rejected photos (estimate).
+- Against the market: EUR 12 is about a third of the cheapest agency audit visit ($30-45) and a quarter of the cheapest German Testkauf (from EUR 50). Ten stores: EUR 120 vs about $300-450 or EUR 500+. Agencies also fix shelves and write long reports; Shelfie replaces only the presence-and-price check.
 - Upsell later: recurring audits, price-monitoring reports, API access.
 
 ## Impact beyond the hackathon

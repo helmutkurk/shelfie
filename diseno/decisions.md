@@ -127,6 +127,12 @@ Short records. Status "accepted" means: build on it unless a "verify Friday" ite
   - Confirmed by Helmut (2026-10-29): OOS payout equals the price-photo payout; a different product standing in the labelled slot is rejected (`slot_not_empty`); the edits to `ideas/decision.md` (chain step 2, live moment) are accepted.
   - Amends ADR-06 (the LAN `<input capture>` fallback is removed; LAN is read-only), ADR-12 (the claim-time city check becomes a capture-time geofence precheck on top of the unchanged freshness proof; location remains "soft", not proof), ADR-16 (item 3: city check at claim stays as feed filter and claim guard; the intake filter is the backstop of the dropdowns, item 2; "one photo" now means one observation, a price photo or an out-of-stock photo).
 
+## ADR-18 Verifier is neutral by design; in the demo we operate it ourselves
+- **Context:** in the hackathon build the engine (`W-VBUY`) pays the verifier (`W-SELL`) and the team controls both wallets, so the x402 payment is circular (net zero minus fees). Shelfie has a conflict of interest: it earns only on passed checks, so it gains from approving bad photos; the brand pays only for passes, so it gains from rejections.
+- **Decision:** keep the verifier a separate x402 service priced per check, **pass or fail** (ADR-02), with published deterministic rules. The pitch states openly that we run both sides in the demo and does not count verifier fees as revenue. Production target: the verifier is run by an independent party, ideally chosen by the brand; the verifier URL is configuration.
+- **Alternatives:** call the verifier in-process (honest about ownership, but loses the agent-pays-agent proof and hard-codes us as judge); pay the verifier only on pass (gives it an incentive to pass); let the brand verify (gives it an incentive to reject).
+- **Consequences:** swapping verifiers is a configuration change, not a rewrite; multi-verifier agreement for large jobs stays on the roadmap; the same endpoint can be sold to other agents. Q&A answers 3 and 3a in `../pitch/qa-prep.md` follow this record.
+
 ## Open (not yet decided)
 - Early delivery (`earlyDeliver`) default: false (dashboard shows the full table); revisit if the Masumi submit deadline is tight.
 - Whether to enter the API3 track as a secondary candidacy: not decided here; this design does not depend on it.
