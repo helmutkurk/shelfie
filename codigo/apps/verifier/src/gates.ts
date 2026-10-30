@@ -42,7 +42,8 @@ export function gateImageOk(input: G1Input, t: Thresholds): GateResult {
   }
   if (!input.info.ok) return fail("image_ok", "image_undecodable");
   const { width, height, variance } = input.info;
-  if (width < t.image.minWidth || height < t.image.minHeight) {
+  // Orientation-agnostic (like the engine's jpeg.ts): a portrait phone photo is 900x1600.
+  if (Math.max(width, height) < t.image.minWidth || Math.min(width, height) < t.image.minHeight) {
     return fail("image_ok", "image_too_small", {
       width,
       height,

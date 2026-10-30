@@ -13,6 +13,8 @@ Shelfie is ready for component work on fakes. Paid resources, real vision, phone
 
 Work on `dev` and push to it directly after `git pull --rebase origin dev` and `npm run check` (feature branches optional, no PR; ADR-0006). Start each block with `bash scripts/peer-review.sh pending` and review what it lists; `main` changes only through the release PR ([CONTRIBUTING.md](../CONTRIBUTING.md)). This integration pass made no git mutation, commit or push. Initial task.sh bookkeeping read local Git identity; subsequent updates set TASK_ACTOR=Codex to avoid it. Helmut (D) expressly authorised edits across all codigo folders and the named integration documents for this pass; ownership resumes for subsequent changes.
 
+Before any phone test in a store or on stage: [field-test-supermarket.md](../preparacion/field-test-supermarket.md) (pre-flight, failure catalogue, commands). Do not push to `dev` while it runs.
+
 Public test URLs and automatic rebuild on every push: [deploy.md](deploy.md) (Vercel + tunnel + pull-based deploy; Helmut operates the hub side).
 
 Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists. The deployment runs on fakes (FAKE_PAYMENTS=1, stub verifier): never use it as evidence. Details: [deploy.md](deploy.md).

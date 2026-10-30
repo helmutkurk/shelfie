@@ -223,3 +223,9 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Worked: `npm run check` exit 0; `bash .claude/hooks/test-hooks.sh` 113/113. One `wiring.test.ts` timeout appeared once under load and passed on rerun.
 - Open: Helmut says the 4 system wallets exist and real payments work, but the hub env still has FAKE_PAYMENTS=1 and VERIFIER_PAYMENT=off; the owner of any tx hash must log it in `codigo/docs/evidence/tx-hashes.md` (not invented here). First release PR dev -> main (3 approvals, ADR-0005). SSE latency through Vercel not measured. The dashboard on the public URL is protected only by the operator token (Cloudflare Access later). The shared backend runs on Helmut's laptop and must stay on until a cloud VM exists.
 - Handoff: changes uncommitted in worktree `shelfie-sync` (branch chore/d-context-sync); orchestrator commits.
+
+## 2026-10-30 18:35 (Europe/Berlin) - Claude Sonnet 5.5 for Helmut (D) - field-test runbook and three small fixes
+- Done: `preparacion/field-test-supermarket.md` (pre-flight, failure catalogue by step from the code, debug commands, REWE script, stage variant, risks R1-R17). Fixes with tests: camera asks for 1920x1080 (`lib/camera.ts`), verifier size gate is orientation-agnostic (`gates.ts`), feed reconciles every 15 s while SSE looks open (`lib/hooks.ts`). Tasks: D-27 done, D-35 added (rehearsal); B-14 stays open (the 353c904 payout came from `payout-queue-once.ts`, not from the hub engine).
+- Worked: `npm run check` exit 0 (420 tests).
+- Open: R1 (shared client IP behind Vercel: test on `api-dev.shelfieapp.fyi/w`), R2 (`VERIFY_RUN_CAP_LOVELACE` before the real switch), R6-R12 proposals in the runbook.
+

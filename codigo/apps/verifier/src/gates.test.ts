@@ -45,6 +45,9 @@ describe("G1 image_ok", () => {
   it("image_too_small", () => {
     expectFail(gateImageOk({ byteLength: 10, info: okInfo({ width: 640, height: 480 }) }, T), "image_too_small");
     expectFail(gateImageOk({ byteLength: 10, info: okInfo({ width: 1600, height: 599 }) }, T), "image_too_small");
+    // portrait photos are fine: same short and long side as landscape
+    expect(gateImageOk({ byteLength: 10, info: okInfo({ width: 720, height: 1280 }) }, T).pass).toBe(true);
+    expectFail(gateImageOk({ byteLength: 10, info: okInfo({ width: 599, height: 1600 }) }, T), "image_too_small");
   });
   it("image_too_large", () => {
     expectFail(gateImageOk({ byteLength: 2_000_001, info: okInfo() }, T), "image_too_large");
