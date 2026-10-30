@@ -10,7 +10,7 @@ const CATALOG = {
       id: "munich",
       name: "München",
       stores: [
-        { id: "rewe-81671-august-everding-strasse-20", name: "REWE", chain: "REWE", address: "August-Everding-Straße 20, 81671 München" },
+        { id: "rewe-81671-august-everding-strasse-20", name: "REWE", chain: "REWE", address: "Hanne-Hiob-Straße 10, 81671 München", aliases: ["August-Everding-Straße 20"] },
         { id: "lidl-81671-august-everding-strasse-20", name: "Lidl", chain: "Lidl", address: "August-Everding-Straße 20, 81671 München" },
         { id: "lidl-81667-orleansplatz-7", name: "Lidl", chain: "Lidl", address: "Orleansplatz 7, 81667 München" },
         { id: "aldi-81667-orleansplatz-2", name: "Aldi Süd", chain: "Aldi Süd", address: "Orleansplatz 2, 81667 München" },
@@ -71,6 +71,12 @@ describe("resolveCatalogInput", () => {
       IDS("4066600641919", "lidl-81667-orleansplatz-7"),
     );
     assert.deepEqual(resolveCatalogInput("EAN 5449000000439 at aldi-81667-orleansplatz-2", CATALOG), IDS("5449000000439", "aldi-81667-orleansplatz-2"));
+  });
+
+  it("finds the REWE by its finder address or by its alias", () => {
+    const ids = IDS("4008400402222", "rewe-81671-august-everding-strasse-20");
+    assert.deepEqual(resolveCatalogInput("Nutella at the REWE, Hanne-Hiob-Straße 10", CATALOG), ids);
+    assert.deepEqual(resolveCatalogInput({ productEan: "Nutella 450 g (EAN 4008400402222)", storeId: "REWE, Hanne-Hiob-Straße 10, 81671 München" }, CATALOG), ids);
   });
 
   it("rejects ambiguous or unknown requests instead of guessing", () => {

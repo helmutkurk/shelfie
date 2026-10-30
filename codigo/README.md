@@ -17,6 +17,8 @@ The boilerplate is implemented with fakes, regression tests and a browser build.
 
 ## How to run
 
+Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists. The deployment runs on fakes (FAKE_PAYMENTS=1, stub verifier): never use it as evidence. Details: [deploy.md](../docs/deploy.md).
+
 Use Node 24 and npm. The checked local version is 24.22.2; the repo's `.node-version` selects major 24. Keep global Node unchanged if needed:
 
 ```bash

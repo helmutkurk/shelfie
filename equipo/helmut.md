@@ -8,6 +8,9 @@
 
 Dev integration / main release branch model implemented in docs, CI, protection script and guards (Codex, 2026-10-30; D-30 done). D-28 remains blocked solely on unrestricted runtime validation; do not mark it done from fake tests. Resume with the [team guide](../docs/START-HERE-TEAM.md).
 
+## Update 2026-10-30 evening (Claude for Helmut)
+Public deployment is live (dev.shelfieapp.fyi, app.shelfieapp.fyi, api and api-dev through the Cloudflare tunnel; engine and verifier on this laptop, systemd --user, auto-update every 60 s; details in `docs/deploy.md` and `equipo/components.md`). Field test on phones passed claim/release; two 422 submissions unexplained until the access log carries `errorCode`. Keep the laptop on. Next: first release PR dev -> main, real-payment env switch with Fernando, tx hashes into `codigo/docs/evidence/tx-hashes.md`.
+
 ## Active branch
 
 `docs/d-dev-workflow`, based on `origin/dev`. Working tree has uncommitted edits; no git write, commit or push was run. The user asked to leave the branch checked out.
