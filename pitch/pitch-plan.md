@@ -20,11 +20,11 @@ Facts to confirm with Isabel before the pitch (her words, not ours): when the re
 
 Consent: ask the acquaintance (via Isabel's father) whether the story may be told in public. Never name the person, the drink, the brand or the country of origin. A message screenshot only as a reconstruction, fully redacted, labelled "reconstructed". No reply by Saturday morning: "an acquaintance of my father", no screenshot.
 
-**English (spoken by Isabel, 67 words, about 28 s; source of truth: [live-pitch.md](live-pitch.md)):**
-> "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph his competitors in a few shops: the price, and is it on the shelf. He can't check our photos. An AI can write a report, but it can't see a shelf. So we built an agent that hires a person, and pays only if the photo is true."
+**English (spoken by Isabel, 62 words, about 26 s; source of truth: [live-pitch.md](live-pitch.md)):**
+> "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph his competitors in a few shops: the price, and is it on the shelf. He can't check our photos, and an AI can't see a shelf. So we built an agent that hires a person, and pays only if the photo is true."
 
 **German (if the pitch is in German):**
-> "Ein Bekannter meines Vaters will ein Getränk nach Deutschland bringen. Er hat Helmut und mich gebeten, seine Konkurrenz in ein paar Läden zu fotografieren: den Preis, und ob sie im Regal steht. Er kann unsere Fotos nicht prüfen. Eine KI kann einen Bericht schreiben, aber sie sieht kein Regal. Also haben wir einen Agenten gebaut, der einen Menschen beauftragt und nur zahlt, wenn das Foto stimmt."
+> "Ein Bekannter meines Vaters will ein Getränk nach Deutschland bringen. Er hat Helmut und mich gebeten, seine Konkurrenz in ein paar Läden zu fotografieren: den Preis, und ob sie im Regal steht. Er kann unsere Fotos nicht prüfen, und eine KI sieht kein Regal. Also haben wir einen Agenten gebaut, der einen Menschen beauftragt und nur zahlt, wenn das Foto stimmt."
 
 Behind her: one or two of their real shelf photos (brands blurred, no people), ideally one blurry or wrong-shelf photo ("he would have paid for this one too").
 
@@ -41,7 +41,7 @@ Wording rules:
 
 ## 3. Run of show (3:00)
 
-The timed script with every spoken line is in [live-pitch.md](live-pitch.md) (one source): 298 words, about 2:05 of speech, about 2:50 with camera, verifier and explorer.
+The timed script with every spoken line is in [live-pitch.md](live-pitch.md) (one source): 281 words, about 2:00 of speech, about 2:45 with camera, verifier and explorer (15 s slack in a 3:00 slot). The market sentence is optional (only when ahead of time).
 
 ## 4. Market (what goes on the slide)
 
@@ -68,7 +68,7 @@ Why making it look bigger than it is backfires: the product claim is "paid only 
 
 1. **Demand is not validated.** "One real request; we have not run brand interviews yet. Today we prove the mechanism."
 2. **Why a blockchain / the verifier is ours.** Name what is on-chain (escrow lock and settle/refund, payout tx, x402 verifier fee) and say "the verifier is a URL the brand can swap".
-3. **Location is not proven.** "The code proves the photo is new and made for this task, not where it was taken. Store QR codes are next." Also: "Agencies also fix shelves; we replace only the 'is it there, at what price' check."
+3. **Location is not proven.** "The hand sign proves the photo is new and made for this task, not where it was taken. Store QR codes are next." Also: "Agencies also fix shelves; we replace only the 'is it there, at what price' check."
 
 Top Q&A to drill (answers in `qa-prep.md`): why blockchain / why not Stripe; GPS spoofing; who the workers are and cold start; Trax, Roamler, BeMyEye exist; what is live vs recorded vs mocked (prepare one honest table on a backup slide); legal: photographing in stores.
 
@@ -126,7 +126,7 @@ Stage rules: no "hello, we are team Shelfie"; open with the first sentence of th
 - [ ] Fresh job pre-created; one settled and one refunded job open in tabs; lock tx tab pre-loaded
 - [ ] Laptop on power, zoom 125%, notifications off, no secret in any tab
 - [ ] Phone: web app logged in, brightness max, do-not-disturb, screen recording running
-- [ ] Props: printed tag of the demo drink, code cards, old photo for the cheat, paper and marker
+- [ ] Props: printed tag of the demo drink, old photo for the cheat on a second screen, code cards only for the `card-pool` fallback (ADR-19)
 - [ ] Backup: video and screenshots on USB and phone, tx hashes as text, backup laptop, hotspot, HDMI/USB-C adapter, power strip
 - [ ] Balances checked (`W-VBUY`, `W-PAY`)
 - [ ] After the pitch: questions we stumbled on into `docs/ai-log.md`
