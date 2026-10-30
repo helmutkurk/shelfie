@@ -248,3 +248,9 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Decision input: GO for ADR-20. No spend cap field exists in the Task API, so caps per order and per day go in the engine (ADR-20 point 5). Credits are charged to the token's account.
 - TODO: create a Sokosumi user API key (`soko_preprod_`) for the engine instead of the CLI's OAuth session (A or B). Settlement row for this Task after the unlock time (A). B-16 can start from the request shape.
 - Handoff: spike script is local only (not committed); the engine call is a plain fetch with the shape above.
+
+## 2026-10-30 21:00 (Europe/Berlin) - Claude Opus 5.5 for Lorenz (C) - pitch screen: homepage instead of slides (C-14)
+- Decided (team): the live pitch uses our homepage (vision page, scrolled only, never clicked, style like omarchy.org) instead of the Beamer deck. The UI team builds it; C only writes the content brief.
+- Done: new `pitch/homepage-brief.md` (rules, six full-screen pitch sections mapped to the run of show, Q&A sections below the close, timeline). `live-pitch.md` screen cues, setup and backups, `pitch-plan.md` decisions, programs and timeline, `storyline.md`, `slides/README.md` (deck is now backup only) and the Devfolio link placeholder switched to the homepage. New task for the homepage under D (owner: UI team).
+- TODO: UI team: homepage usable by Sat 09:30, frozen with an offline copy Sat 11:00; decide its URL for `devfolio-description.md`.
+- Handoff: next pitch step is rehearsal 3 (Sat 09:30) on the homepage; Fernando scrolls with Page Down.

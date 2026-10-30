@@ -96,7 +96,7 @@ Lead agent and task splitter; phone web page with one-time challenge codes; veri
 - Live demo / app: [APP_URL]
 - Sokosumi coworker: [SOKOSUMI_LINK]
 - Transactions: lock [LOCK_TX_HASH], x402 [X402_TX_HASH], payout [PAYOUT_TX_HASH], settle [SETTLE_TX_HASH], refund [REFUND_TX_HASH]
-- Slides: [SLIDES_LINK]
+- Homepage: [HOMEPAGE_URL]
 
 ## Team
 

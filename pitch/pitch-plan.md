@@ -11,7 +11,7 @@ Synthesis of eight advisor passes (market, hook, judges, tools, skeptic, vision,
 | Market | One spoken line on stage, led by the $6B in-store merchandising spend and EUR 12 vs EUR 50; the three-number slide and the vision ladder are backups. No summed markets, no unsourced Germany figure. |
 | Arc of the demo | Cheat first (red, no money), then the true photo (green), then the x402 fee and payout tx. Fail, then pass, then pay. Jury review: `../review/pitch-jury-2026-10-30.md`. |
 | Voices | Two main voices (Isabel, Lorenz), Fernando one line on the tx, Helmut runs backup and time. |
-| Slides | Keep Beamer; 6 live slides (hook, four-step flow, live demo, receipts on Cardano, today/next, close), backups after `\appendix`; present with `pdfpc`. |
+| Screen | Our homepage, scrolled only, never clicked (team, 2026-10-30 evening; replaces the Beamer deck). Six full-screen sections (hook, name, four steps, receipts on Cardano, today/next, close), vision, market and team below the close for Q&A. Built by the UI team from [homepage-brief.md](homepage-brief.md). The Beamer deck stays as offline backup. |
 | Honesty | Say "live", "earlier run" or "mocked" for every step. State the limits before a judge does. |
 
 ## 2. The hook
@@ -76,13 +76,13 @@ Top Q&A to drill (answers in `qa-prep.md`): why blockchain / why not Stripe; GPS
 
 | Need | Primary | Fallback |
 |---|---|---|
-| Slides | Existing Beamer deck (`slides/`), max 2 editors, others send text; Lorenz builds | Committed `shelfie.pdf` on USB and phone |
-| Presenting | `pdfpc` (presenter view, timer, notes) | `okular -presentation` / `evince -s` |
-| Demo switching | One Chrome window: Sokosumi, verifier, explorer, report; `Ctrl+1..9`; slides on a second workspace; zoom 125%, notifications off | Screenshots in the deck |
+| Screen | Homepage (UI team, [homepage-brief.md](homepage-brief.md)), scrolled with Page Down | Offline copy of the homepage; then committed `slides/shelfie.pdf` on USB and phone |
+| Presenting | Homepage in Chrome tab 1, full screen (F11) | Backup deck: `pdfpc` / `evince -s` |
+| Demo switching | One Chrome window: Sokosumi, verifier, explorer, report; `Ctrl+1..9`; homepage in tab 1; zoom 125%, notifications off | Screenshots in the backup deck |
 | Phone on the big screen | The web app's own verifier/dashboard view (no cable). For the claim/code moment: `scrcpy` over USB (Android) | iPhone: QuickTime on a Mac; or the phone's screen recording played from the laptop |
 | Video capture / edit | OBS Studio + Kdenlive, 1080p30, one headset mic, one narrator | CapCut on a Windows laptop |
 | Captions | `whisper video.mp4 --model small --output_format srt`, or Kdenlive speech-to-text | CapCut auto captions |
-| Rehearsal | `pdfpc` timer at 3:00 + a phone stopwatch held by a non-speaker; `/qa` skill for questions | |
+| Rehearsal | Phone timer at 3:00 + a phone stopwatch held by a non-speaker; `/qa` skill for questions | |
 | Network | Phone hotspot on a second device, tested at the venue | Offline kit: PDF, video, step screenshots, tx hashes as text |
 
 Install (Ubuntu; OBS is already there): `sudo apt install pdfpc scrcpy adb kdenlive ffmpeg`. Do not use OBS scenes live; it adds a failure point.
@@ -105,11 +105,11 @@ Rules: store footage is story only, never shown as a demo verification. Ask the 
 |---|---|---|
 | Fri 15:00 | Story lock: Isabel tells it aloud in 45 s, Lorenz writes it down; real numbers; consent request sent | Isabel, Lorenz |
 | Fri today, daylight | Store B-roll, 30 min, 2 shops | Helmut, Isabel |
-| Fri 18:00 | Slides v1 (5 slides) | Lorenz |
+| Sat 09:30 | Homepage usable for rehearsal 3 ([homepage-brief.md](homepage-brief.md)) | UI team |
 | Fri 18:30 | Rehearsal 1: paper, timing only, 15 min | all |
 | Fri 21:00 | Rehearsal 2: with the demo on fakes, 15 min; no pitch work after 22:00 | all |
 | Sat 09:30 | Script frozen; rehearsal 3 full dress with the kill-the-demo drill | all |
-| Sat 11:00 | Slides frozen (= feature freeze) | Lorenz |
+| Sat 11:00 | Homepage frozen (= feature freeze), offline copy saved | UI team |
 | Sat 11:00-13:00 | Final demo take on the printed shelf; last paid escrow cycle started by 13:00 | Lorenz (footage), Fernando |
 | Sat 13:00-14:15 | Edit, captions, export | Helmut |
 | Sat 12:30 | Rehearsal 4 on the real preprod flow | all |
@@ -117,7 +117,7 @@ Rules: store footage is story only, never shown as a demo verification. Ask the 
 
 Rehearsal protocol: timer held by a non-speaker, stop hard at 3:00; kill-the-demo drill (someone says "dead", switch to the recording within 5 s, same words); Q&A drill, 10 questions, answer starts with the limit, then the mitigation.
 
-Stage rules: no "hello, we are team Shelfie"; open with the first sentence of the story, looking at a judge. One idea per slide, at most six words. Pause after the hook and after the red cheat. Non-speakers stand still and face the judges.
+Stage rules: no "hello, we are team Shelfie"; open with the first sentence of the story, looking at a judge. One idea per homepage section, at most six words. Pause after the hook and after the red cheat. Non-speakers stand still and face the judges.
 
 ## 9. Pitch-day checklist (Sat)
 

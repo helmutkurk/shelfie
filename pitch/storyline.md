@@ -21,8 +21,8 @@ An acquaintance of Isabel's father wants to bring a beverage to Germany. He aske
 | Reveal | "Shelfie: an agent that hires people to look, and pays them only if the photo is true." | Sokosumi task: "the question he asked us": one comparable drink, one Munich store |
 | Proof | Escrow locks the fee. A person in a store gets a one-time code, writes it on paper (or holds a printed card) and photographs the tag with the code in frame; a verifier agent (paid per check over x402) reads price and product; green = payout tx on preprod; an old photo with the wrong code = red, no payment. | Real screens, real tx hash on preprod.cardanoscan.io |
 | Result | If the photo passes, the report is delivered and escrow settles. If no photo passes in time, the brand is refunded automatically. | Report table, then (or alternatively) refund tx |
-| Vision | "Anything an AI needs to know about the physical world can be bought this way: proof first, payment second." Next: store-owned QR codes for location, other domain packs (deliveries, outages, accessibility). | One line, one slide |
-| Callback | Isabel: "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true." | Closing slide |
+| Vision | "Anything an AI needs to know about the physical world can be bought this way: proof first, payment second." Next: store-owned QR codes for location, other domain packs (deliveries, outages, accessibility). | One line, homepage section below the close |
+| Callback | Isabel: "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true." | Homepage close section |
 
 Demo order on stage: the cheat first (red, no money), then the true photo (green, payout tx). Run of show: [live-pitch.md](live-pitch.md).
 
@@ -60,7 +60,7 @@ Terminology: the **three payment gates** (photo gate pays the human, job gate se
 
 One-sentence version for the video: "A verified check costs about twelve euros, a fraction of an agency visit, and you pay only for checks that pass."
 
-## Market (one slide, one sentence)
+## Market (one homepage section, one sentence)
 
 Pain number, TAM, neighbour market and vision ladder, with sources and the framings not to use: [pitch-plan.md](pitch-plan.md) section 4. Rules: say "loss" or "revenue" with every figure, never add markets up, mark forecasts as forecasts, re-check each figure at its source before it goes on a slide.
 
