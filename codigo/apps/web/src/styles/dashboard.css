@@ -653,3 +653,40 @@
     flex-wrap: wrap;
   }
 }
+
+/* Orders share the existing grouped surfaces and semantic state tokens. */
+.order-stores {
+  list-style: none;
+  padding: 0;
+  margin: 1em 0 0;
+}
+.order-stores > li {
+  padding: 1em 0;
+  border-top: 1px solid var(--separator);
+}
+.order-stores .text-button {
+  display: block;
+  text-align: left;
+  min-height: 44px;
+}
+.request-form select[multiple] {
+  height: auto;
+  min-height: 10em;
+  width: 100%;
+  padding: 0.5em;
+}
+.request-form select[multiple] option {
+  padding: 0.5em;
+  white-space: normal;
+}
+.operator {
+  margin-top: 1em;
+}
+.operator summary {
+  cursor: pointer;
+  min-height: 44px;
+  font-weight: 600;
+}
+.operator .field {
+  margin: 1em 0;
+}

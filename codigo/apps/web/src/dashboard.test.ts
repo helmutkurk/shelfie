@@ -44,7 +44,7 @@ describe("dashboard banners", () => {
   it("shows no fake banner on a real run", async () => {
     const { deps } = makeDeps({ routes: baseRoutes() });
     renderWithDeps(h(DashboardApp), deps);
-    await screen.findByText("Example Pale Ale 0.33 l");
+    await screen.findByRole("button", { name: /Example Pale Ale 0.33 l/ });
     expect(screen.queryByText("Fake payments.")).toBeNull();
   });
 
@@ -65,9 +65,9 @@ describe("job list and detail", () => {
   it("lists jobs with product, store and live counts, then opens the detail", async () => {
     const { deps } = makeDeps({ routes: baseRoutes() });
     renderWithDeps(h(DashboardApp), deps);
-    expect(await screen.findByText("Example Pale Ale 0.33 l")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /Example Pale Ale 0.33 l/ })).toBeTruthy();
     expect(screen.getByText(/Passed 0 of 1, open 1, failed 1/)).toBeTruthy();
-    fireEvent.click(screen.getByText("Example Pale Ale 0.33 l"));
+    fireEvent.click(screen.getByRole("button", { name: /Example Pale Ale 0.33 l/ }));
     expect(await screen.findByText("Waiting for a worker.")).toBeTruthy();
   });
 
@@ -126,5 +126,54 @@ describe("ledger view", () => {
     expect(await screen.findByText("JOB_CREATED")).toBeTruthy();
     FakeEventSource.last("/api/ledger/stream")?.emit("entry", ledgerFixture(2, "TASK_OPENED"));
     expect(await screen.findByText("TASK_OPENED")).toBeTruthy();
+  });
+});
+
+describe("dashboard orders", () => {
+  it("places a customer order and opens its store timeline; operator controls require a token", async () => {
+    let orders: unknown[] = [];
+    const order = {
+      orderId: "ord_01",
+      productEan: "4000000000000",
+      createdAt: "2026-10-30T10:00:00Z",
+      fake: true,
+      jobs: [{ storeId: "s1", sokosumiTaskId: "fake-task", jobId: "job_01", status: "COLLECTING" }],
+    };
+    const { deps, calls } = makeDeps({
+      routes: baseRoutes({
+        "GET /api/config": {
+          ...configFixture(),
+          orders: {
+            fake: true,
+            enabled: true,
+            realReady: false,
+            maxStores: 5,
+            maxCreditsPerTask: 100,
+          },
+        },
+        "GET /api/orders": () => Response.json({ orders }),
+        "POST /api/orders": () => {
+          orders = [order];
+          return Response.json(order, { status: 201 });
+        },
+      }),
+    });
+    renderWithDeps(h(DashboardApp), deps);
+    await screen.findByRole("button", { name: /Example Pale Ale/ });
+    expect(screen.queryByRole("button", { name: "Demo job" })).toBeNull();
+    fireEvent.change(screen.getByLabelText("Brand access code"), {
+      target: { value: "synthetic-brand-code" },
+    });
+    fireEvent.change(screen.getByLabelText("Product"), { target: { value: "4000000000000" } });
+    const stores = screen.getByLabelText<HTMLSelectElement>("Stores");
+    stores.options[0]!.selected = true;
+    fireEvent.change(stores);
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Timeline and report/ }));
+    expect(await screen.findByText("Waiting for a worker.")).toBeTruthy();
+    const purchase = calls.find((call) => call.method === "POST");
+    expect(purchase?.path).toBe("/api/orders");
+    expect(purchase?.headers["X-Brand-Token"]).toBe("synthetic-brand-code");
+    expect(purchase?.headers["X-Admin-Token"]).toBeUndefined();
   });
 });

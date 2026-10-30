@@ -1,126 +1,137 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { RequestForm } from "./dashboard/RequestForm.js";
+import { OrderStatus } from "./dashboard/OrderStatus.js";
 import { catalogFixture, errorResponse, h, makeDeps, renderWithDeps } from "./testing.js";
 import type { FetchRoutes } from "./testing.js";
+import { OrderViewSchema } from "@shelfie/core/browser";
 
 afterEach(cleanup);
-
-function setup(routes: FetchRoutes = {}, adminToken = "") {
+const order = () =>
+  OrderViewSchema.parse({
+    orderId: "ord_01",
+    productEan: "4000000000000",
+    createdAt: "2026-10-30T10:00:00Z",
+    fake: true,
+    jobs: [
+      { storeId: "s1", sokosumiTaskId: "fake-task-1", jobId: "job_01", status: "COLLECTING" },
+      { storeId: "s2", sokosumiTaskId: null, jobId: null, status: "AWAITING_SHELL" },
+    ],
+  });
+function setup(routes: FetchRoutes = {}, brandToken = "brand-code") {
   const created: string[] = [];
-  const tokens: string[] = [];
   const { deps, calls } = makeDeps({ routes });
   renderWithDeps(
     h(RequestForm, {
       catalog: catalogFixture(),
-      packId: "shelf-check",
-      adminToken,
-      onAdminToken: (t: string) => void tokens.push(t),
-      onCreated: (id: string) => void created.push(id),
+      brandToken,
+      onBrandToken: () => undefined,
+      onCreated: (o: { orderId: string }) => {
+        created.push(o.orderId);
+      },
+      enabled: true,
+      maxStores: 5,
+      fake: true,
+      maxCreditsPerTask: 100,
     }),
     deps,
   );
   return { created, calls };
 }
+function pickStores(...ids: string[]) {
+  const select = screen.getByLabelText<HTMLSelectElement>("Stores");
+  for (const option of select.options) option.selected = ids.includes(option.value);
+  fireEvent.change(select);
+}
+const pickProduct = () =>
+  fireEvent.change(screen.getByLabelText("Product"), { target: { value: "4000000000000" } });
 
-const pick = (label: string, value: string) =>
-  fireEvent.change(screen.getByLabelText(label), { target: { value } });
-
-describe("request form", () => {
-  it("is made of dropdowns only: no free-text input inside the request form", () => {
+describe("new order", () => {
+  it("uses catalog dropdowns only; access code is outside the order form; no file inputs", () => {
     setup();
-    const form = document.querySelector("form.request-form") as HTMLFormElement;
-    expect(form).not.toBeNull();
+    const form = document.querySelector("form.request-form")!;
     expect(form.querySelectorAll("select")).toHaveLength(3);
-    expect(form.querySelectorAll("input, textarea")).toHaveLength(0);
+    expect(form.querySelectorAll("input,textarea")).toHaveLength(0);
+    expect(screen.getByLabelText<HTMLInputElement>("Brand access code").type).toBe("password");
+    expect(document.querySelector('input[type="file"]')).toBeNull();
   });
-
-  it("enables store after city and product after store; button waits for all three", () => {
-    setup({}, "token");
-    const store = screen.getByLabelText<HTMLSelectElement>("Store");
-    const product = screen.getByLabelText<HTMLSelectElement>("Product");
-    const button = screen.getByRole<HTMLButtonElement>("button", { name: "Request check" });
-    expect(store.disabled).toBe(true);
-    expect(product.disabled).toBe(true);
-    pick("City", "munich");
-    expect(store.disabled).toBe(false);
-    expect(product.disabled).toBe(true);
-    pick("Store", "s1");
-    expect(product.disabled).toBe(false);
-    expect(button.disabled).toBe(true);
-    pick("Product", "4000000000000");
-    expect(button.disabled).toBe(false);
-  });
-
-  it("sends ids only, with the admin token header", async () => {
-    const { created, calls } = setup(
-      {
-        "POST /api/jobs": {
-          job: {
-            id: "job_01",
-            state: "COLLECTING",
-            n: 1,
-            k: 1,
-            windowEndsAt: "2026-10-30T10:15:00Z",
-          },
-          tasks: [],
-        },
-      },
-      "token",
+  it("filters stores by chain, preserves selected stores and requires code/product/store", () => {
+    setup({}, "");
+    pickProduct();
+    pickStores("s1");
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Place order" }).disabled).toBe(
+      true,
     );
-    pick("City", "munich");
-    pick("Store", "s1");
-    pick("Product", "4000000000000");
-    fireEvent.click(screen.getByRole("button", { name: "Request check" }));
-    await waitFor(() => expect(created).toEqual(["job_01"]));
-    const call = calls.find((c) => c.method === "POST");
-    expect(call?.headers["X-Admin-Token"]).toBe("token");
-    expect(call?.body).toEqual({
-      packId: "shelf-check",
-      source: "demo",
-      externalRef: "demo-req_01",
-      input: { productEan: "4000000000000", stores: [{ id: "s1" }] },
-      windowSec: 900,
+    fireEvent.change(screen.getByLabelText("Chain"), { target: { value: "Chain Y" } });
+    expect(screen.getByLabelText<HTMLSelectElement>("Stores").options).toHaveLength(1);
+    expect(screen.getByText(/1 store selected/)).toBeTruthy();
+  });
+  it("posts ids and X-Brand-Token, deduplicates an uncertain retry and shows fake/unknown price", async () => {
+    const { calls, created } = setup({ "POST /api/orders": order() });
+    pickProduct();
+    pickStores("s1", "s2");
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+    await waitFor(() => expect(created).toEqual(["ord_01"]));
+    expect(calls[0]?.body).toEqual({ productEan: "4000000000000", storeIds: ["s1", "s2"] });
+    expect(calls[0]?.headers["X-Brand-Token"]).toBe("brand-code");
+    expect(calls[0]?.headers["Idempotency-Key"]).toBeTruthy();
+    expect(screen.getByText(/Fake orders/)).toBeTruthy();
+    expect(screen.getByText(/Price not yet quoted/)).toBeTruthy();
+  });
+  it("retains the request key after a network failure, and opens a partially placed order on 502", async () => {
+    let n = 0;
+    const { calls, created } = setup({
+      "POST /api/orders": () => {
+        n++;
+        return n === 1
+          ? errorResponse("dependency_unavailable", "Cannot reach server", 503)
+          : errorResponse("sokosumi_unavailable", "Needs reconciliation", 502, {
+              orderId: "ord_01",
+            });
+      },
     });
+    pickProduct();
+    pickStores("s1");
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+    await waitFor(() => expect(created).toEqual(["ord_01"]));
+    expect(calls[0]?.headers["Idempotency-Key"]).toBe(calls[1]?.headers["Idempotency-Key"]);
   });
+});
 
-  it("demo job uses the first catalog store and product", async () => {
-    const { created, calls } = setup(
-      {
-        "POST /api/jobs": {
-          job: {
-            id: "job_02",
-            state: "COLLECTING",
-            n: 1,
-            k: 1,
-            windowEndsAt: "2026-10-30T10:15:00Z",
-          },
-          tasks: [],
+describe("order status", () => {
+  it("shows each store, shell pickup pending, and opens a linked job timeline", () => {
+    const opened: string[] = [];
+    const { deps } = makeDeps();
+    renderWithDeps(
+      h(OrderStatus, {
+        order: order(),
+        catalog: catalogFixture(),
+        onOpenJob: (id: string) => {
+          opened.push(id);
         },
-      },
-      "token",
+      }),
+      deps,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Demo job" }));
-    await waitFor(() => expect(created).toEqual(["job_02"]));
-    expect((calls[0]?.body as { input: unknown }).input).toEqual({
-      productEan: "4000000000000",
-      stores: [{ id: "s1" }],
-    });
+    expect(screen.getByText("Store A")).toBeTruthy();
+    expect(screen.getByText("Store B")).toBeTruthy();
+    expect(screen.getByText("Waiting for Shelfie")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Timeline and report/ }));
+    expect(opened).toEqual(["job_01"]);
+    expect(screen.getByText(/Fake order/)).toBeTruthy();
   });
-
-  it("shows intake rejection reasons", async () => {
-    setup(
-      {
-        "POST /api/jobs": () =>
-          errorResponse("intake_rejected", "Store is not in the supported Munich catalog.", 422, {
-            reasons: [{ code: "unknown_store", field: "input.stores[0].id" }],
-          }),
-      },
-      "token",
+  it("updates delivery and refund independently per store", () => {
+    const { deps } = makeDeps();
+    const next = order();
+    next.jobs[0]!.status = "SETTLED";
+    next.jobs[1]!.status = "REFUNDED";
+    renderWithDeps(
+      h(OrderStatus, { order: next, catalog: catalogFixture(), onOpenJob: () => undefined }),
+      deps,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Demo job" }));
-    const alert = await screen.findByRole("alert");
-    expect(within(alert).getByText(/unknown_store/)).toBeTruthy();
+    expect(screen.getByText("Settled")).toBeTruthy();
+    expect(screen.getByText("Refunded")).toBeTruthy();
   });
 });

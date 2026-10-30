@@ -12,6 +12,10 @@ import { TxBaseContext } from "./TxChip.js";
 import { JobDetail } from "./JobDetail.js";
 import { JobList } from "./JobList.js";
 import { LedgerView } from "./LedgerView.js";
+import type { OrderView } from "@shelfie/core/browser";
+import { OrderStatus } from "./OrderStatus.js";
+import { OperatorTools } from "./OperatorTools.js";
+import { describeError } from "../lib/messages.js";
 import { RequestForm } from "./RequestForm.js";
 
 type View = { name: "jobs" } | { name: "new" } | { name: "job"; id: string } | { name: "ledger" };
@@ -20,6 +24,8 @@ type View = { name: "jobs" } | { name: "new" } | { name: "job"; id: string } | {
 export function DashboardApp() {
   const { api, env } = useDeps();
   const [view, setView] = useState<View>({ name: "jobs" });
+  const [brandToken, setBrandToken] = useState("");
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [adminToken, setAdminToken] = useState(""); // memory only (security.md: no localStorage)
   const [toast, setToast] = useState<string | null>(null);
   const stage =
@@ -33,6 +39,7 @@ export function DashboardApp() {
     // verify Friday: GET /api/jobs carries no counts, so each recent job is read once more.
     return Promise.all(list.jobs.slice(0, 10).map((j) => api.job(j.id, signal)));
   }, 3000);
+  // Keyed inner component resets fetched order state when the access code changes.
   const ledger = useLedger();
 
   const section: Section = view.name === "ledger" ? "ledger" : "requests";
@@ -68,7 +75,22 @@ export function DashboardApp() {
                 </button>
                 <RequestForm
                   catalog={catalog}
+                  brandToken={brandToken}
+                  onBrandToken={setBrandToken}
+                  enabled={config?.orders?.enabled ?? false}
+                  fake={config?.orders?.fake ?? true}
+                  maxStores={config?.orders?.maxStores ?? 5}
+                  maxCreditsPerTask={config?.orders?.maxCreditsPerTask}
+                  onCreated={(order) => {
+                    setOrderId(order.orderId);
+                    setView({ name: "jobs" });
+                  }}
+                />
+                <OperatorTools
+                  catalog={catalog}
                   packId={config?.packId ?? "shelf-check"}
+                  enabledOverride={config?.demoOverrideEnabled ?? false}
+                  ledger={ledger.entries}
                   adminToken={adminToken}
                   onAdminToken={setAdminToken}
                   onCreated={onCreated}
@@ -77,6 +99,17 @@ export function DashboardApp() {
             ) : null}
             {view.name !== "ledger" ? (
               <div className="dcol dcol-list">
+                {brandToken ? (
+                  <OrdersPanel
+                    key={`${brandToken}:${orderId ?? ""}`}
+                    token={brandToken}
+                    selectedId={orderId}
+                    catalog={catalog}
+                    onOpenJob={(id) => setView({ name: "job", id })}
+                  />
+                ) : (
+                  <p className="dsub">Enter your brand access code in New order to see orders.</p>
+                )}
                 <JobList
                   jobs={jobs}
                   catalog={catalog}
@@ -90,7 +123,7 @@ export function DashboardApp() {
                     className="button button-primary new-check"
                     onClick={() => setView({ name: "new" })}
                   >
-                    New shelf check
+                    New order
                   </button>
                 ) : null}
               </div>
@@ -114,5 +147,41 @@ export function DashboardApp() {
       </TxBaseContext.Provider>
       <Toast message={toast} onDone={() => setToast(null)} />
     </ExplorerProvider>
+  );
+}
+
+function OrdersPanel(props: {
+  token: string;
+  selectedId: string | null;
+  catalog: Parameters<typeof OrderStatus>[0]["catalog"];
+  onOpenJob: (id: string) => void;
+}) {
+  const { api } = useDeps();
+  const { data, error } = usePolling(async (signal) => {
+    const list = await api.orders(props.token, signal);
+    if (props.selectedId && !list.orders.some((o) => o.orderId === props.selectedId)) {
+      const selected = await api.order(props.selectedId, props.token, signal);
+      return { orders: [selected, ...list.orders] };
+    }
+    return list;
+  }, 3000);
+  const orders: OrderView[] = data?.orders ?? [];
+  return (
+    <section aria-label="Orders">
+      {error ? (
+        <p role="alert" className="form-error">
+          {describeError(error)}
+        </p>
+      ) : null}
+      {orders.map((order) => (
+        <OrderStatus
+          key={order.orderId}
+          order={order}
+          catalog={props.catalog}
+          onOpenJob={props.onOpenJob}
+        />
+      ))}
+      {data && orders.length === 0 ? <p className="dsub">No orders yet.</p> : null}
+    </section>
   );
 }

@@ -43,3 +43,7 @@ M2 worker page claims and uploads against fakes (Fri 15:00); M6 front end and li
 - Do not build customer routes outside `contracts.md` without updating it.
 - Do not add a file input, a gallery path or a third-party script; do not store photos or tokens in the browser.
 - Do not commit `.env`.
+
+## ADR-20 amendment (Helmut, 2026-10-30)
+
+The customer orders from `/dashboard`, with product/chain dropdowns and a native store multi-select. The brand access code stays in React state only and is sent as `X-Brand-Token`; request selections get an idempotency key retained after transport failures. Orders poll every 3 s and open the existing job timeline/report per store. Demo and override tools are under a collapsed Operator disclosure and require the operator token. No separate `/brand` app. Prices remain explicitly unknown (credit ceilings are not quotes). Real buying is disabled pending B-15; the complete local fake flow needs engine-side `BRAND_TOKEN` and fake verifier/payments.

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 /** Id prefixes (contracts: "IDs are prefixed strings"). */
 export const ID_PREFIXES = {
+  order: "ord",
   job: "job",
   task: "tsk",
   claim: "clm",

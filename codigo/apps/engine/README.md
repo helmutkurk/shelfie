@@ -49,3 +49,9 @@ Extra runtime switches (validated by core `EngineEnvSchema`): `CATALOG_DIR`, `WE
 - Do not change `packages/core` without announcing it and mirroring `contracts.md` in the same commit.
 - Do not log mnemonics, tokens, API keys or image bytes. Do not reset the evidence ledger.
 - Do not add endpoints that are not in `contracts.md`.
+
+## Dashboard orders (ADR-20)
+
+`Orders` persists reservations in the same Store journal as jobs; POST/GET `/api/orders` and GET `/api/orders/:id` require `X-Brand-Token`. The brand token has no default and needs 32+ characters. `SOKOSUMI_CLIENT=fake` drives the same shell job creation path for local tests, requiring fake verifier/payments and no evidence lock. Orders survive admin reset so the daily cap cannot be bypassed. Idempotent retries use the same `Idempotency-Key`; unknown outcomes need reconciliation, not a new order.
+
+`SOKOSUMI_CLIENT=real` selects a read-only authenticated schema probe and refuses purchases until B-15 verifies a single capped Task mechanism. The dashboard reflects this as disabled; see `docs/verified.md` for the exact spike and all engine env names. Never combine READY auto-pickup with a second paid agent-job call.

@@ -148,7 +148,17 @@ export class Engine {
   }
 
   private led(input: AppendInput): void {
-    this.d.ledger.append({ ...input, flags: this.flags(input.flags) });
+    const fakeOrder =
+      input.refs?.["jobId"] &&
+      this.d.store.orders
+        .all()
+        .some(
+          (order) => order.fake && order.jobs.some((row) => row.jobId === input.refs?.["jobId"]),
+        );
+    this.d.ledger.append({
+      ...input,
+      flags: this.flags({ ...(fakeOrder ? { fakeSokosumi: true } : {}), ...input.flags }),
+    });
   }
 
   private track(p: Promise<unknown>): void {
@@ -275,8 +285,43 @@ export class Engine {
         },
       );
     }
+    // Order correlation is trusted only after matching the reserved store/product and bound Task id.
+    const order = req.orderRef ? this.d.store.orders.get(req.orderRef.orderId) : undefined;
+    const orderRow = order?.jobs.find((j) => j.storeId === req.orderRef?.storeId);
+    if (
+      req.orderRef &&
+      (!order ||
+        !orderRow ||
+        req.input.stores.length !== 1 ||
+        req.input.stores[0]?.id !== orderRow.storeId ||
+        req.input.productEan !== order.productEan ||
+        req.source !== "shell" ||
+        (orderRow.sokosumiTaskId !== null && orderRow.sokosumiTaskId !== req.externalRef))
+    ) {
+      throw new AppError(
+        "input_schema_violation",
+        "Order correlation does not match the reserved check.",
+      );
+    }
     const existing = this.d.store.jobs.all().find((j) => j.externalRef === req.externalRef);
     if (existing) {
+      if (order && orderRow) {
+        if (
+          existing.input.productEan !== order.productEan ||
+          existing.input.stores.length !== 1 ||
+          existing.input.stores[0]?.id !== orderRow.storeId
+        ) {
+          throw new AppError("input_schema_violation", "Existing job does not match order.");
+        }
+        this.d.store.orders.put({
+          ...order,
+          jobs: order.jobs.map((j) =>
+            j.storeId === orderRow.storeId
+              ? { ...j, sokosumiTaskId: req.externalRef, jobId: existing.id }
+              : j,
+          ),
+        });
+      }
       if (existing.state === "REJECTED_INPUT")
         this.throwIntake(existing.id, this.intakeReasons(existing.input));
       return { status: 200, body: this.createResponse(existing) };
@@ -343,6 +388,16 @@ export class Engine {
       createdAt: now,
     };
     this.d.store.jobs.put(job);
+    if (order && orderRow) {
+      this.d.store.orders.put({
+        ...order,
+        jobs: order.jobs.map((j) =>
+          j.storeId === orderRow.storeId
+            ? { ...j, sokosumiTaskId: req.externalRef, jobId: job.id }
+            : j,
+        ),
+      });
+    }
     const settlement: Settlement = {
       id: newSettlementId(this.d.ids),
       jobId,
@@ -1541,6 +1596,18 @@ export class Engine {
       challengeMode: this.d.pack.config.worker.challenge ? this.challengeMode() : "none",
       secureContext,
       demoOverrideEnabled: this.env.ALLOW_DEMO_OVERRIDE,
+      orders: {
+        fake: this.env.SOKOSUMI_CLIENT === "fake",
+        enabled:
+          Boolean(this.env.BRAND_TOKEN) &&
+          this.env.SOKOSUMI_CLIENT === "fake" &&
+          this.env.FAKE_PAYMENTS &&
+          (this.env.VERIFY_CLIENT ?? "fake") === "fake" &&
+          !this.env.EVIDENCE_RUN_LOCKED,
+        realReady: false,
+        maxStores: this.env.ORDER_MAX_STORES,
+        maxCreditsPerTask: this.env.SOKOSUMI_MAX_CREDITS_PER_TASK,
+      },
     };
   }
 
