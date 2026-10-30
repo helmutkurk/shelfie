@@ -88,9 +88,18 @@ async function main(): Promise<void> {
     return;
   }
 
+  const store = new FilePayoutStore(args.store);
+  // An unfinished payout from an earlier run must be finished under its own task, never next to a
+  // new one (a fresh task id is a fresh payout: two transfers).
+  const open = (await store.list(["QUEUED", "SENDING", "UNKNOWN", "SUBMITTED"])).filter(
+    (o) => o.taskId !== taskId,
+  );
+  if (open.length > 0) {
+    refuse(`earlier payout not finished: ${open.map(show).join("; ")}. Rerun with --task ${open[0]?.taskId ?? ""}.`);
+  }
   const queue = new DefaultPayoutQueue({
     adapter,
-    store: new FilePayoutStore(args.store),
+    store,
     clock: systemClock,
     logger,
     maxPayoutLovelace: env.PAYOUT_LOVELACE,
@@ -104,6 +113,9 @@ async function main(): Promise<void> {
   await queue.drain();
   p = await queue.get(p.id);
   out(`after enqueue: ${show(p)}`);
+  if (p.toAddress !== to || p.amount !== env.PAYOUT_LOVELACE) {
+    out(`note: this task was stored earlier for ${short(p.toAddress)}, ${lovelaceToAdaString(p.amount)} tADA; --to and the amount are ignored`);
+  }
 
   // 2. wait for the confirmation
   const deadline = Date.now() + WAIT_MS;
@@ -125,7 +137,9 @@ async function main(): Promise<void> {
   out(
     `re-enqueue same task: ${same ? "OK, same payout, no new send" : `BROKEN: payout ${again.id}, sends ${String(sends - sendsBefore)}`}`,
   );
-  out(`sends this run: ${String(sends)}`);
+  out(`sends this run: ${String(sends)}  (task ${taskId})`);
+  const st = await queue.status();
+  if (st.paused) out(`queue paused: ${st.reason ?? "unknown"}`);
   if (!same) process.exit(3);
   if (p.state !== "CONFIRMED") process.exit(p.state === "FAILED_FINAL" ? 2 : 3);
 }
