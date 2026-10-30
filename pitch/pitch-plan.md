@@ -8,10 +8,10 @@ Synthesis of eight advisor passes (market, hook, judges, tools, skeptic, vision,
 |---|---|
 | Hook | The real request replaces the fictional persona (Katharina, Isarquell). Isabel tells it in first person. |
 | Customer | "A brand entering a market without a field team: before launch it needs competitor prices and availability in specific stores." One verified photo per product per store. |
-| Market | Big but defensible: one pain number (loss, not revenue), one TAM, a bottom-up example, a vision ladder marked "forecast". No summed markets, no unsourced Germany figure. |
-| Arc of the demo | Cheat first (red, no money), then the true photo (green, payout tx). Fail, then pass, then pay. |
+| Market | One spoken line on stage, led by the $6B in-store merchandising spend and EUR 12 vs EUR 50; the three-number slide and the vision ladder are backups. No summed markets, no unsourced Germany figure. |
+| Arc of the demo | Cheat first (red, no money), then the true photo (green), then the x402 fee and payout tx. Fail, then pass, then pay. Jury review: `../review/pitch-jury-2026-10-30.md`. |
 | Voices | Two main voices (Isabel, Lorenz), Fernando one line on the tx, Helmut runs backup and time. |
-| Slides | Keep Beamer; max 5 visible slides; present with `pdfpc`. |
+| Slides | Keep Beamer; 6 live slides (hook, four-step flow, live demo, receipts on Cardano, today/next, close), backups after `\appendix`; present with `pdfpc`. |
 | Honesty | Say "live", "earlier run" or "mocked" for every step. State the limits before a judge does. |
 
 ## 2. The hook
@@ -20,18 +20,18 @@ Facts to confirm with Isabel before the pitch (her words, not ours): when the re
 
 Consent: ask the acquaintance (via Isabel's father) whether the story may be told in public. Never name the person, the drink, the brand or the country of origin. A message screenshot only as a reconstruction, fully redacted, labelled "reconstructed". No reply by Saturday morning: "an acquaintance of my father", no screenshot.
 
-**English (spoken by Isabel, 68 words, about 28 s):**
-> "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph competitors in a few shops: price, and whether they're there. But he is abroad. He can't check our photos. An AI can write him a report, but it can't see the shelf. We built an agent that hires someone who can, and pays only if the photo is true."
+**English (spoken by Isabel, 67 words, about 28 s; source of truth: [live-pitch.md](live-pitch.md)):**
+> "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph his competitors in a few shops: the price, and is it on the shelf. He can't check our photos. An AI can write a report, but it can't see a shelf. So we built an agent that hires a person, and pays only if the photo is true."
 
 **German (if the pitch is in German):**
-> "Ein Bekannter meines Vaters will ein Getränk nach Deutschland bringen. Er hat Helmut und mich gebeten, die Konkurrenz in ein paar Läden zu fotografieren: den Preis, und ob sie überhaupt da ist. Aber er ist im Ausland. Er kann unsere Fotos nicht prüfen. Eine KI kann ihm einen Bericht schreiben, aber sie sieht das Regal nicht. Also haben wir einen Agenten gebaut, der jemanden beauftragt und nur zahlt, wenn das Foto stimmt."
+> "Ein Bekannter meines Vaters will ein Getränk nach Deutschland bringen. Er hat Helmut und mich gebeten, seine Konkurrenz in ein paar Läden zu fotografieren: den Preis, und ob sie im Regal steht. Er kann unsere Fotos nicht prüfen. Eine KI kann einen Bericht schreiben, aber sie sieht kein Regal. Also haben wir einen Agenten gebaut, der einen Menschen beauftragt und nur zahlt, wenn das Foto stimmt."
 
 Behind her: one or two of their real shelf photos (brands blurred, no people), ideally one blurry or wrong-shelf photo ("he would have paid for this one too").
 
 Thread through the pitch:
 - Demo job = "the question he asked us": one competitor drink, one Munich store.
 - Isabel during the photo: "This is what I did by hand for him."
-- Close: "Next time he doesn't call us. He posts a job. Paid only when the photo is true."
+- Close: "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true."
 
 Wording rules:
 - Say "a real request", never "our customer", "pilot" or "validated".
@@ -41,7 +41,7 @@ Wording rules:
 
 ## 3. Run of show (3:00)
 
-The timed script with every spoken line is in [live-pitch.md](live-pitch.md) (one source). Budget at 145 words per minute: about 2:05 of speech, plus camera, verifier and explorer, about 2:45; the 15 s left are for the verifier. If the verifier is slow, drop the "beyond" beat first.
+The timed script with every spoken line is in [live-pitch.md](live-pitch.md) (one source): 298 words, about 2:05 of speech, about 2:50 with camera, verifier and explorer.
 
 ## 4. Market (what goes on the slide)
 

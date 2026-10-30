@@ -22,19 +22,19 @@ An acquaintance of Isabel's father wants to bring a beverage to Germany. He aske
 | Proof | Escrow locks the fee. A person in a store gets a one-time code, writes it on paper (or holds a printed card) and photographs the tag with the code in frame; a verifier agent (paid per check over x402) reads price and product; green = payout tx on preprod; an old photo with the wrong code = red, no payment. | Real screens, real tx hash on preprod.cardanoscan.io |
 | Result | If the photo passes, the report is delivered and escrow settles. If no photo passes in time, the brand is refunded automatically. | Report table, then (or alternatively) refund tx |
 | Vision | "Anything an AI needs to know about the physical world can be bought this way: proof first, payment second." Next: store-owned QR codes for location, other domain packs (deliveries, outages, accessibility). | One line, one slide |
-| Callback | Isabel: "Next time he doesn't call us. He posts a job. Paid only when the photo is true." | Closing slide |
+| Callback | Isabel: "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true." | Closing slide |
 
 Demo order on stage: the cheat first (red, no money), then the true photo (green, payout tx). Run of show: [live-pitch.md](live-pitch.md).
 
 ## Hook line (first 28 seconds)
 
-The real request, told by Isabel (word for word in [live-pitch.md](live-pitch.md)), ending on: "An AI can write him a report, but it can't see the shelf. We built an agent that hires someone who can, and pays only if the photo is true."
+The real request, told by Isabel (word for word in [live-pitch.md](live-pitch.md)), ending on: "An AI can write a report, but it can't see a shelf. So we built an agent that hires a person, and pays only if the photo is true."
 
 ## The 3 phrases judges must remember
 
 1. **"Paid only when the photo is true."** The product in one breath; ties payment to result.
 2. **"The code in the photo."** The one-time challenge code is the memorable mechanism (freshness proof, visible in the demo).
-3. **"Agents hire people, and the blockchain pays the bill."** Agents acting in the real world, with an explorer link as receipt.
+3. **"Cardano escrow makes sure nobody pays for a photo that isn't true."** The closing line: payment tied to result, with the explorer receipts as proof (replaced "the blockchain pays the bill" after the jury review, `../review/pitch-jury-2026-10-30.md`).
 
 Rule: these three appear verbatim in the video, in the live pitch and in the Devfolio text. Do not paraphrase them.
 

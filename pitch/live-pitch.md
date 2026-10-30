@@ -25,23 +25,29 @@ Two main voices (Isabel, Lorenz); handoffs eat time. Letters are the build roles
 
 ## Run of show (3:00 pitch)
 
-| Time | Speaker | Says / does | Demo step |
+| Time | Speaker | Says / does | Screen |
 |---|---|---|---|
-| 0:00-0:28 | Isabel | "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph competitors in a few shops: price, and whether they're there. But he is abroad. He can't check our photos. An AI can write him a report, but it can't see the shelf. We built an agent that hires someone who can, and pays only if the photo is true." No "hello, we are team Shelfie" before it. | Slide 1: their real shelf photo |
-| 0:28-0:40 | Lorenz | "Shelfie. Paid only when the photo is true. The brand pays into escrow, a person takes the photo, a verifier agent checks it, and only a true photo pays." | Slide 2: one flow diagram |
-| 0:40-1:00 | Fernando | "This is the question he asked us, as a job on Sokosumi: one comparable drink, one Munich store. The fee is locked in Masumi escrow on preprod; here is the lock transaction from a run we started earlier, escrow takes about an hour." | Demo 1: Sokosumi job, lock tx on explorer |
-| 1:00-1:20 | Isabel, Lorenz | Isabel aims the live camera at an old photo of the tag and shoots. Lorenz: "Same tag, old photo, no code. Red. No money moves." | Demo 2: cheat attempt, red |
-| 1:20-1:55 | Isabel, Lorenz | Isabel: "This is what I did by hand for him." She claims the task, shows the one-time code for a second, holds the code card next to the tag and shoots. Lorenz: "The code proves the photo is new and made for this task, not where it was taken. The verifier is a separate agent, paid per check over x402. It reads product, price and the code. Green." | Demo 3: code photo, verifier green |
-| 1:55-2:10 | Fernando | "And she is paid now, on preprod. Here is the transaction." Zoom on the hash. | Demo 4: payout tx on explorer |
-| 2:10-2:35 | Lorenz | "The photo passed, so the report is delivered and the escrow settles; otherwise the brand is refunded." (Settled and refunded jobs from earlier runs in tabs.) Switch to the market slide: "Out-of-stocks cost retail a trillion dollars a year, and one test purchase costs fifty euros. Shelfie: about twelve, paid only when the photo is true." | Slide 3: market |
-| 2:35-2:50 | Lorenz | "Today it is one shelf in Munich, on preprod. The same engine works for any fact an agent cannot find online. Store QR codes for location are next." | Slide 4: beyond |
-| 2:50-3:00 | Isabel | "Next time he doesn't call us. He posts a job. Agents hire people to look, and the blockchain pays the bill." | Slide 5: close |
+| 0:00-0:28 | Isabel | "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph his competitors in a few shops: the price, and is it on the shelf. He can't check our photos. An AI can write a report, but it can't see a shelf. So we built an agent that hires a person, and pays only if the photo is true." No "hello, we are team Shelfie" before it. | Slide 1: their real shelf photo |
+| 0:28-0:36 | Lorenz | "Shelfie. Paid only when the photo is true. For brands entering a market without a field team." | Slide 2: four-step flow |
+| 0:36-0:55 | Fernando | "His question, as a job on Sokosumi: one drink, one Munich store. The fee is locked in escrow on Cardano preprod. This lock is from an earlier run; escrow takes about an hour. Photo, check and payout are live." | Slide 3, then Sokosumi job and lock tx |
+| 0:55-1:10 | Isabel, Lorenz | Isabel aims the live camera at an old photo of the tag and shoots. Lorenz: "Same tag, old photo, no code. Red. No money moves." | Verifier red |
+| 1:10-1:45 | Isabel, Lorenz | Isabel: "This is what I did by hand for him." She claims the task, shows the one-time code for a second, holds the code card next to the tag and shoots. Lorenz: "The code proves this photo is new, made for this task. The verifier is a separate service, paid per check over x402. Today we run it; the brand can swap its URL. It reads product, price and code. Green." | Code photo, verifier green |
+| 1:45-2:00 | Fernando | "Two transactions, live on preprod: the verifier's fee, and her payout. Here is the hash." Zoom on the payout hash. | Explorer: x402 fee tx, then payout tx |
+| 2:00-2:18 | Lorenz | "The photo passed, so the report is delivered and escrow settles; if it fails, the brand is refunded. Earlier runs, here. Lock, fee, payout, settle or refund: every step is a public receipt on Cardano." | Slide 4: receipts; settled and refunded tabs |
+| 2:18-2:40 | Lorenz | "Brands spend six billion dollars a year on in-store merchandising; one test purchase costs fifty euros. A Shelfie check: about twelve. Today: one shelf, preprod, one real request, no brand interviews yet. The code stops stale photos, not the wrong shop; store QR codes are next." | Slide 5: today / next |
+| 2:40-2:50 | Isabel | "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true." | Slide 6: close |
+
+298 spoken words: about 2:05 at 145 words per minute, about 2:50 with the demo; 10 s of slack. The tagline appears three times (hook, 0:28, close). Decisions behind this version: [../review/pitch-jury-2026-10-30.md](../review/pitch-jury-2026-10-30.md).
+
+Verify before Saturday (B): the x402 verifier fee shows as its own preprod tx on the explorer. If not, Fernando says "The verifier's fee is logged; her payout is live on preprod" and slide 4 marks the fee row "logged".
 
 Why the cheat comes first: fail, then pass, then pay is a stronger arc than green first, and the red step costs nothing if the network is slow.
 
-2-minute version: Fernando's lock beat becomes one sentence inside the result beat; drop the "beyond" beat.
+If the verifier takes more than 10 s: Lorenz says "It reads product, price and code" while it runs, then "Green". If behind at 1:45, drop the market sentence at 2:18.
 
-If a judge wants to participate: Isabel hands the phone and the card to the judge for the true photo (1:20). Offer it only when ahead of time and the network is behaving.
+2-minute version: Fernando's lock beat becomes one sentence inside the 2:00 beat; drop the market sentence.
+
+If a judge wants to participate: Isabel hands the phone and the card to the judge for the true photo (1:10). Offer it only when ahead of time and the network is behaving.
 
 ## Demo choreography detail
 
@@ -49,8 +55,8 @@ If a judge wants to participate: Isabel hands the phone and the card to the judg
 2. **Cheat (A, C):** point the live camera at the old photo (printout or laptop screen) and shoot. Verifier shows red with "code missing"; the payout counter stays unchanged and the verification fee is still shown as spend. The app has no upload path (ADR-17); if asked, say the live camera can be aimed at anything and the code, not the camera, is the defence (Q&A, not on stage).
 3. **Challenge-code photo (A):** the code (card number in card-pool mode) appears on the phone only after A claims the task. A shows the screen to the judges for one second, then puts the matching printed card (or the code written on paper) next to the tag; the phone that takes the photo cannot show its own screen. Both code and tag must be in frame.
 4. **Verifier (C):** the verifier page highlights the extracted price and product, then each check turns green; C reads only the code and the price.
-5. **Payout (B):** show the payout tx hash, amount, status. Zoom in.
-6. **Result (C):** switch to the report and the refund tab.
+5. **Fee and payout (B):** show the x402 fee tx, then the payout tx hash, amount, status. Zoom in on the payout.
+6. **Result (C):** slide 4 (receipts), then the settled and the refunded job tabs, each labelled "earlier run".
 
 Screen tooling: slides in `pdfpc` on one workspace, one Chrome window with the demo tabs in order (Sokosumi, verifier, explorer, report) switched with `Ctrl+1..9`; no OBS scenes live. Details: [pitch-plan.md](pitch-plan.md) section 6.
 
@@ -80,9 +86,8 @@ Rule: never present a recording or a pre-existing transaction as if it was live.
 
 ## Timing marks (Helmut, phone timer)
 
-0:28, 0:40, 1:00, 1:20, 1:55, 2:10, 2:35, 2:50, 3:00. If behind at 1:55, drop the "beyond" beat; if ahead at 1:20, offer the judge the phone.
+0:28, 0:36, 0:55, 1:10, 1:45, 2:00, 2:18, 2:40, 2:50. If behind at 1:45, drop the market sentence; if ahead at 1:10, offer the judge the phone.
 
-Budget (145 words per minute): about 2:05 of speech plus demo actions, about 2:45 in total. The 15 s left are for the verifier's response time, which is not measured yet (measure it in the live eval, C-09).
 
 ## Multiple tracks
 

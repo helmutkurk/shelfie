@@ -89,6 +89,17 @@ Answers are short on purpose: lead with the honest limit, then the mitigation. M
 24. **Were you allowed to photograph in those shops?** [D]
     For the story we photographed price tags from the customer aisle, no people; for the video we ask the manager first. In the product, shelf and tag only, and store permission is an open legal question (see Q11).
 
+## From the jury review (2026-10-30)
+
+25. **"The verifier and both wallets are yours. Why a blockchain?"** [B]
+    The brand's money sits in escrow, not with us, and comes back automatically if no photo passes. The verifier is a URL the brand can swap for an independent one, and every check is a public receipt either way.
+
+26. **"Second phone showing the code, or the wrong shop?"** [C]
+    The code proves the photo is fresh and made for this task; it does not prove the shop. Store-owned QR codes or a second worker close that gap; not built in 30 hours.
+
+27. **"Who pays, and why not BeMyEye or Roamler?"** [D]
+    One real request, no brand interviews yet. They sell per visit, usable or not; we charge only for a photo that passes, and an agent can hire us without a contract. (Competitor behaviour: [SOURCE NEEDED] before claiming more.)
+
 ## Bonus questions to rehearse
 
 - "Is this just Streetspotr with a chain?" Answer: the existing crowd-audit apps trust the platform to check photos and pay on their own schedule; here payment is bound to a published rule set and the receipt is public. We are not claiming a better workforce, only a trustable payment gate. [SOURCE NEEDED: confirm what competitors do before saying this]

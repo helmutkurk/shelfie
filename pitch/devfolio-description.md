@@ -28,7 +28,7 @@ The three things to remember:
 
 1. Paid only when the photo is true.
 2. The code in the photo: each task has a one-time challenge code that must appear next to the price tag.
-3. Agents hire people, and the blockchain pays the bill.
+3. Cardano escrow makes sure nobody pays for a photo that isn't true.
 
 ## How it works
 
