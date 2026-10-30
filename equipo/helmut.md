@@ -6,7 +6,7 @@
 
 ## Current focus
 
-Dev integration / main release branch model implemented in docs, CI, protection script and guards (Codex, 2026-10-30; D-29 done). D-28 remains blocked solely on unrestricted runtime validation; do not mark it done from fake tests. Resume with the [team guide](../docs/START-HERE-TEAM.md).
+Dev integration / main release branch model implemented in docs, CI, protection script and guards (Codex, 2026-10-30; D-30 done). D-28 remains blocked solely on unrestricted runtime validation; do not mark it done from fake tests. Resume with the [team guide](../docs/START-HERE-TEAM.md).
 
 ## Active branch
 
@@ -33,7 +33,7 @@ Exact next task command: `bash scripts/task.sh next D`. For branch-model closeou
 - Lorenz: review ten REWE draft labels (blurry photos are intentional negatives; no challenge-code evidence), complete 20 price + 8 OOS eval, verify real models/options.
 - Isabel + Fernando: starter bridge and escrow/refund semantics, paid x402 and plain preprod transfer, W-VBUY balance, ledger observer failure handling.
 - Session cookie is explicitly deferred; workerId is still in the request body. Real phone camera/GPS/CIP-30, secure LAN, tunnel headers and screenshot/explorer evidence remain to capture.
-- [Full open register and validation](../codigo/docs/integration-2026-10-30.md). Task statuses remain in `equipo/tasks/`; D-28 remains blocked and D-29 is done.
+- [Full open register and validation](../codigo/docs/integration-2026-10-30.md). Task statuses remain in `equipo/tasks/`; D-28 remains blocked; D-29 (skills) and D-30 (branch model) are done.
 - Fernando (B): review the `scripts/launch-github.sh` protection loop because `scripts/` is B-owned.
 - Helmut: apply and verify the live `dev`/`main` protection settings after the PR is merged; this work only changed the script and guidance.
 - Seed task D-05 still says the repo skeleton is merged to `main`; `scripts/task.sh` has no task-edit command. Update its acceptance before starting D-05 through an approved task-tracker change.
