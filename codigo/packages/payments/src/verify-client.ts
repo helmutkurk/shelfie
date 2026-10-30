@@ -109,6 +109,8 @@ export class DryVerifyClient implements VerifyClient {
   }
 }
 
+const errName = (e: unknown): string => (e instanceof Error ? e.name : "unknown");
+
 // ---------------------------------------------------------------- x402
 export interface X402Wallet {
   id: string;
@@ -159,10 +161,23 @@ export class X402VerifyClient implements VerifyClient {
     });
   }
 
+  /**
+   * Persist after a payment step. A write error (disk full, permissions) is logged and never
+   * replaces the receipt or the payment_uncertain error the caller branches on; the write-ahead
+   * pending mark already on disk keeps the key frozen across a restart.
+   */
+  private persistAfterPayment(): void {
+    try {
+      this.persist();
+    } catch (err) {
+      this.opts.logger.error("verify client state write failed", { reason: errName(err) });
+    }
+  }
+
   /** Freeze a key whose payment outcome is unclear; durable before the error is thrown. */
   private freeze(key: string): void {
     this.uncertain.add(key);
-    this.persist();
+    this.persistAfterPayment();
   }
 
   /** Keys whose payment outcome is unclear. Operator action only. */
@@ -172,6 +187,12 @@ export class X402VerifyClient implements VerifyClient {
 
   /** Operator: after checking the wallet history on the explorer, allow a new attempt. */
   resolveUncertain(key: string): void {
+    if (this.pending.has(key)) {
+      throw new AppError("invalid_transition", "A payment attempt for this key is still running.", undefined, {
+        reason: "attempt_running",
+        key,
+      });
+    }
     this.uncertain.delete(key);
     this.persist();
   }
@@ -208,12 +229,22 @@ export class X402VerifyClient implements VerifyClient {
     const wallet = this.opts.wallets[idx] as X402Wallet;
     const guarded = async (): Promise<Receipt> => {
       this.pending.add(key);
-      this.persist(); // write-ahead: a crash from here on loads this key as unclear
+      try {
+        this.persist(); // write-ahead: a crash from here on loads this key as unclear
+      } catch (err) {
+        // nothing signed yet: refuse rather than pay without a durable mark
+        this.pending.delete(key);
+        this.opts.logger.error("verify client state write failed", { reason: errName(err) });
+        throw new AppError("dependency_unavailable", "Buyer state cannot be written; nothing was paid.", undefined, {
+          reason: "state_unwritable",
+          paymentSent: false,
+        });
+      }
       try {
         return await this.attempt(wallet, body, key);
       } finally {
         this.pending.delete(key);
-        this.persist();
+        this.persistAfterPayment();
       }
     };
     const run = (this.tails[idx] as Promise<unknown>).then(guarded, guarded);
@@ -336,7 +367,7 @@ export class X402VerifyClient implements VerifyClient {
       receipt: { transaction: settle.transaction, network: NETWORK },
     };
     this.receipts.set(key, receipt);
-    this.persist();
+    this.persistAfterPayment();
     logger.info("verify paid", {
       submissionId: body.submissionId,
       key,

@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   closeSync,
   fsyncSync,
   mkdirSync,
@@ -78,10 +79,11 @@ export function saveVerifyClientState(
     uncertain: [...state.uncertain],
     pending: [...state.pending],
   };
-  mkdirSync(dirname(path), { recursive: true });
+  mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
   const tmp = `${path}.tmp`;
   const fd = openSync(tmp, "w", 0o600);
   try {
+    chmodSync(tmp, 0o600); // a stale tmp from an earlier crash keeps its old mode otherwise
     writeSync(fd, JSON.stringify(body));
     fsyncSync(fd);
   } finally {

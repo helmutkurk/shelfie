@@ -1,6 +1,6 @@
 // Security tests for the x402 buyer's double-pay guard (security.md P5): a signed payment whose
 // outcome is unclear must freeze the key, never look like "nothing sent, safe to retry".
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -230,5 +230,83 @@ describe("X402VerifyClient durable state (B-13)", () => {
     writeFileSync(path, "{not json");
     expect(() => durable(path, () => Promise.resolve(verdict()))).toThrow(/unreadable/);
     expect(readFileSync(path, "utf8")).toBe("{not json");
+  });
+});
+
+describe("X402VerifyClient state write failures (B-13)", () => {
+  const base = mkdtempSync(join(tmpdir(), "shelfie-verify-fail-"));
+  let n = 0;
+  const freshDir = (): string => {
+    const d = join(base, `d${String(n++)}`);
+    mkdirSync(d);
+    return d;
+  };
+  const make = (path: string, paid: () => Promise<Response>, calls = { n: 0 }): X402VerifyClient =>
+    new X402VerifyClient({
+      verifierUrl: "http://127.0.0.1:4021",
+      logger,
+      wallets: [x402LikeWallet],
+      settle: () => ({ transaction: "ab".repeat(32), success: true }),
+      statePath: path,
+      fetchImpl: (input) => {
+        calls.n++;
+        const signed = input instanceof Request && input.headers.has("payment-signature");
+        return signed ? paid() : Promise.resolve(json(402, "{}"));
+      },
+    });
+
+  it("write-ahead failure: nothing is sent, state_unwritable, no pending mark left", async () => {
+    const dir = freshDir();
+    chmodSync(dir, 0o500);
+    const calls = { n: 0 };
+    const c = make(join(dir, "state.json"), () => Promise.resolve(json(200, "{}")), calls);
+    try {
+      await expect(c.verify(req, KEY)).rejects.toMatchObject({ details: { reason: "state_unwritable" } });
+      expect(calls.n).toBe(0);
+      expect(c.uncertainKeys).toEqual([]);
+    } finally {
+      chmodSync(dir, 0o700);
+    }
+  });
+
+  it("receipt write failure after payment still returns the receipt", async () => {
+    const dir = freshDir();
+    const c = make(join(dir, "state.json"), () => {
+      chmodSync(dir, 0o500); // the disk "fails" after the payment
+      return Promise.resolve(json(200, JSON.stringify(fakeVerdict(req, { pass: true }))));
+    });
+    try {
+      const r = await c.verify(req, KEY);
+      expect(r.txHash).toBe("ab".repeat(32));
+    } finally {
+      chmodSync(dir, 0o700);
+    }
+    // the write-ahead mark on disk keeps the paid key frozen after a restart (fail closed)
+    expect(make(join(dir, "state.json"), () => Promise.resolve(json(200, "{}"))).uncertainKeys).toEqual([KEY]);
+  });
+
+  it("freeze write failure still throws payment_uncertain", async () => {
+    const dir = freshDir();
+    const c = make(join(dir, "state.json"), () => {
+      chmodSync(dir, 0o500);
+      return Promise.reject(new TypeError("socket hang up"));
+    });
+    try {
+      await expect(c.verify(req, KEY)).rejects.toMatchObject({ details: { reason: "payment_uncertain" } });
+      expect(c.uncertainKeys).toEqual([KEY]);
+    } finally {
+      chmodSync(dir, 0o700);
+    }
+  });
+
+  it("resolveUncertain is refused while an attempt for the key is running", async () => {
+    const dir = freshDir();
+    let release: (r: Response) => void = () => undefined;
+    const c = make(join(dir, "state.json"), () => new Promise<Response>((ok) => (release = ok)));
+    const running = c.verify(req, KEY);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(() => c.resolveUncertain(KEY)).toThrow(/still running/);
+    release(json(200, JSON.stringify(fakeVerdict(req, { pass: true }))));
+    await running;
   });
 });
