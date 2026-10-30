@@ -25,7 +25,7 @@ Friday night (before sleeping):
 
 | What | Who | Done when |
 |---|---|---|
-| Voice-over for all 12 shots, one quiet room, one mic, 2 takes each (`vo_sNN.wav`). Shot 6 in all 8 sign variants (2-5 fingers, left/right of the tag: `vo_s06_3R.wav` etc.); shot 4 also in the plan B wording (section "Fallback cut", `vo_s04_B.wav`) | Lorenz (narrator) | files in `~/shelfie-video/raw/`, the agent has run `cut.py probe` |
+| Voice-over for all 12 shots generated with Gemini TTS in Google AI Studio (voice "Koda", one style prompt; text from `video-script.md`), `vo_s01.wav` ... `vo_s12.wav`, 121 s of speech. Shot 6 uses three fingers right of the tag as a placeholder and is regenerated on Saturday | agent (done Fri 23:45) | 12 files in `~/shelfie-video/raw/` |
 | Refund tx of an earlier escrow run on preprod.cardanoscan.io, screen recorded (shot 9, label "earlier test run"); hash from `tx-hashes.md` | Lorenz | `s09_refund_t1.mkv` |
 | Log Friday's payout tx `7000899...` (job `job_c88c9da1cb68`) via `/log-evidence`, hash copied from the explorer | Lorenz | row committed (else fallback 1 in section 5 is not usable) |
 | Plan A or B (section 1) decided | Isabel | answer in chat |
@@ -44,6 +44,7 @@ Saturday:
 | 08:00-08:20 | Laptop: dashboard job page with the PASS row (7), payout row and the payout tx on Cardanoscan with hash and amount (8), report and escrow state (9) | Lorenz | `s07`/`s08`/`s09` files |
 | 08:30 | Transfer to `~/shelfie-video/raw/` (section 4); a one-line note per file ("IMG_1234 = hand at tag") | Lorenz | agent confirms all sources present |
 | 08:30-09:00 | Cheat take at a laptop (10): new job via `field-jobs.ts`, phone aimed at an old shelf photo, no hand; red verdict and FAIL row recorded | Lorenz | `s10` files |
+| 08:30 | Shot 6 voice-over regenerated with the sign that actually appeared (same voice and style prompt) | agent | `vo_s06.wav` matches the take |
 | 09:00 | Draft v0 with real footage and Friday's voice-over; contact sheet to Lorenz | agent | draft under 150 s |
 | 09:30 | Pitch rehearsal 3; agent fixes the review notes meanwhile | Lorenz; agent | - |
 | 10:15 | Review v0b (stills, then once with sound); re-takes of screen shots only if needed. Escrow settlement clip if it has arrived, else the earlier-run clip (section 5) | Lorenz | notes to the agent |
@@ -59,7 +60,7 @@ Hard cut-offs: no usable store run by 09:30 means fallback 1 in section 5 (Frida
 
 ## 3. Edit decision list (16:9, 1920x1080, 30 fps)
 
-Each shot lasts as long as its voice-over take plus 0.7 s, at least the picture minimum below. Dry run with synthetic footage and a 140 wpm read of the 314-word script: 145 s.
+Each shot lasts as long as its voice-over take plus 0.7 s, at least the picture minimum below. Dry run with synthetic footage and the generated voice-over (318 words): 141 s.
 
 | # | Min (s) | Picture | Title (top left) | Label (top right) | Source files |
 |---|---|---|---|---|---|
