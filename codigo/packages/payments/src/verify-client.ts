@@ -145,6 +145,8 @@ export class X402VerifyClient implements VerifyClient {
   private readonly pending = new Set<string>();
   /** Spent plus reserved lovelace in this run (run cap). */
   private reserved = 0n;
+  /** Keys whose current attempt has signed a payment (reservation is never given back). */
+  private readonly signed = new Set<string>();
   private readonly tails: Promise<unknown>[];
   private readonly load: number[];
 
@@ -157,6 +159,12 @@ export class X402VerifyClient implements VerifyClient {
       : { receipts: new Map<string, Receipt>(), uncertain: new Set<string>() };
     this.receipts = state.receipts;
     this.uncertain = state.uncertain;
+    if (opts.runCap) {
+      // the cap survives a restart: every stored receipt or frozen key counts at the per-payment cap
+      // (receipts do not store the amount, so this is a conservative upper bound)
+      const known = BigInt(this.receipts.size + this.uncertain.size);
+      this.reserved = BigInt(opts.runCap.maxPerPaymentLovelace) * known;
+    }
   }
 
   /** Reserve the per-payment cap against the run cap; refuse before signing when it would pass it. */
@@ -165,7 +173,10 @@ export class X402VerifyClient implements VerifyClient {
     if (!cap) return 0n;
     const per = BigInt(cap.maxPerPaymentLovelace);
     if (this.reserved + per > BigInt(cap.runCapLovelace)) {
-      this.opts.logger.error("verify run spend cap reached", { reserved: this.reserved.toString() });
+      this.opts.logger.error("verify run spend cap reached", {
+        reserved: this.reserved.toString(),
+        cap: cap.runCapLovelace,
+      });
       throw new AppError("dependency_unavailable", "Verify spend cap for this run reached; nothing was paid.", undefined, {
         reason: "run_cap_reached",
         paymentSent: false,
@@ -269,9 +280,12 @@ export class X402VerifyClient implements VerifyClient {
         return await this.attempt(wallet, body, key);
       } catch (err) {
         // nothing paid (no receipt, key not frozen): give the reservation back
-        if (!this.uncertain.has(key) && !this.receipts.has(key)) this.reserved -= reservation;
+        if (!this.signed.has(key) && !this.uncertain.has(key) && !this.receipts.has(key)) {
+          this.reserved -= reservation;
+        }
         throw err;
       } finally {
+        this.signed.delete(key);
         this.pending.delete(key);
         this.persistAfterPayment();
       }
@@ -294,7 +308,10 @@ export class X402VerifyClient implements VerifyClient {
       new Headers(init?.headers).forEach((v, k) => {
         headers.set(k, v);
       });
-      if (headers.has("payment-signature") || headers.has("x-payment")) paymentSent = true;
+      if (headers.has("payment-signature") || headers.has("x-payment")) {
+        paymentSent = true;
+        this.signed.add(key);
+      }
       return base(input, init);
     };
     let res: Response;

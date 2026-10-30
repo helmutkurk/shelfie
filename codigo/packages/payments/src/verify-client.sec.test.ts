@@ -374,3 +374,45 @@ describe("X402VerifyClient run spend cap (B-10, P5)", () => {
     await expect(c.verify(reqFor(4), keyFor(4))).rejects.toMatchObject({ details: { reason: "run_cap_reached" } });
   });
 });
+
+describe("X402VerifyClient run cap after review (B-10)", () => {
+  const runCap = { runCapLovelace: "3000000", maxPerPaymentLovelace: "1000000" };
+  const reqFor = (i: number): VerifyRequest => ({ ...req, submissionId: `sub_${String(i)}` });
+  const keyFor = (i: number): string => `verify:sub_${String(i)}`;
+  const make = (paid: (i: number) => Promise<Response>, statePath?: string): X402VerifyClient => {
+    let current = 0;
+    return new X402VerifyClient({
+      verifierUrl: "http://127.0.0.1:4021",
+      logger,
+      wallets: [x402LikeWallet],
+      settle: () => ({ transaction: "ab".repeat(32), success: true }),
+      runCap,
+      ...(statePath ? { statePath } : {}),
+      fetchImpl: async (input) => {
+        const r = input as Request;
+        if (!r.headers.has("payment-signature")) {
+          current = Number((JSON.parse(await r.clone().text()) as { submissionId: string }).submissionId.slice(4));
+          return json(402, "{}");
+        }
+        return paid(current);
+      },
+    });
+  };
+  const ok = (i: number) => Promise.resolve(json(200, JSON.stringify(fakeVerdict(reqFor(i), { pass: true }))));
+
+  it("the cap survives a restart: stored receipts count against it", async () => {
+    const path = join(mkdtempSync(join(tmpdir(), "shelfie-cap-")), "state.json");
+    const first = make(ok, path);
+    for (let i = 1; i <= 2; i++) await first.verify(reqFor(i), keyFor(i));
+    const restarted = make(ok, path);
+    await restarted.verify(reqFor(3), keyFor(3));
+    await expect(restarted.verify(reqFor(4), keyFor(4))).rejects.toMatchObject({ details: { reason: "run_cap_reached" } });
+  });
+
+  it("our error body after signing does not give the reservation back", async () => {
+    const body = JSON.stringify({ error: { code: "invalid_request", message: "bad image", details: {} } });
+    const c = make(() => Promise.resolve(json(422, body)));
+    for (let i = 1; i <= 3; i++) await expect(c.verify(reqFor(i), keyFor(i))).rejects.toMatchObject({ code: "invalid_request" });
+    await expect(c.verify(reqFor(4), keyFor(4))).rejects.toMatchObject({ details: { reason: "run_cap_reached" } });
+  });
+});
