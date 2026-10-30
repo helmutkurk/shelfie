@@ -12,7 +12,7 @@ const engineUrl = webEnv.VITE_ENGINE_URL ?? `http://127.0.0.1:${webEnv.ENGINE_PO
 const proxy = {
   "/api": {
     target: engineUrl,
-    changeOrigin: false,
+    changeOrigin: true,
     // The engine checks Origin on POST against PUBLIC_BASE_URL (security.md E9). // verify Friday
     headers: { Origin: engineUrl },
   },
