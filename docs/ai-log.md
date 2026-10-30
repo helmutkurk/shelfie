@@ -278,3 +278,9 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Worked: browser check under the production CSP (no console errors), cart room fixed (`cart-ready` class), no horizontal overflow at 390 px, `npm run check` 437 + 29 tests.
 - TODO (Helmut): fill the `[TO CONFIRM]` markers in imprint/privacy/developers (postal address, contact email, full legal names, retention, Gemini tier) before any release to `main`. Hook photo for `pitch.html` screen 1. Real PageDown on the projector not tested (synthetic keys do not scroll).
 - Handoff: branch `feature/homepage`; merge into `dev` locally when the team agrees (`/` still redirects to `/story`, T-26).
+
+## 2026-10-31 00:15 (Europe/Berlin) - Claude Opus 5.5 for Lorenz (C) - /story is the pitch screen (C-14)
+- Decided (Lorenz): the live pitch runs on `/story`, not `/homepage`.
+- Done: `/story` sections reordered to the run of show (story beats, how it works, receipts, price, market, team, close); five preprod receipts back in "Already running" with an honest line (earlier test runs, each step on its own; hashes from `tx-hashes.md`); market and price figures unchanged (Lorenz: they are correct; Isabel's #32 values). New key stepping in `story.js`: Page Down, Space, right arrow or a clicker land exactly on the next beat or section. `live-pitch.md` screen cues and the price line now follow the page.
+- Worked: local browser at 1536x864 (1920x1080 at 125 %), stepping lands on every beat and section, no console errors; `npm run check` with Node 24: 448 tests pass (Node 20 fails to start vitest workers, local setup only).
+- TODO: rehearse with a real Page Down on the projector laptop (synthetic keys only tested). Isabel: wording of the request beat ("Alex", "lives abroad") vs the consent rule in `pitch-plan.md` section 2.

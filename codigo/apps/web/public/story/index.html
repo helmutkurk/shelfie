@@ -21,8 +21,8 @@
         <span>Shelf<b>ie</b></span>
       </a>
       <nav class="topnav" aria-label="Sections">
-        <a href="#market">Market</a>
         <a href="#how">How it works</a>
+        <a href="#market">Market</a>
         <a href="#team">Team</a>
         <a class="btn btn-small" href="/dashboard">Start a check</a>
       </nav>
@@ -69,76 +69,6 @@
             </article>
           </div>
           <div class="progress" aria-hidden="true"><span id="story-progress"></span></div>
-        </div>
-      </section>
-
-      <section class="section" id="market">
-        <div class="wrap">
-          <p class="eyebrow">Why it matters</p>
-          <h2 class="title">Market research is a $150 billion business, built for big budgets.</h2>
-          <p class="lead">
-            Today, checking a few shelves means hiring a research agency. Even for ten stores, you
-            pay fixed fees to set up the project and write the report, on top of every visit.
-            With Shelfie, you pay per verified photo, nothing else.
-          </p>
-          <div class="stats">
-            <figure class="stat reveal">
-              <p class="stat-num">
-                <span data-count="150" data-prefix="$" data-suffix="B+">$150B+</span>
-              </p>
-              <figcaption>spent worldwide in 2024 on understanding customers and markets</figcaption>
-            </figure>
-            <figure class="stat reveal">
-              <p class="stat-num">
-                <span data-count="56" data-prefix="$" data-suffix="B">$56B</span>
-              </p>
-              <figcaption>of that is market research, mostly people collecting data in person</figcaption>
-            </figure>
-            <figure class="stat reveal">
-              <p class="stat-num">
-                <span data-count="300" data-prefix="$" data-suffix="K+">$300K+</span>
-              </p>
-              <figcaption>per year to have an agency check 200–500 stores, up to $1M</figcaption>
-            </figure>
-          </div>
-        </div>
-      </section>
-
-      <section class="section section-tint" id="price">
-        <div class="wrap">
-          <p class="eyebrow">What one shelf check costs today</p>
-          <h2 class="title">Knowing the price on a shelf is expensive.</h2>
-          <div class="bars reveal" role="list">
-            <div class="bar-row" role="listitem">
-              <span class="bar-label">Test purchase (Testkauf), Germany</span>
-              <span class="bar"><span class="bar-fill" data-width="100"></span></span>
-              <span class="bar-value">€50+</span>
-            </div>
-            <div class="bar-row" role="listitem">
-              <span class="bar-label">Quick audit visit, US</span>
-              <span class="bar"><span class="bar-fill" data-width="90"></span></span>
-              <span class="bar-value">$30–45</span>
-            </div>
-            <div class="bar-row bar-row-us" role="listitem">
-              <span class="bar-label"
-                >Shelfie check <small>illustrative, charged only when the photo passes</small></span
-              >
-              <span class="bar"><span class="bar-fill" data-width="24"></span></span>
-              <span class="bar-value">≈€12</span>
-            </div>
-          </div>
-          <div class="compare reveal">
-            <div class="compare-card">
-              <p class="compare-head">50 stores, one month, test purchases</p>
-              <p class="compare-num">€2,500+</p>
-              <p>a buyer visits and can do more than photograph</p>
-            </div>
-            <div class="compare-card compare-card-us">
-              <p class="compare-head">50 stores, one month, Shelfie</p>
-              <p class="compare-num">€600</p>
-              <p>presence and the shelf price, charged only for photos that pass</p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -196,8 +126,126 @@
           <p class="eyebrow">Already running</p>
           <h2 class="title">Real transactions on Cardano preprod.</h2>
           <p class="lead">
-            Preprod is Cardano's public test network: real transactions, test money.
+            Preprod is Cardano's public test network: real transactions, test money. Earlier test
+            runs, each step on its own; a full job with a verified real photo is next.
           </p>
+          <ul class="receipts">
+            <li class="reveal">
+              <span>Fee locked in Masumi escrow</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/8415ae7d015d981ac14605f796b46ac58da61cf9150f3e710bfa0fd728cdd081"
+                rel="noopener noreferrer"
+                target="_blank"
+                >8415ae7d…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>Verifier paid per check over x402</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d"
+                rel="noopener noreferrer"
+                target="_blank"
+                >cbc9cb5d…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>Person paid on-chain</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/1abef82575d1bfa75e64d9f0d9e40e733fe964e9bc6c9cee333e23a994e510d8"
+                rel="noopener noreferrer"
+                target="_blank"
+                >1abef825…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>Escrow settled, result delivered (test photo)</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/0614b337065b50701df9589d47e5c205a43b409c057eeb109d043042b0b752d0"
+                rel="noopener noreferrer"
+                target="_blank"
+                >0614b337…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>No photo: brand refunded from escrow</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/ca8f5de9d66a6aa4657d9f8dbf64670f7bbd7e9b66c61355a816ad8ae47fa1d6"
+                rel="noopener noreferrer"
+                target="_blank"
+                >ca8f5de9…</a
+              >
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="price">
+        <div class="wrap">
+          <p class="eyebrow">What one shelf check costs today</p>
+          <h2 class="title">Knowing the price on a shelf is expensive.</h2>
+          <div class="bars reveal" role="list">
+            <div class="bar-row" role="listitem">
+              <span class="bar-label">Test purchase (Testkauf), Germany</span>
+              <span class="bar"><span class="bar-fill" data-width="100"></span></span>
+              <span class="bar-value">€50+</span>
+            </div>
+            <div class="bar-row" role="listitem">
+              <span class="bar-label">Quick audit visit, US</span>
+              <span class="bar"><span class="bar-fill" data-width="90"></span></span>
+              <span class="bar-value">$30–45</span>
+            </div>
+            <div class="bar-row bar-row-us" role="listitem">
+              <span class="bar-label"
+                >Shelfie check <small>illustrative, charged only when the photo passes</small></span
+              >
+              <span class="bar"><span class="bar-fill" data-width="24"></span></span>
+              <span class="bar-value">≈€12</span>
+            </div>
+          </div>
+          <div class="compare reveal">
+            <div class="compare-card">
+              <p class="compare-head">50 stores, one month, test purchases</p>
+              <p class="compare-num">€2,500+</p>
+              <p>a buyer visits and can do more than photograph</p>
+            </div>
+            <div class="compare-card compare-card-us">
+              <p class="compare-head">50 stores, one month, Shelfie</p>
+              <p class="compare-num">€600</p>
+              <p>presence and the shelf price, charged only for photos that pass</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-tint" id="market">
+        <div class="wrap">
+          <p class="eyebrow">Why it matters</p>
+          <h2 class="title">Market research is a $150 billion business, built for big budgets.</h2>
+          <p class="lead">
+            Today, checking a few shelves means hiring a research agency. Even for ten stores, you
+            pay fixed fees to set up the project and write the report, on top of every visit.
+            With Shelfie, you pay per verified photo, nothing else.
+          </p>
+          <div class="stats">
+            <figure class="stat reveal">
+              <p class="stat-num">
+                <span data-count="150" data-prefix="$" data-suffix="B+">$150B+</span>
+              </p>
+              <figcaption>spent worldwide in 2024 on understanding customers and markets</figcaption>
+            </figure>
+            <figure class="stat reveal">
+              <p class="stat-num">
+                <span data-count="56" data-prefix="$" data-suffix="B">$56B</span>
+              </p>
+              <figcaption>of that is market research, mostly people collecting data in person</figcaption>
+            </figure>
+            <figure class="stat reveal">
+              <p class="stat-num">
+                <span data-count="300" data-prefix="$" data-suffix="K+">$300K+</span>
+              </p>
+              <figcaption>per year to have an agency check 200–500 stores, up to $1M</figcaption>
+            </figure>
+          </div>
         </div>
       </section>
 

@@ -470,6 +470,41 @@
     schedule();
   });
 
+  // ---------- Pitch stepping: one key press = one beat or section ----------
+  // A plain Page Down moves 87.5% of the screen and lands between beats; on stage (and with a
+  // presenter clicker, which sends Page Down) each press must land on the next beat or section.
+  function stops() {
+    const total = Math.max(0, room.offsetHeight - window.innerHeight);
+    const top = document.querySelector(".topbar");
+    const offset = top ? top.offsetHeight : 0;
+    const list = beats.map((b, i) => {
+      const from = Number(b.dataset.from);
+      const at = i === 0 ? 0 : from + (Math.min(1, Number(b.dataset.to)) - from) * 0.7;
+      return room.offsetTop + at * total;
+    });
+    for (const sec of document.querySelectorAll("main > .section")) {
+      const start = sec.offsetTop - offset;
+      list.push(start);
+      const rest = sec.offsetHeight + offset - window.innerHeight;
+      if (rest > window.innerHeight * 0.25) list.push(start + rest);
+    }
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    return list.map((y) => Math.round(Math.min(max, Math.max(0, y)))).sort((a, b) => a - b);
+  }
+  window.addEventListener("keydown", (e) => {
+    const field = e.target instanceof Element && e.target.closest("input, textarea, select");
+    if (e.altKey || e.ctrlKey || e.metaKey || field) return;
+    const next = e.key === "PageDown" || e.key === "ArrowRight" || (e.key === " " && !e.shiftKey);
+    const prev = e.key === "PageUp" || e.key === "ArrowLeft" || (e.key === " " && e.shiftKey);
+    if (!next && !prev) return;
+    const y = window.scrollY;
+    const list = stops();
+    const target = next ? list.find((s) => s > y + 4) : list.reverse().find((s) => s < y - 4);
+    if (target === undefined) return;
+    e.preventDefault();
+    window.scrollTo({ top: target, behavior: reduced ? "auto" : "smooth" });
+  });
+
   // ---------- Content modules: reveal, count-up, bars ----------
   const formatCount = (el, value) => {
     const d = Number(el.dataset.decimals || 0);
