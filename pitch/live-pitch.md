@@ -17,7 +17,7 @@ Two main voices (Isabel, Lorenz); handoffs eat time. Letters are the build roles
 
 ## Setup before the table is called
 
-- [ ] Story page (`https://dev.shelfieapp.fyi/story`) open in tab 1, one key press down (the "real request" beat), served from the offline copy if the network is weak. Click once on the page so it has keyboard focus.
+- [ ] Story page (`https://dev.shelfieapp.fyi/story`) open in tab 1, one key press down (the "real request" beat), or, if the network is weak, the offline copy `~/Dokumente/Projekte/Shelfie-Pitch-Offline/story/index.html` on Lorenz's laptop (opens from disk; rebuild after every page change with `bash scripts/story-offline.sh`). Click once on the page so it has keyboard focus.
 - [ ] Laptop on power; second tab strips: Sokosumi, dashboard job page (verdict rows), preprod.cardanoscan.io (verifier fee address and payout address pre-opened), terminal with ledger.
 - [ ] A fresh job pre-created but not started; one earlier completed job open in a tab (escrow settled) and one earlier refunded job open in a tab.
 - [ ] Phone with the web app logged in, brightness max, do-not-disturb on, screen recording running as insurance. Camera permission already granted (no prompt on stage).
