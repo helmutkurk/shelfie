@@ -13,6 +13,7 @@ P1 = ask first; P2 = if time.
 - P1 M2: Is there a hosted Masumi Payment Service for the hackathon, so we avoid running our own?
 - P1 M3: Compatible Payment Service / V2 payment source for the starter? Which commit? `forceLayer` and `sellerReturnAddress`?
 - P1 M4: Is a human payout as a plain Cardano transfer from the lead's wallet acceptable for "agents hire people", or is an x402/Masumi route expected?
+- P2 M8: Is there an agent on Sokosumi (or planned) that verifies images or photo evidence, which we could hire as an independent verifier instead of our own? (We pay ourselves for verification in the demo; see ADR-18.)
 - P2 M5: Recommended way to withhold a result on quality failure so the buyer's no-result auto-refund runs; any shortcut to show the refund faster?
 - P2 M6: TUM Workspace seats, grants, child-job budget; Preprod MCP endpoint; does the loopback URL need hosting?
 - P2 M7: Dispenser limits; which tUSDM token is right; does the Payment Service need the 5 ADA collateral?
@@ -20,7 +21,7 @@ P1 = ask first; P2 = if time.
 
 ## Cardano workshop (Friday 10:30)
 - P1 C1: Recommended way for a headless agent to pay a Masumi-escrow x402 route (`/x402/start_job`), and does it count for the track?
-- P1 C2: Does plain x402 to a verifier plus a Sokosumi job satisfy "agents hiring agents"?
+- P1 C2: Does plain x402 to a verifier plus a Sokosumi job satisfy "agents hiring agents"? We operate the verifier ourselves, so the x402 payment goes to our own wallet; is that acceptable for the demo if we say so openly?
 - P1 C3: How to pay a person's address from an agent wallet with the Evolution SDK (minimum UTxO, fees, confirmation time)?
 - P2 C4: Preferred explorer (Cardanoscan vs Cexplorer preprod URL form)?
 - P2 C5: Using template code in the public repo: any licence or rule concerns?

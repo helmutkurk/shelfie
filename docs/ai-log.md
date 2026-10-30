@@ -117,13 +117,9 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Agent lesson: validate the public package exports and actual runtime wiring with focused regressions before accepting a passing workspace-only check; report socket sandbox failures separately from successful local logic tests.
 - Final check result (Codex): `cd codigo && npm run check` on Node 24.22.2 exited 1: typecheck and lint passed; Vitest 277 passed / 79 failed (356 total), 79 socket errors, 7 failed / 21 passed files. Final focused suite: 244 passed; final env/API/explorer rerun: 15 passed. Shell HTTP setup is also blocked and was interrupted. D-28 stays blocked; no push approval requested.
 
-## 2026-10-30 12:09 (Europe/Berlin) - Codex for Helmut (D) - role and technology skills
-
-- Done: added seven concise role/technology SKILL.md files, docs/playbook/skills.md, role skill lines in START-HERE-TEAM.md, and pointers in AGENTS.md and agent-setup.md. Skills map to existing design/runbooks and mark unverified platform behavior as verify Friday.
-- Verification: a Python check passed skill names/descriptions and the 120-line limit; relative Markdown links resolved in all changed docs and the five existing process skills. No code tests, paid calls, or transactions were run.
-- TODO: none for D-29.
-- Handoff: branch name supplied by Helmut is feature/d-agent-skills; no Git commands were run. Next root command: bash scripts/task.sh next D. See docs/playbook/skills.md for the per-role load order.
-- Purpose-impact: minor: align the path-scoped web rule with ADR-17 camera-only capture. Orchestrator adds the same value as the commit trailer and PR Context and purpose.
-- Done (continued): aligned .claude/rules/web.md with ADR-17 so camera use without a secure context stays read-only and offers no file-picker submission.
-- Correction: initial task.sh add/start calls invoked git config user.name internally before TASK_ACTOR=Codex was set; later task tracking used TASK_ACTOR=Codex. No direct Git commands for status, diff, or branch inspection were issued.
-- Purpose-impact (full change set; use for commit trailer and PR Context and purpose): minor: add role/technology agent skills and align the web camera-only rule with ADR-17.
+## 2026-10-30 (Europe/Berlin) - Claude Opus 5.5 for Fernando (B) - market pricing and verifier neutrality (docs only)
+- Done: ported a 2026-10-29 prep session (done outside the repo) onto branch `docs/market-pricing-verifier`. New `pitch/market-pricing.md` (agency, mystery-shopping and crowd-audit benchmarks with sources, Shelfie cost build-up); illustrative pricing revised from EUR 5 / EUR 2.50 to EUR 12 per check (EUR 399/month for 50, EUR 5-6 at volume) and EUR 3.50 payout across storyline, Devfolio text, Q&A, live pitch, video script and slide macros. Verifier neutrality: ADR-18 in `diseno/decisions.md` (we operate the verifier in the demo; it is paid per check, pass or fail; the URL is configuration), Q&A Q3 rewritten and Q3a added, mentor questions M8 and C2 note.
+- Worked: every replacement was checked against the current repo text; nothing from teammates was overwritten. ADR renumbered 16 -> 18 because ADR-16/17 already exist.
+- Failed: `shelfie.pdf` not rebuilt (no LaTeX engine on this machine).
+- TODO: rebuild the slides with `latexmk -xelatex shelfie.tex` in `pitch/slides/` (D). The "10 stores: EUR 120" comparison describes the customer's need; check that it fits the single-store MVP wording (ADR-16) (D). Lead time, unusable-data share and the 5% Masumi fee are still unsourced.
+- Handoff: PR to `main` needs Helmut's review (pitch/ and README are D's; diseno/ is a purpose file, `Purpose-impact: ADR-18`).

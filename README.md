@@ -20,7 +20,7 @@ Shelfie lets a brand check what its products really cost on shelves. An agent of
 | Learning the concepts from zero | [basic-knowledge/main.pdf](basic-knowledge/main.pdf)                                                                                                                             |
 | Setting up Thursday evening     | [preparacion/thursday-evening-checklist.md](preparacion/thursday-evening-checklist.md)                                                                                           |
 | Building on Friday              | [preparacion/friday-runbook.md](preparacion/friday-runbook.md) · [diseno/repo-layout.md](diseno/repo-layout.md) · [diseno/contracts.md](diseno/contracts.md)                     |
-| Pitching                        | [pitch/storyline.md](pitch/storyline.md) · [pitch/live-pitch.md](pitch/live-pitch.md) · [pitch/video-script.md](pitch/video-script.md) · [pitch/qa-prep.md](pitch/qa-prep.md) · [pitch/slogans.md](pitch/slogans.md)    |
+| Pitching                        | [pitch/storyline.md](pitch/storyline.md) · [pitch/market-pricing.md](pitch/market-pricing.md) · [pitch/live-pitch.md](pitch/live-pitch.md) · [pitch/video-script.md](pitch/video-script.md) · [pitch/qa-prep.md](pitch/qa-prep.md) · [pitch/slogans.md](pitch/slogans.md)    |
 | Submitting                      | [preparacion/submission-checklist.md](preparacion/submission-checklist.md) · [pitch/devfolio-description.md](pitch/devfolio-description.md)                                      |
 
 ## This repository
@@ -57,7 +57,7 @@ for proposed parameters pending confirmation by all four members.
 | `ideas/` | Two independent ideation rounds (27 ideas, weighted scoring) and the **decision** |
 | `diseno/` | Architecture, domain model and state machines, API contracts, verifier rules, repo layout + milestones M1–M6 with acceptance criteria, ADRs |
 | `preparacion/` | Thursday checklist, Friday/Saturday runbooks, demo props, risk register, mentor questions, evidence log, submission checklist |
-| `pitch/` | Storyline, ≤2:30 video script, live pitch + demo choreography, Q&A prep, Devfolio text, `slides/` (LaTeX beamer deck, build with `latexmk -xelatex shelfie.tex`) |
+| `pitch/` | Storyline, market pricing analysis (`market-pricing.md`), ≤2:30 video script, live pitch + demo choreography, Q&A prep, Devfolio text, `slides/` (LaTeX beamer deck, build with `latexmk -xelatex shelfie.tex`) |
 | `review/` | Cross-file consistency report |
 | `codigo/` | Monorepo skeleton: READMEs per app/package only; source code from Friday 09:00 |
 | `equipo/` | Current state per person (focus, branch, components) and the registry of extra bots/scripts |
