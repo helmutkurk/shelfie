@@ -10,7 +10,7 @@ const TOKEN = "test-shell-token"; // fake value for the fake engine only
 let server;
 /** @type {{ method: string, url: string, headers: Record<string, any>, body: any }[]} */
 let calls;
-/** @type {{ create: (call: any) => [number, any], decision: (call: any) => [number, any] }} */
+/** @type {{ create: (call: any) => [number, any], decision: (call: any) => [number, any], catalog?: (call: any) => [number, any] }} */
 let script;
 let baseUrl = "";
 
@@ -31,6 +31,7 @@ beforeEach(async () => {
       else if (call.method === "POST" && call.url === "/api/jobs") reply = script.create(call);
       else if (call.method === "GET" && call.url.startsWith("/api/jobs/job_01/decision")) reply = script.decision(call);
       else if (call.method === "POST" && call.url === "/api/jobs/job_01/settlement-events") reply = [201, { ok: true }];
+      else if (call.method === "GET" && call.url === "/api/catalog" && script.catalog) reply = script.catalog(call);
       res.writeHead(reply[0], { "Content-Type": "application/json" });
       res.end(JSON.stringify(reply[1]));
     });
@@ -82,6 +83,17 @@ describe("config", () => {
 });
 
 describe("create job", () => {
+  it("resolves a free-text request against the engine catalog and still sends ids only", async () => {
+    script.catalog = () => [
+      200,
+      { cities: [{ id: "munich", name: "München", stores: [{ id: "s1", name: "REWE", chain: "REWE", address: "Main Street 1" }], products: [{ ean: "4000000000000", name: "Nutella 450 g" }] }] },
+    ];
+    const bridge = makeBridge();
+    await bridge.createJob("Nutella at the REWE on Main Street", "sokosumi-task-9");
+    const create = calls.find((c) => c.method === "POST");
+    assert.deepEqual(create?.body.input, { productEan: "4000000000000", stores: [{ id: "s1" }] });
+  });
+
   it("sends ids only, the shell token and externalRef = Sokosumi task id", async () => {
     const bridge = makeBridge();
     const { jobId, created } = await bridge.createJob(INPUT, "sokosumi-task-1");
