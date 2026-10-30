@@ -146,7 +146,8 @@ describe("order trust boundary", () => {
       orderRig({
         SOKOSUMI_CLIENT: "real",
         SOKOSUMI_API_TOKEN: "synthetic-api-token",
-        SOKOSUMI_AGENT_ID: "agent-1",
+        SOKOSUMI_COWORKER_ID: "coworker-1",
+        SOKOSUMI_ORGANIZATION_SLUG: "org-slug",
       }).engine.configView(true).orders?.enabled,
     ).toBe(false);
   });

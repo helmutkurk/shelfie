@@ -111,6 +111,15 @@ const engineBase = z.object({
     .max(200)
     .regex(/^[A-Za-z0-9_-]+$/)
     .optional(),
+  // Real Task create (A-25, B-16): the coworker the starter polls and the organization slug.
+  SOKOSUMI_COWORKER_ID: z
+    .string()
+    .regex(/^[A-Za-z0-9-]{1,100}$/)
+    .optional(),
+  SOKOSUMI_ORGANIZATION_SLUG: z
+    .string()
+    .regex(/^[a-z0-9-]{1,100}$/)
+    .optional(),
   SOKOSUMI_MAX_CREDITS_PER_TASK: z.coerce
     .number()
     .int()
@@ -178,7 +187,8 @@ export const EngineEnvSchema = withDevTokens(
     if (v.SOKOSUMI_CLIENT === "real") {
       if (!v.BRAND_TOKEN) add("BRAND_TOKEN", "required for real orders");
       if (!v.SOKOSUMI_API_TOKEN) add("SOKOSUMI_API_TOKEN", "required for real orders");
-      if (!v.SOKOSUMI_AGENT_ID) add("SOKOSUMI_AGENT_ID", "required for real orders");
+      if (!v.SOKOSUMI_COWORKER_ID) add("SOKOSUMI_COWORKER_ID", "required for real orders");
+      if (!v.SOKOSUMI_ORGANIZATION_SLUG) add("SOKOSUMI_ORGANIZATION_SLUG", "required for real orders");
     }
     if (v.CLAIM_TTL_SEC + v.VERIFY_BUDGET_SEC >= v.JOB_WINDOW_SEC) {
       add("JOB_WINDOW_SEC", "must exceed CLAIM_TTL_SEC + VERIFY_BUDGET_SEC (claim cutoff)");

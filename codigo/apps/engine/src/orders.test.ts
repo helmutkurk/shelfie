@@ -129,54 +129,65 @@ describe("orders", () => {
   });
 });
 
-describe("real Sokosumi transport (mocked, B-15 still open)", () => {
-  it("probes the real schema with server credentials but never purchases before B-15 verifies the Task boundary", async () => {
-    const calls: RequestInit[] = [];
-    const urls: string[] = [];
-    const env = orderRig({
+describe("real Sokosumi transport (mocked; request shape from A-25)", () => {
+  const realEnv = () =>
+    orderRig({
       SOKOSUMI_CLIENT: "real",
       SOKOSUMI_API_TOKEN: "synthetic-api-token",
-      SOKOSUMI_AGENT_ID: "agent-1",
+      SOKOSUMI_COWORKER_ID: "coworker-1",
+      SOKOSUMI_ORGANIZATION_SLUG: "org-slug",
     }).env;
-    const client = new RealSokosumiClient(env, (url, init) => {
+  const task = { orderId: "ord_01", storeId: "s1", productEan: EAN, maxCredits: 100 };
+
+  it("creates one READY coworker Task with the ids-only order description and reports its id", async () => {
+    const urls: string[] = [];
+    const calls: RequestInit[] = [];
+    const seen: string[] = [];
+    const client = new RealSokosumiClient(realEnv(), (url, init) => {
       urls.push(url instanceof Request ? url.url : String(url));
       calls.push(init!);
-      return Promise.resolve(Response.json({ data: { input_data: [] } }));
+      return Promise.resolve(Response.json({ data: { id: "task-1", credits: 100 } }, { status: 201 }));
     });
-    await expect(
-      client.createTask({ orderId: "ord_01", storeId: "s1", productEan: EAN, maxCredits: 100 }),
-    ).rejects.toMatchObject({
-      code: "sokosumi_unavailable",
-      message: "Real Task purchases are blocked pending the B-15 capped REST spike.",
-    });
-    expect(urls).toEqual(["https://api.preprod.sokosumi.com/v1/agents/agent-1/input-schema"]);
-    expect(calls[0]?.method).toBe("GET");
-    expect(calls[0]?.body).toBeUndefined();
-    expect(calls[0]?.signal).toBeInstanceOf(AbortSignal);
+    await expect(client.createTask(task, (id) => seen.push(id))).resolves.toEqual({ taskId: "task-1" });
+    expect(urls).toEqual(["https://api.preprod.sokosumi.com/v1/tasks"]);
+    expect(calls[0]?.method).toBe("POST");
     expect(calls[0]?.redirect).toBe("error");
+    const headers = new Headers(calls[0]?.headers);
+    expect(headers.get("authorization")).toBe("Bearer synthetic-api-token");
+    expect(headers.get("x-organization-slug")).toBe("org-slug");
+    const body = JSON.parse(calls[0]?.body as string) as { coworkerId: string; status: string; description: string };
+    expect(body.coworkerId).toBe("coworker-1");
+    expect(body.status).toBe("READY");
+    expect(JSON.parse(body.description)).toEqual({ orderId: "ord_01", storeId: "s1", productEan: EAN });
+    expect(seen).toEqual(["task-1"]);
+  });
+
+  it("a Task priced above the cap is reported (id kept for reconciliation), not silently accepted", async () => {
+    const seen: string[] = [];
+    const client = new RealSokosumiClient(realEnv(), () =>
+      Promise.resolve(Response.json({ data: { id: "task-2", credits: 500 } }, { status: 201 })),
+    );
+    await expect(client.createTask(task, (id) => seen.push(id))).rejects.toMatchObject({
+      code: "sokosumi_unavailable",
+      details: { reason: "task_above_credit_cap", taskId: "task-2" },
+    });
+    expect(seen).toEqual(["task-2"]);
   });
 
   it("hides upstream bodies, errors and malformed responses; does not retry", async () => {
-    const env = orderRig({
-      SOKOSUMI_CLIENT: "real",
-      SOKOSUMI_API_TOKEN: "synthetic-api-token",
-      SOKOSUMI_AGENT_ID: "agent-1",
-    }).env;
     for (const response of [
       new Response("synthetic-api-token", { status: 401 }),
-      Response.json({ data: "invalid schema" }),
+      Response.json({ data: "invalid" }, { status: 201 }),
+      Response.json({ data: { id: "../x" } }, { status: 201 }),
     ]) {
       let count = 0;
-      const client = new RealSokosumiClient(env, () => {
+      const client = new RealSokosumiClient(realEnv(), () => {
         count++;
         return Promise.resolve(response);
       });
-      await expect(
-        client.createTask({ orderId: "ord_01", storeId: "s1", productEan: EAN, maxCredits: 100 }),
-      ).rejects.toMatchObject({
-        code: "sokosumi_unavailable",
-        message: "Sokosumi request could not be confirmed.",
-      });
+      const err = await client.createTask(task).catch((e: unknown) => e);
+      expect(err).toMatchObject({ code: "sokosumi_unavailable", message: "Sokosumi request could not be confirmed." });
+      expect(JSON.stringify(err)).not.toContain("synthetic-api-token");
       expect(count).toBe(1);
     }
   });

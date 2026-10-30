@@ -74,7 +74,7 @@ These confirm code behaviour only; no paid request, real model call or preprod t
 | Local order flow | One fake Task and shell-source job per catalog store; same `Engine.createJob` body/method as bridge; correlation `{orderId,storeId}` outside catalog job input; jobs remain N=1/K=1 | `orders.test.ts`, `order-input.test.js`; rehearsal only |
 | Spend safety | Durable worst-case reservation before I/O; concurrent requests, restart and admin reset retain caps; uncertain purchases never retried automatically | `orders.test.ts`, `orders.sec.test.ts`, `orders-http.sec.test.ts` |
 | REST source distinction | Official MCP implementation has agent input-schema/job endpoints and separate coworker Task creation; it is not evidence that Shelfie's account can purchase a capped Task | [Official Sokosumi-MCP source](https://github.com/masumi-network/Sokosumi-MCP/blob/main/server.py), inspected 2026-10-30; runbook REST section |
-| Real adapter status | Env-selected read-only authenticated schema probe; **no real mutation implemented/enabled** pending B-15. A READY Task plus attached agent Job risks two purchases. | `sokosumi.ts`, `orders.test.ts`; security-reviewer finding |
+| Real adapter status | **Implemented (B-16):** `RealSokosumiClient.createTask` creates one READY coworker Task with the request A-25 verified (`POST /v1/tasks`, Bearer, `X-Organization-Slug`, description `{orderId, storeId, productEan}`); no agent Job is created, so one paid mechanism per store. Mocked tests in `orders.test.ts`; not yet run against preprod through the engine (needs `SOKOSUMI_CLIENT=real` and the hub env). The B-15 spike below was done as A-25 (Isabel). | `sokosumi.ts`, `orders.test.ts`, A-25 row |
 
 ### TODO B-15 — account-backed capped REST Task spike (Fernando)
 
