@@ -70,7 +70,11 @@ async function main(): Promise<void> {
   if (args.check !== undefined) {
     if (args.tag === undefined || args.since === undefined)
       refuse("--check needs --tag and --since.");
-    process.exit(await confirmAndFind(adapter, args.check, args.tag, args.since));
+    if (!/^[0-9a-f]{64}$/.test(args.check)) refuse("--check must be a 64-char hex tx hash.");
+    if (!/^shelfie:payout-once-\d+$/.test(args.tag))
+      refuse("--tag must be shelfie:payout-once-<n>.");
+    if (!Number.isFinite(Date.parse(args.since))) refuse("--since must be an ISO timestamp.");
+    process.exit(await confirmAndFindAfterSend(adapter, args.check, args.tag, args.since));
   }
 
   const to = args.to ?? refuse("--to <addr_test1...> is required.");
@@ -117,7 +121,26 @@ async function main(): Promise<void> {
   out(`txHash ${txHash}`);
   out(`explorer ${env.EXPLORER_TX_BASE}${txHash}`);
   out(`recheck: --check ${txHash} --tag ${tag} --since ${sinceIso}`);
-  process.exit(await confirmAndFind(adapter, txHash, tag, sinceIso));
+  process.exit(await confirmAndFindAfterSend(adapter, txHash, tag, sinceIso));
+}
+
+/**
+ * The transfer was sent (or is being rechecked): a query error here must never read as
+ * "nothing sent", so it maps to exit 3 with a do-not-resend notice instead of exit 2.
+ */
+async function confirmAndFindAfterSend(
+  adapter: PayoutAdapter,
+  txHash: string,
+  tag: string,
+  sinceIso: string,
+): Promise<number> {
+  try {
+    return await confirmAndFind(adapter, txHash, tag, sinceIso);
+  } catch (err) {
+    const reason = err instanceof AppError ? String(err.details["reason"]) : "unknown";
+    out(`check failed (reason=${reason}). The tx WAS sent: do NOT resend; rerun with --check.`);
+    return 3;
+  }
 }
 
 /** Wait for >= 1 confirmation, then check that find() returns the same hash by metadata tag. */
