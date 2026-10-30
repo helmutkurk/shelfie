@@ -11,6 +11,7 @@ import {
   hostGuard,
   isAdminToken,
   originGuard,
+  parseAllowedOrigins,
   rateLimit,
   requireAdmin,
   requireShellOrAdmin,
@@ -122,7 +123,7 @@ export function createApp(opts: AppOptions): express.Express {
   });
   app.use(securityHeaders());
   app.use(hostGuard(hosts));
-  app.use(originGuard(originHosts));
+  app.use(originGuard(originHosts, parseAllowedOrigins(env.ALLOWED_ORIGINS)));
 
   const smallJson = express.json({ limit: "16kb", strict: true });
   const photoLimit = Math.ceil((env.MAX_IMAGE_BYTES * 4) / 3) + 4096;

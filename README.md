@@ -40,6 +40,7 @@ Everyone pushes directly to `dev` (agents peer-review each other's commits, `scr
 | Who is doing what, extra bots and scripts | [equipo/](equipo/README.md) · [equipo/components.md](equipo/components.md) |
 | Open-source libraries we may use | [docs/open-source-libraries.md](docs/open-source-libraries.md) |
 | License, authors and draft team IP agreement | [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AUTHORS.md](AUTHORS.md) · [docs/ip-agreement.md](docs/ip-agreement.md) |
+| Auto-deploy and public test URLs (Vercel + tunnel) | [docs/deploy.md](docs/deploy.md) |
 | Decisions and daily log | [docs/adr/](docs/adr/) · [docs/ai-log.md](docs/ai-log.md) |
 
 ## License

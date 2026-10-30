@@ -94,6 +94,7 @@ const engineBase = z.object({
   SELLER_ADDRESS: optStr(),
   PAYOUT_DAILY_CAP_LOVELACE: lovelaceVar("50000000"),
   ALLOWED_HOSTS: optStr(),
+  ALLOWED_ORIGINS: optStr(),
   CATALOG_DIR: optStr(),
   WEB_DIST: optStr(),
   VERIFY_CLIENT: z.enum(["fake", "real"]).optional(),
