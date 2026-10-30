@@ -4,7 +4,7 @@
 - Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
-B-01, B-02, B-04 done (ADR-04 answered: SDK payout tx `60d49a3a...`). Next: B-03 (M1 paid x402 request from W-VBUY), B-07 (payout queue on preprod: confirmed payout plus no double pay on the same key), B-10 (spend caps, incl. `VERIFY_RUN_CAP_LOVELACE`).
+B-01..B-04 done: M1 paid x402 request (tx `cbc9cb5d...`), ADR-04 payout (tx `60d49a3a...`). Verifier settles with 0 confirmations. Next: B-07 (payout queue on preprod), B-13 (persist x402 receipts and uncertain keys), B-10 (spend caps).
 
 ## Active branch
 - `dev`: payout-once and the payout reconcile (auto-reconcile of UNKNOWN, stale alert, space-in-path fix) merged and pushed (ADR-0006), security-reviewer passes done; awaiting peer review by Isabel's agent. B-07 doing.
