@@ -1,19 +1,11 @@
 import { isAppError } from "@shelfie/core/browser";
 import type { ClaimLocation, TaskListItem } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
-import { formatAda, minutesLeft, shortAddress } from "../lib/format.js";
+import { formatAda, minutesLeft } from "../lib/format.js";
 import { useTaskFeed } from "../lib/hooks.js";
 import { describeError, S } from "../lib/messages.js";
-import {
-  Banner,
-  Button,
-  EmptyState,
-  Group,
-  LargeTitle,
-  NavBar,
-  Row,
-  TextButton,
-} from "../ui/index.js";
+import { Banner, Button, EmptyState, Icon, Skeleton } from "../ui/index.js";
+import { AppHeader } from "./AppHeader.js";
 
 export type LocationState = "idle" | "reading" | "ok" | "denied" | "unavailable";
 
@@ -31,16 +23,22 @@ export function Feed(props: {
   const feed = useTaskFeed(props.location);
   const locationMissing = props.locationState !== "ok";
 
+  const count = feed.rows.filter((r) => !r.leaving).length;
+  const showSkeleton = !locationMissing && feed.loading && feed.rows.length === 0;
+
   return (
-    <main className="screen">
-      <NavBar
-        action={
-          <TextButton onClick={props.onEditProfile} translate="no">
-            {props.address ? shortAddress(props.address) : "Set payout address"}
-          </TextButton>
-        }
+    <main className="screen screen-feed">
+      <AppHeader
+        address={props.address}
+        onEditProfile={props.onEditProfile}
+        status={locationMissing ? undefined : feed.status}
       />
-      <LargeTitle title={S.feedTitle} />
+      <div className="feed-title">
+        <h1>{S.feedTitle}</h1>
+        {!locationMissing && !showSkeleton ? (
+          <p className="subhead">{count === 1 ? "1 open task" : `${count} open tasks`}</p>
+        ) : null}
+      </div>
       {props.notice ? (
         <p className="notice" role="status">
           {props.notice}
@@ -78,22 +76,45 @@ export function Feed(props: {
               {feed.pendingCount === 1 ? "1 new task" : `${feed.pendingCount} new tasks`}
             </button>
           ) : null}
-          {feed.rows.length === 0 && !feed.loading ? (
-            <EmptyState text={S.feedEmpty} />
+          {showSkeleton ? (
+            <div className="task-list" aria-busy="true" aria-label="Loading tasks">
+              <Skeleton />
+              <Skeleton />
+              <Skeleton />
+            </div>
+          ) : feed.rows.length === 0 ? (
+            <EmptyState text={S.feedEmpty} help={S.feedHint} />
           ) : (
-            <Group label="Open tasks" footer={S.feedHint}>
-              {feed.rows.map(({ task, leaving }) => (
-                <Row
-                  key={task.id}
-                  className={leaving ? "leaving" : ""}
-                  title={task.productName}
-                  secondary={`${task.storeName}, ${task.storeAddress}`}
-                  trailing={formatAda(task.payoutAmount)}
-                  trailingSecondary={`${minutesLeft(task.windowEndsAt, now())} min left`}
-                  {...(leaving ? {} : { onClick: () => props.onOpen(task) })}
-                />
-              ))}
-            </Group>
+            <>
+              <ul className="task-list" aria-label="Open tasks">
+                {feed.rows.map(({ task, leaving }) => (
+                  <li key={task.id} className={`task-item ${leaving ? "leaving" : ""}`}>
+                    <button
+                      type="button"
+                      className="task-card"
+                      disabled={leaving}
+                      onClick={() => props.onOpen(task)}
+                    >
+                      <span className="task-main">
+                        <span className="task-product">{task.productName}</span>
+                        <span className="task-store">
+                          {task.storeName}, {task.storeAddress}
+                        </span>
+                        <span className="task-meta">
+                          <Icon name="clock" size={16} />
+                          {minutesLeft(task.windowEndsAt, now())} min left
+                        </span>
+                      </span>
+                      <span className="task-reward">
+                        <span className="task-reward-amount">{formatAda(task.payoutAmount)}</span>
+                        <Icon name="chevron" size={18} />
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p className="footnote feed-hint">{S.feedHint}</p>
+            </>
           )}
         </>
       )}

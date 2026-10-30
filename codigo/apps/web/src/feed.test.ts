@@ -36,7 +36,7 @@ describe("live task feed", () => {
     renderFeed();
     expect(await screen.findByText("Example Pale Ale 0.33 l")).toBeTruthy();
     expect(screen.getByText("Other Product 0.5 l")).toBeTruthy();
-    const rewards = [...document.querySelectorAll(".row-value")].map((e) => e.textContent);
+    const rewards = [...document.querySelectorAll(".task-reward-amount")].map((e) => e.textContent);
     expect(rewards).toEqual(["3\u00a0tADA", "3\u00a0tADA"]);
   });
 

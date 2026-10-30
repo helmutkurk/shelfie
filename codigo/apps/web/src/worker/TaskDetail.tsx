@@ -2,12 +2,12 @@ import { useState } from "react";
 import type { ClaimResponse, TaskListItem } from "@shelfie/core/browser";
 import { AppError, WorkerIdSchema, isAppError } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
-import { formatAda } from "../lib/format.js";
+import { formatAda, minutesLeft } from "../lib/format.js";
 import { GeoError, readCoarseLocation } from "../lib/geo.js";
 import { describeError } from "../lib/messages.js";
 import { loadWorkerId } from "../lib/storage.js";
 import type { Profile } from "../lib/storage.js";
-import { Button, Group, LargeTitle, NavBar, Row } from "../ui/index.js";
+import { Button, Icon, NavBar } from "../ui/index.js";
 
 const STEPS = [
   "Find the product",
@@ -27,6 +27,7 @@ export function TaskDetail(props: {
   onNeedProfile: () => void;
 }) {
   const deps = useDeps();
+  const left = minutesLeft(props.task.windowEndsAt, deps.now());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,23 +64,37 @@ export function TaskDetail(props: {
   return (
     <main className="screen">
       <NavBar back={{ label: "Tasks", onClick: props.onBack }} />
-      <LargeTitle
-        title={props.task.productName}
-        subtitle={`${props.task.storeName}, ${props.task.storeAddress}`}
-      />
-      <Group label="Steps" footer="No product there? You can report the empty shelf spot.">
-        <ol className="steps">
+      <section className="hero-card">
+        <h1 className="hero-title">{props.task.productName}</h1>
+        <p className="hero-sub">
+          <Icon name="pin" size={18} />
+          <span>
+            {props.task.storeName}, {props.task.storeAddress}
+          </span>
+        </p>
+        <dl className="stat-row">
+          <div className="stat">
+            <dt>Reward</dt>
+            <dd className="stat-value stat-accent">{formatAda(props.task.payoutAmount)}</dd>
+          </div>
+          <div className="stat">
+            <dt>Time left</dt>
+            <dd className="stat-value">{left} min</dd>
+          </div>
+        </dl>
+      </section>
+      <section className="steps-card" aria-label="Steps">
+        <h2 className="section-title">How it works</h2>
+        <ol className="step-list">
           {STEPS.map((s) => (
             <li key={s}>{s}</li>
           ))}
         </ol>
-      </Group>
-      <Group label="Reward">
-        <Row title="Reward" trailing={formatAda(props.task.payoutAmount)} />
-      </Group>
+        <p className="footnote">No product there? You can report the empty shelf spot.</p>
+      </section>
       {error ? (
-        <p className="error-text" role="alert">
-          {error}
+        <p className="inline-error" role="alert">
+          <Icon name="alert" size={18} /> <span>{error}</span>
         </p>
       ) : null}
       {!props.canClaim ? (

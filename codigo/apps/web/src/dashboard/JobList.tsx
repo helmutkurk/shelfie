@@ -1,11 +1,13 @@
 import { useState } from "react";
 import type { CatalogResponse, JobView } from "@shelfie/core/browser";
 import { formatTime } from "../lib/format.js";
-import { EmptyState, Group, LargeTitle, Pill, Row, Segmented, TextButton } from "../ui/index.js";
+import { EmptyState, Pill, Segmented, TextButton } from "../ui/index.js";
 import { describeJob, jobStatus, matchesFilter } from "./model.js";
 import type { JobFilter } from "./model.js";
+import { Progress } from "./Progress.js";
+import { relativeTime, useNow } from "./time.js";
 
-/** B2: job list with live counts. */
+/** B2: live job list as compact rows. */
 export function JobList(props: {
   jobs: JobView[] | undefined;
   catalog: CatalogResponse | undefined;
@@ -14,43 +16,65 @@ export function JobList(props: {
   onNew: () => void;
 }) {
   const [filter, setFilter] = useState<JobFilter>("all");
+  const now = useNow();
   const jobs = (props.jobs ?? []).filter((j) => matchesFilter(j.job.state, filter));
   return (
-    <section className="screen" aria-label="Requests">
-      <LargeTitle title="Requests" />
-      <Segmented<JobFilter>
-        label="Filter requests"
-        value={filter}
-        onChange={setFilter}
-        options={[
-          { value: "all", label: "All" },
-          { value: "active", label: "Active" },
-          { value: "done", label: "Done" },
-        ]}
-      />
+    <section className="dcard dlist" aria-label="Requests">
+      <div className="dcard-head">
+        <h2 className="dh2">Requests</h2>
+        <Segmented<JobFilter>
+          label="Filter requests"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: "all", label: "All" },
+            { value: "active", label: "Active" },
+            { value: "done", label: "Done" },
+          ]}
+        />
+      </div>
       {jobs.length === 0 ? (
         <EmptyState
           text="No requests yet. Create one to see it here."
           action={<TextButton onClick={props.onNew}>New shelf check</TextButton>}
         />
       ) : (
-        <Group label="Requests">
+        <ul className="jlist">
           {jobs.map((view) => {
             const { title, subtitle } = describeJob(view, props.catalog);
             const status = jobStatus(view.job.state);
+            const selected = props.selectedId === view.job.id;
             return (
-              <Row
-                key={view.job.id}
-                className={props.selectedId === view.job.id ? "selected" : ""}
-                title={title}
-                secondary={`${subtitle}. Passed ${view.counts.passed} of ${view.job.k}, open ${view.counts.open}, failed ${view.counts.failed}.`}
-                trailing={<Pill tone={status.tone}>{status.label}</Pill>}
-                trailingSecondary={formatTime(view.job.createdAt)}
-                onClick={() => props.onOpen(view.job.id)}
-              />
+              <li key={view.job.id}>
+                <button
+                  type="button"
+                  className={`jrow ${selected ? "selected" : ""}`}
+                  aria-current={selected ? "true" : undefined}
+                  onClick={() => props.onOpen(view.job.id)}
+                >
+                  <span className="jrow-main">
+                    <span className="jrow-title">{title}</span>
+                    <span className="jrow-sub">{subtitle}</span>
+                  </span>
+                  <span className="jrow-side">
+                    <Pill tone={status.tone}>{status.label}</Pill>
+                    <Progress passed={view.counts.passed} needed={view.job.k} />
+                    <time
+                      className="jrow-time"
+                      dateTime={view.job.createdAt}
+                      title={formatTime(view.job.createdAt)}
+                    >
+                      {relativeTime(view.job.createdAt, now)}
+                    </time>
+                  </span>
+                  <span className="sr-only">
+                    {`Passed ${view.counts.passed} of ${view.job.k}, open ${view.counts.open}, failed ${view.counts.failed}.`}
+                  </span>
+                </button>
+              </li>
             );
           })}
-        </Group>
+        </ul>
       )}
     </section>
   );
