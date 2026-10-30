@@ -1,5 +1,8 @@
 // Security tests for the x402 buyer's double-pay guard (security.md P5): a signed payment whose
 // outcome is unclear must freeze the key, never look like "nothing sent, safe to retry".
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createLogger } from "@shelfie/core";
 import type { VerifyRequest } from "@shelfie/core";
@@ -144,5 +147,88 @@ describe("X402VerifyClient double-pay guard (P5)", () => {
     const r = await c.verify(req, KEY);
     expect(r.txHash).toBe("ab".repeat(32));
     expect(c.uncertainKeys).toEqual([]);
+  });
+});
+
+describe("X402VerifyClient durable state (B-13)", () => {
+  const dir = mkdtempSync(join(tmpdir(), "shelfie-verify-state-"));
+  let n = 0;
+  const statePath = (): string => join(dir, `state-${String(n++)}.json`);
+  const verdict = (): Response => json(200, JSON.stringify(fakeVerdict(req, { pass: true })));
+  const durable = (path: string, paid: () => Promise<Response>, calls = { n: 0 }): X402VerifyClient =>
+    new X402VerifyClient({
+      verifierUrl: "http://127.0.0.1:4021",
+      logger,
+      wallets: [x402LikeWallet],
+      settle: () => ({ transaction: "ab".repeat(32), success: true }),
+      statePath: path,
+      fetchImpl: (input) => {
+        calls.n++;
+        const signed = input instanceof Request && input.headers.has("payment-signature");
+        return signed ? paid() : Promise.resolve(json(402, "{}"));
+      },
+    });
+
+  it("a receipt survives a restart: the same key is answered from the file, no new payment", async () => {
+    const path = statePath();
+    await durable(path, () => Promise.resolve(verdict())).verify(req, KEY);
+    const calls = { n: 0 };
+    const restarted = durable(path, () => Promise.resolve(verdict()), calls);
+    const r = await restarted.verify(req, KEY);
+    expect(r.txHash).toBe("ab".repeat(32));
+    expect(r.verdict.cached).toBe(true);
+    expect(calls.n).toBe(0);
+  });
+
+  it("an unclear key survives a restart and stays frozen", async () => {
+    const path = statePath();
+    const c = durable(path, () => Promise.reject(new TypeError("socket hang up")));
+    await expect(c.verify(req, KEY)).rejects.toMatchObject({ details: { reason: "payment_uncertain" } });
+    const calls = { n: 0 };
+    const restarted = durable(path, () => Promise.resolve(verdict()), calls);
+    expect(restarted.uncertainKeys).toEqual([KEY]);
+    await expect(restarted.verify(req, KEY)).rejects.toMatchObject({ details: { reason: "payment_uncertain" } });
+    expect(calls.n).toBe(0);
+  });
+
+  it("a crash during an attempt (write-ahead pending mark) loads the key as unclear", async () => {
+    const path = statePath();
+    let release: (r: Response) => void = () => undefined;
+    const c = durable(path, () => new Promise<Response>((ok) => (release = ok)));
+    const running = c.verify(req, KEY); // signed retry in flight, process "crashes" now
+    await new Promise((r) => setTimeout(r, 20));
+    const afterCrash = durable(path, () => Promise.resolve(verdict()));
+    expect(afterCrash.uncertainKeys).toEqual([KEY]);
+    release(verdict());
+    await running;
+  });
+
+  it("a failure before signing leaves no pending mark (retry allowed after restart)", async () => {
+    const path = statePath();
+    const c = new X402VerifyClient({
+      verifierUrl: "http://127.0.0.1:4021",
+      logger,
+      wallets: [x402LikeWallet],
+      settle: () => ({ transaction: "ab".repeat(32), success: true }),
+      statePath: path,
+      fetchImpl: () => Promise.reject(new TypeError("ECONNREFUSED")),
+    });
+    await expect(c.verify(req, KEY)).rejects.toMatchObject({ details: { reason: "network_or_timeout" } });
+    expect(durable(path, () => Promise.resolve(verdict())).uncertainKeys).toEqual([]);
+  });
+
+  it("resolveUncertain is durable", async () => {
+    const path = statePath();
+    const c = durable(path, () => Promise.reject(new TypeError("socket hang up")));
+    await expect(c.verify(req, KEY)).rejects.toThrow();
+    c.resolveUncertain(KEY);
+    expect(durable(path, () => Promise.resolve(verdict())).uncertainKeys).toEqual([]);
+  });
+
+  it("a corrupt state file stops the client instead of being replaced", () => {
+    const path = statePath();
+    writeFileSync(path, "{not json");
+    expect(() => durable(path, () => Promise.resolve(verdict()))).toThrow(/unreadable/);
+    expect(readFileSync(path, "utf8")).toBe("{not json");
   });
 });

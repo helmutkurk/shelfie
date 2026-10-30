@@ -147,6 +147,8 @@ export async function wireAdapters(
     const pay = await loadPayments();
     verifyClient = pay.createVerifyClient(env, deps.logger, {
       ...(env.SELLER_ADDRESS ? { expectedPayTo: env.SELLER_ADDRESS } : {}),
+      // receipts and unclear x402 payments survive a restart (B-13); next to the payout queue file
+      statePath: join(dirname(env.STORE_PATH), "verify-client.json"),
     });
   }
 

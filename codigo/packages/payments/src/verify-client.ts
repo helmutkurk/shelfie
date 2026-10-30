@@ -16,6 +16,8 @@ import { toClientCardanoSigner } from "@x402/cardano";
 import { x402Client, x402HTTPClient, wrapFetchWithPayment } from "@x402/fetch";
 import { FakeVerifyClient } from "./fakes.js";
 import { BLOCKFROST_PREPROD_URL } from "./payout-adapter.js";
+import { loadVerifyClientState, saveVerifyClientState } from "./verify-state.js";
+import type { StoredReceipt } from "./verify-state.js";
 
 // Verify clients: what the engine uses to get a verdict (contracts.md section 3.3).
 //
@@ -119,18 +121,21 @@ export interface X402VerifyClientOptions extends VerifyClientOptions {
   wallets: readonly X402Wallet[];
   /** Decode `PAYMENT-RESPONSE` into the settlement transaction hash. */
   settle: (headers: Headers) => { transaction: string; success: boolean };
+  /**
+   * JSON file for receipts, unclear keys and the write-ahead pending mark (B-13). Without it the
+   * state lives in memory only and a restart could re-pay a signed check.
+   */
+  statePath?: string;
 }
 
-interface Receipt {
-  txHash: string;
-  verdict: VerifyResponse;
-  receipt: unknown;
-}
+type Receipt = StoredReceipt;
 
 export class X402VerifyClient implements VerifyClient {
-  private readonly receipts = new Map<string, Receipt>();
+  private readonly receipts: Map<string, Receipt>;
   private readonly inflight = new Map<string, Promise<Receipt>>();
-  private readonly uncertain = new Set<string>();
+  private readonly uncertain: Set<string>;
+  /** Keys with an attempt running (write-ahead): unclear after a crash. */
+  private readonly pending = new Set<string>();
   private readonly tails: Promise<unknown>[];
   private readonly load: number[];
 
@@ -138,6 +143,26 @@ export class X402VerifyClient implements VerifyClient {
     if (opts.wallets.length === 0) throw new Error("X402VerifyClient needs at least one wallet");
     this.tails = opts.wallets.map(() => Promise.resolve());
     this.load = opts.wallets.map(() => 0);
+    const state = opts.statePath
+      ? loadVerifyClientState(opts.statePath)
+      : { receipts: new Map<string, Receipt>(), uncertain: new Set<string>() };
+    this.receipts = state.receipts;
+    this.uncertain = state.uncertain;
+  }
+
+  private persist(): void {
+    if (!this.opts.statePath) return;
+    saveVerifyClientState(this.opts.statePath, {
+      receipts: this.receipts,
+      uncertain: this.uncertain,
+      pending: this.pending,
+    });
+  }
+
+  /** Freeze a key whose payment outcome is unclear; durable before the error is thrown. */
+  private freeze(key: string): void {
+    this.uncertain.add(key);
+    this.persist();
   }
 
   /** Keys whose payment outcome is unclear. Operator action only. */
@@ -148,6 +173,7 @@ export class X402VerifyClient implements VerifyClient {
   /** Operator: after checking the wallet history on the explorer, allow a new attempt. */
   resolveUncertain(key: string): void {
     this.uncertain.delete(key);
+    this.persist();
   }
 
   async verify(
@@ -180,10 +206,17 @@ export class X402VerifyClient implements VerifyClient {
     for (let i = 1; i < this.load.length; i++) if ((this.load[i] ?? 0) < (this.load[idx] ?? 0)) idx = i;
     this.load[idx] = (this.load[idx] ?? 0) + 1;
     const wallet = this.opts.wallets[idx] as X402Wallet;
-    const run = (this.tails[idx] as Promise<unknown>).then(
-      () => this.attempt(wallet, body, key),
-      () => this.attempt(wallet, body, key),
-    );
+    const guarded = async (): Promise<Receipt> => {
+      this.pending.add(key);
+      this.persist(); // write-ahead: a crash from here on loads this key as unclear
+      try {
+        return await this.attempt(wallet, body, key);
+      } finally {
+        this.pending.delete(key);
+        this.persist();
+      }
+    };
+    const run = (this.tails[idx] as Promise<unknown>).then(guarded, guarded);
     this.tails[idx] = run.catch(() => undefined);
     return run.finally(() => {
       this.load[idx] = (this.load[idx] ?? 1) - 1;
@@ -227,7 +260,7 @@ export class X402VerifyClient implements VerifyClient {
       }
       // A payment was sent and the connection broke: it may still settle. The key is frozen,
       // no automatic re-sign (double-pay guard); an operator checks the explorer first.
-      this.uncertain.add(key);
+      this.freeze(key);
       logger.error("verify payment outcome unclear, key frozen", {
         submissionId: body.submissionId,
         key,
@@ -244,7 +277,7 @@ export class X402VerifyClient implements VerifyClient {
       if (paymentSent) {
         // 402 after the signed retry: x402 servers also answer 402 when settlement fails, and the
         // tx may already be submitted. Freeze the key; an operator checks the explorer first.
-        this.uncertain.add(key);
+        this.freeze(key);
         throw new AppError("dependency_unavailable", "Payment refused after signing, outcome unclear.", undefined, {
           reason: "payment_uncertain",
           key,
@@ -260,7 +293,7 @@ export class X402VerifyClient implements VerifyClient {
       const parsedError = ErrorBodySchema.safeParse(json);
       if (!parsedError.success && paymentSent) {
         // not our error body (proxy, tunnel, crash): the failure may have happened around settlement
-        this.uncertain.add(key);
+        this.freeze(key);
         throw new AppError("dependency_unavailable", "Verifier failed after payment, outcome unclear.", undefined, {
           reason: "payment_uncertain",
           key,
@@ -274,7 +307,7 @@ export class X402VerifyClient implements VerifyClient {
     } catch (err) {
       if (!paymentSent) throw err;
       // 200 after a signed payment: settlement may have happened even though the body is bad.
-      this.uncertain.add(key);
+      this.freeze(key);
       throw new AppError("dependency_unavailable", "Unreadable verdict after payment, outcome unclear.", undefined, {
         reason: "payment_uncertain",
         key,
@@ -284,14 +317,14 @@ export class X402VerifyClient implements VerifyClient {
     try {
       settle = this.opts.settle(res.headers);
     } catch {
-      this.uncertain.add(key);
+      this.freeze(key);
       throw new AppError("dependency_unavailable", "Verdict received without a payment receipt.", undefined, {
         reason: "missing_payment_receipt",
         key,
       });
     }
     if (!settle.success || !settle.transaction) {
-      this.uncertain.add(key);
+      this.freeze(key);
       throw new AppError("dependency_unavailable", "Payment settlement was not confirmed.", undefined, {
         reason: "settlement_not_confirmed",
         key,
@@ -303,6 +336,7 @@ export class X402VerifyClient implements VerifyClient {
       receipt: { transaction: settle.transaction, network: NETWORK },
     };
     this.receipts.set(key, receipt);
+    this.persist();
     logger.info("verify paid", {
       submissionId: body.submissionId,
       key,
@@ -333,6 +367,8 @@ export interface CreateVerifyClientOptions {
   /** Expected W-SELL address (SELLER_ADDRESS). Payments to any other payee are refused. */
   expectedPayTo?: string;
   fetchImpl?: typeof fetch;
+  /** Durable buyer state (receipts, unclear keys); see X402VerifyClientOptions.statePath. */
+  statePath?: string;
 }
 
 /**
@@ -391,6 +427,7 @@ export function createVerifyClient(
   const httpClient = new x402HTTPClient(new x402Client());
   return new X402VerifyClient({
     ...base,
+    ...(opts.statePath ? { statePath: opts.statePath } : {}),
     wallets,
     settle: (headers) => {
       const r = httpClient.getPaymentSettleResponse((n) => headers.get(n));
