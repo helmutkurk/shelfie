@@ -4,10 +4,10 @@
 - Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
-Bridge wired into the starter (A-10): an unpaid Sokosumi Task went through the bridge and the engine on fakes to COMPLETED with the Shelfie report. Next: WITHHOLD and intake rejection on a real Task (A-12), a Shelfie agent registration, then the paid path through the bridge with the real engine (needs Sokosumi credits: 16 left, top-up requested).
+M3 (A-10) and M5 done through the bridge: paid Task withheld, no result hash, escrow refunded. One input format for all channels (`bridge/catalog-input.js`): dashboard ids, Sokosumi dropdown indices, labels and free text. Next: post the withhold comment on the Sokosumi Task (A-12), Shelfie agent registration, M4 with the real engine and a real photo (with B and C).
 
 ## Active branch
-`feature/a-shell-bridge` from `dev` (repo work in WSL `~/shelfie`): `bridge/starter-answer.js` + tests, starter patch switch, docs, A-10 done.
+`feature/a-shell-catalog-input` from `dev` (repo work in WSL `~/shelfie`): catalog input resolver, agent-api dropdown schema, M5 evidence.
 
 ## Components I added
 | Name | Path | What it does | How to run | Status | Depends on |
