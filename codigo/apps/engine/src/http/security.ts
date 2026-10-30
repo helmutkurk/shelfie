@@ -225,3 +225,19 @@ export const requireShellOrAdmin = (tokens: Tokens, lock: FailLock): RequestHand
     },
     "Shell",
   );
+
+/** Orders accept only the header; a missing server configuration fails closed. */
+export function requireBrand(token: string | undefined): RequestHandler {
+  return (req, _res, next) => {
+    const supplied = headerValue(req, "x-brand-token");
+    if (!supplied) {
+      next(new AppError("brand_token_missing", "Brand access code required."));
+      return;
+    }
+    if (!token || !safeEqual(supplied, token)) {
+      next(new AppError("brand_token_invalid", "Brand access code was not accepted."));
+      return;
+    }
+    next();
+  };
+}

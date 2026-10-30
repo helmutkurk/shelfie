@@ -76,3 +76,7 @@ M3 hired via marketplace (Fri 13:00, unpaid); M4 paid escrow (Fri 20:00); M5 wit
 - Do not rewrite the starter or add business logic; do not retry uncertain Masumi writes automatically.
 - Do not commit `.env`, keys or mnemonics.
 - Do not create duplicate Vendor, Coworker or wallets on restart.
+
+## ADR-20 order correlation
+
+A Task description may include `{orderId,storeId,productEan}` as ids-only JSON. The bridge keeps the existing catalog-only job input and forwards `orderRef:{orderId,storeId}` separately to `POST /api/jobs`. The engine checks the reserved order/store/product and binds `externalRef` (the actual Task id) once. Older Tasks omit this optional reference. `order-input.test.js` proves the mapping without network sockets. B-15 must verify the real Task id / agent Job id / starter journal identity before real orders are enabled.

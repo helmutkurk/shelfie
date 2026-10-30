@@ -91,6 +91,39 @@ export type SharedEnv = z.output<typeof SharedEnvSchema>;
 const engineBase = z.object({
   ...sharedEnvShape,
   ENGINE_PORT: intVar(4000),
+  BRAND_TOKEN: z
+    .string()
+    .min(32)
+    .refine((v) => v !== "CHANGE_ME", "placeholder refused")
+    .optional(),
+  SOKOSUMI_CLIENT: z.enum(["fake", "real"]).default("fake"),
+  SOKOSUMI_API_URL: z
+    .literal("https://api.preprod.sokosumi.com")
+    .default("https://api.preprod.sokosumi.com"),
+  SOKOSUMI_API_TOKEN: z
+    .string()
+    .min(8)
+    .refine((v) => v !== "CHANGE_ME", "placeholder refused")
+    .optional(),
+  SOKOSUMI_AGENT_ID: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
+  SOKOSUMI_MAX_CREDITS_PER_TASK: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(100),
+  ORDER_MAX_STORES: z.coerce.number().int().min(1).max(100).default(5),
+  ORDER_DAILY_CREDIT_CAP: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(500),
   SELLER_ADDRESS: optStr(),
   PAYOUT_DAILY_CAP_LOVELACE: lovelaceVar("50000000"),
   ALLOWED_HOSTS: optStr(),
@@ -142,6 +175,11 @@ const engineBase = z.object({
 export const EngineEnvSchema = withDevTokens(
   refineWith(engineBase, (v, add) => {
     guardPreprod(v, add);
+    if (v.SOKOSUMI_CLIENT === "real") {
+      if (!v.BRAND_TOKEN) add("BRAND_TOKEN", "required for real orders");
+      if (!v.SOKOSUMI_API_TOKEN) add("SOKOSUMI_API_TOKEN", "required for real orders");
+      if (!v.SOKOSUMI_AGENT_ID) add("SOKOSUMI_AGENT_ID", "required for real orders");
+    }
     if (v.CLAIM_TTL_SEC + v.VERIFY_BUDGET_SEC >= v.JOB_WINDOW_SEC) {
       add("JOB_WINDOW_SEC", "must exceed CLAIM_TTL_SEC + VERIFY_BUDGET_SEC (claim cutoff)");
     }

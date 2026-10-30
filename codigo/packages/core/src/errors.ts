@@ -5,6 +5,11 @@ import { z } from "zod";
  * `snake_case`, stable, machine-readable. Codes marked "extra" are not listed in contracts.md.
  */
 export const ERROR_STATUS = {
+  brand_token_missing: 401,
+  brand_token_invalid: 401,
+  order_cap_reached: 429,
+  daily_cap_reached: 429,
+  sokosumi_unavailable: 502,
   // 400-level generic
   invalid_request: 400,
   unauthorized: 401,

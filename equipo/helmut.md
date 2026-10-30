@@ -6,14 +6,14 @@
 
 ## Current focus
 
-Dev integration / main release branch model implemented in docs, CI, protection script and guards (Codex, 2026-10-30; D-30 done). D-28 remains blocked solely on unrestricted runtime validation; do not mark it done from fake tests. Resume with the [team guide](../docs/START-HERE-TEAM.md).
+ADR-20 customer orders implemented on fakes in `/dashboard` per Helmut's amendment (Codex, 2026-10-30 evening). D-36 done; B-16 blocked on B-15's real capped REST Task/authority/identity proof. Real adapter probes the schema and refuses purchases; shared deployments remain on their existing real-payment configuration. [Validation and handoff](../codigo/docs/adr20-validation.md).
 
 ## Update 2026-10-30 evening (Claude for Helmut)
 Public deployment is live (dev.shelfieapp.fyi, app.shelfieapp.fyi, api and api-dev through the Cloudflare tunnel; engine and verifier on this laptop, systemd --user, auto-update every 60 s; details in `docs/deploy.md` and `equipo/components.md`). Field test on phones passed claim/release; two 422 submissions unexplained until the access log carries `errorCode`. Keep the laptop on. Next: first release PR dev -> main, real-payment env switch with Fernando, tx hashes into `codigo/docs/evidence/tx-hashes.md`.
 
 ## Active branch
 
-`docs/d-dev-workflow`, based on `origin/dev`. Working tree has uncommitted edits; no git write, commit or push was run. The user asked to leave the branch checked out.
+`feature/adr20-brand-orders`, based on `origin/dev`, worktree `shelfie-orders`. Uncommitted changes; no git write, commit or push. Orchestrator commits with `Purpose-impact: ADR-20` and references B-16/D-36.
 
 ## Components I added or integrated
 
@@ -26,11 +26,14 @@ Public deployment is live (dev.shelfieapp.fyi, app.shelfieapp.fyi, api and api-d
 
 ## What runs / next command
 
-`bash .claude/hooks/test-hooks.sh`: 108 passed, 0 failed. Ruby parsed all workflow YAML files; 66 relative links resolved in 20 changed Markdown files; `bash -n`, protection JSON, `jq empty .claude/settings.json` and `git diff --check` passed. `npm run check` was not run for this docs/config-only task. GitHub settings were not changed; run the protection script after both branches exist and the PR is merged.
+Node 24 typecheck, ESLint, web production build, 113 targeted tests, three shell test files, 113 hook tests, redacted source scans and diff whitespace check pass. Full-suite socket listeners hit sandbox EPERM; details in [ADR-20 validation](../codigo/docs/adr20-validation.md). Fake order lifecycle includes delivery, withholding and observed refund; no real order was placed. Peer-review lookup requires authenticated gh on hub.
 
-Exact next task command: `bash scripts/task.sh next D`. For branch-model closeout, Fernando (B) reviews the change to `scripts/launch-github.sh`; after merge, Helmut runs `scripts/launch-github.sh --protect` once `dev` and `main` exist, then verifies both settings in GitHub. D-28 runtime validation remains separate and must run on the unrestricted hub before D-28 can be done.
+Exact next command on the unrestricted hub: `cd codigo && npm run check`. Fernando: follow `codigo/docs/verified.md` TODO B-15 to establish one capped Task purchase mechanism and the Task/agent Job/starter id mapping; then replace the fail-closed real probe, test one real 1-2-store order and close B-16. Keep A-24/D-37 separate. For unrelated D tasks: `bash scripts/task.sh next D`.
 
 ## Open questions / evidence
+
+- Fernando (B-15/B-16): real Task cap enforcement, workspace/coworker authority, actual schema/quote and Task id -> starter journal -> engine externalRef. Real buying remains disabled; env names and exact spike are in verified.md. No prices/txs invented.
+- Helmut/orchestrator: integrate the uncommitted feature after hub checks and authenticated peer review. No push was performed here.
 
 - Helmut: approve or reject pre-existing sharp 0.34.5 in verifier/eval. No external package was added by this pass.
 - Lorenz: review ten REWE draft labels (blurry photos are intentional negatives; no challenge-code evidence), complete 20 price + 8 OOS eval, verify real models/options.

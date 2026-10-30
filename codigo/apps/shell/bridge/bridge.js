@@ -168,6 +168,15 @@ export function createBridge(config, deps = {}) {
     const input = await toJobInput(sokosumiInput);
     /** @type {Record<string, unknown>} */
     const body = { packId: config.packId, source: "shell", externalRef: sokosumiTaskId, input };
+    // ADR-20 correlation is separate from job input; engine validates it against the reservation.
+    let value = sokosumiInput;
+    if (typeof value === "string") { try { value = JSON.parse(value); } catch { value = null; } }
+    if (typeof value === "object" && value !== null && typeof value.orderId === "string") {
+      if (!/^ord_[A-Za-z0-9]+$/.test(value.orderId) || value.storeId !== input.stores[0].id) {
+        throw new BridgeError("input_schema_violation", "Invalid order correlation.");
+      }
+      body.orderRef = { orderId: value.orderId, storeId: value.storeId };
+    }
     if (config.windowSec !== undefined) body.windowSec = config.windowSec;
     const { status, json } = await withRetry(() => engine("POST", "/api/jobs", body));
     const jobId = json?.job?.id;

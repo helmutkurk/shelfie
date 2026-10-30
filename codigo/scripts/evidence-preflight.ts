@@ -22,7 +22,7 @@ const out = (line: string): void => {
 };
 
 /** Ledger flags that mean "not real evidence" (operatorAlert is an alert, not a fake). */
-const FORBIDDEN_FLAGS = ["demoOverride", "operatorMarkedPaid"] as const;
+const FORBIDDEN_FLAGS = ["demoOverride", "operatorMarkedPaid", "fakeSokosumi"] as const;
 
 async function main(): Promise<void> {
   const { values: args } = parseArgs({
@@ -116,7 +116,7 @@ async function main(): Promise<void> {
     check(readable, "evidence ledger readable");
     check(
       flagged === 0,
-      `no demo override or operator mark-paid in the ledger (${String(lines)} entries checked)`,
+      `no demo override, operator mark-paid or fake Sokosumi in the ledger (${String(lines)} entries checked)`,
     );
   }
 
@@ -127,7 +127,9 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   if (args["no-engine"]) {
-    out("evidence preflight: env and ledger PASS, runtime checks SKIPPED (--no-engine): not enough for an evidence run");
+    out(
+      "evidence preflight: env and ledger PASS, runtime checks SKIPPED (--no-engine): not enough for an evidence run",
+    );
     process.exit(2);
   }
   out("evidence preflight: PASS");

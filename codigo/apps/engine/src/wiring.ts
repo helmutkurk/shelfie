@@ -1,3 +1,6 @@
+import type { Engine } from "./engine.js";
+import { FakeSokosumiClient, RealSokosumiClient } from "./sokosumi.js";
+import type { SokosumiClient } from "./sokosumi.js";
 import { dirname, join } from "node:path";
 import type {
   Clock,
@@ -167,4 +170,11 @@ export async function wireAdapters(
     probe,
     fakes: { payments: useFakePayments, verifier: useFakeVerifier },
   };
+}
+
+/** Separate switch: local order transport can be fake independently of verifier/payout adapters. */
+export function wireSokosumi(env: EngineEnv, engine: Engine, ids: IdGenerator): SokosumiClient {
+  return env.SOKOSUMI_CLIENT === "real"
+    ? new RealSokosumiClient(env)
+    : new FakeSokosumiClient(engine, env, ids);
 }

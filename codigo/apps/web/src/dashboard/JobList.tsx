@@ -36,7 +36,7 @@ export function JobList(props: {
       {jobs.length === 0 ? (
         <EmptyState
           text="No requests yet. Create one to see it here."
-          action={<TextButton onClick={props.onNew}>New shelf check</TextButton>}
+          action={<TextButton onClick={props.onNew}>New order</TextButton>}
         />
       ) : (
         <ul className="jlist">

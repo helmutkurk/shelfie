@@ -1,144 +1,157 @@
-import { useMemo, useState } from "react";
-import { isAppError, IntakeRejectedDetailsSchema } from "@shelfie/core/browser";
-import type { CatalogResponse } from "@shelfie/core/browser";
+import { useRef, useState } from "react";
+import { isAppError } from "@shelfie/core/browser";
+import type { CatalogResponse, OrderView } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
 import { describeError } from "../lib/messages.js";
 import { Button, Field, Select } from "../ui/index.js";
 
-/**
- * B1 / C1: new shelf check. City, store and product are native selects fed by GET /api/catalog;
- * the form sends ids only (ADR-17). The admin token lives in memory (state), never in storage.
- */
+/** Brand access code is outside the catalog-only form; all secrets stay in tab memory. */
 export function RequestForm(props: {
   catalog: CatalogResponse | undefined;
-  packId: string;
-  adminToken: string;
-  onAdminToken: (token: string) => void;
-  onCreated: (jobId: string) => void;
+  brandToken: string;
+  onBrandToken: (token: string) => void;
+  onCreated: (order: Pick<OrderView, "orderId">) => void;
+  enabled: boolean;
+  maxStores: number;
+  fake: boolean;
+  maxCreditsPerTask: number | undefined;
 }) {
   const deps = useDeps();
-  const [cityId, setCityId] = useState("");
-  const [storeId, setStoreId] = useState("");
   const [ean, setEan] = useState("");
+  const [chain, setChain] = useState("");
+  const [storeIds, setStoreIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const city = useMemo(
-    () => props.catalog?.cities.find((c) => c.id === cityId),
-    [props.catalog, cityId],
-  );
-  const ready = cityId !== "" && storeId !== "" && ean !== "" && props.adminToken !== "";
-
-  const send = async (input: { storeId: string; ean: string }) => {
+  // Reuse the purchase key after an uncertain response, even if the form is changed and restored.
+  const requestKeys = useRef(new Map<string, string>());
+  const pending = useRef(false);
+  const city = props.catalog?.cities.find((c) => c.id === "munich");
+  const stores = city?.stores ?? [];
+  const chains = [...new Set(stores.map((s) => s.chain))].sort();
+  const visible = chain ? stores.filter((s) => s.chain === chain) : stores;
+  const ready =
+    props.enabled &&
+    props.brandToken !== "" &&
+    ean !== "" &&
+    storeIds.length > 0 &&
+    storeIds.length <= props.maxStores;
+  const send = async () => {
+    if (!ready || pending.current) return;
+    pending.current = true;
     setBusy(true);
     setError(null);
+    const body = { productEan: ean, storeIds: [...storeIds].sort() };
+    const fingerprint = JSON.stringify(body);
+    const key = requestKeys.current.get(fingerprint) ?? `order-${deps.newId("req")}`;
+    requestKeys.current.set(fingerprint, key);
     try {
-      const res = await deps.api.createJob(
-        {
-          packId: props.packId,
-          source: "demo",
-          externalRef: `demo-${deps.newId("req")}`,
-          input: { productEan: input.ean, stores: [{ id: input.storeId }] },
-          windowSec: 900,
-        },
-        props.adminToken,
-      );
-      props.onCreated(res.job.id);
+      const order = await deps.api.createOrder(body, props.brandToken, key);
+      requestKeys.current.delete(fingerprint);
+      setStoreIds([]);
+      props.onCreated(order);
     } catch (err) {
-      if (isAppError(err) && err.code === "intake_rejected") {
-        const details = IntakeRejectedDetailsSchema.safeParse(err.details);
-        setError(
-          details.success
-            ? `${err.message} (${details.data.reasons.map((r) => r.code).join(", ")})`
-            : err.message,
-        );
-      } else {
-        setError(describeError(err));
+      setError(describeError(err));
+      if (
+        isAppError(err) &&
+        err.code === "sokosumi_unavailable" &&
+        typeof err.details["orderId"] === "string"
+      ) {
+        props.onCreated({ orderId: err.details["orderId"] });
       }
     } finally {
+      pending.current = false;
       setBusy(false);
     }
   };
-
-  const demoJob = () => {
-    const c = props.catalog?.cities[0];
-    const store = c?.stores[0];
-    const product = c?.products[0];
-    if (store && product) void send({ storeId: store.id, ean: product.ean });
-  };
-
-  const hint =
-    !ready && !busy
-      ? props.adminToken === ""
-        ? "Enter the operator token below to send."
-        : "Choose city, store and product."
-      : undefined;
   return (
-    <section className="dcard dform" aria-label="New shelf check">
-      <h2 className="dh2">New shelf check</h2>
+    <section className="dcard dform" aria-label="New order">
+      <h2 className="dh2">New order</h2>
+      <Field
+        label="Brand access code"
+        type="password"
+        value={props.brandToken}
+        onChange={props.onBrandToken}
+        autoComplete="off"
+        help="Stays in this tab's memory only."
+      />
       <form
         className="request-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (ready) void send({ storeId, ean });
+        onSubmit={(event) => {
+          event.preventDefault();
+          void send();
         }}
       >
-        <Select
-          label="City"
-          value={cityId}
-          placeholder="Select a city"
-          options={(props.catalog?.cities ?? []).map((c) => ({ value: c.id, label: c.name }))}
-          onChange={(v) => {
-            setCityId(v);
-            setStoreId("");
-            setEan("");
-          }}
-        />
-        <Select
-          label="Store"
-          value={storeId}
-          placeholder="Select a store"
-          disabled={!city}
-          help={city ? undefined : "Choose a city first"}
-          options={(city?.stores ?? []).map((s) => ({
-            value: s.id,
-            label: `${s.name}, ${s.address}`,
-          }))}
-          onChange={setStoreId}
-        />
         <Select
           label="Product"
           value={ean}
           placeholder="Select a product"
-          disabled={storeId === ""}
-          help={storeId === "" ? "Choose a store first" : undefined}
           options={(city?.products ?? []).map((p) => ({ value: p.ean, label: p.name }))}
           onChange={setEan}
         />
-        <p className="footnote">
-          Only stores and products in our Munich catalog can be requested. Time to complete: 15 min
-          (fixed in the MVP). Price: shown by the Sokosumi quote.
-        </p>
-        <Button type="submit" disabled={!ready || busy}>
-          {busy ? "Sending…" : "Request check"}
-        </Button>
-        {hint ? <p className="footnote">{hint}</p> : null}
-      </form>
-
-      <section className="operator" aria-label="Operator">
-        <h3 className="dh3">Operator</h3>
-        <Field
-          label="Operator token"
-          type="password"
-          value={props.adminToken}
-          onChange={props.onAdminToken}
-          autoComplete="off"
-          help="Needed to create a job. Stays in this tab's memory only."
+        <Select
+          label="Chain"
+          value={chain}
+          placeholder="All chains"
+          options={chains.map((c) => ({ value: c, label: c }))}
+          onChange={setChain}
         />
-        <Button variant="plain" disabled={props.adminToken === "" || busy} onClick={demoJob}>
-          Demo job
+        <label className="field">
+          <span className="field-label">Stores</span>
+          <select
+            multiple
+            size={Math.min(6, Math.max(3, visible.length))}
+            value={storeIds}
+            disabled={busy}
+            onChange={(e) => {
+              const hidden = storeIds.filter((id) => !visible.some((s) => s.id === id));
+              setStoreIds([
+                ...hidden,
+                ...Array.from(e.currentTarget.selectedOptions, (o) => o.value),
+              ]);
+            }}
+          >
+            {visible.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}, {s.address}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="footnote">
+          {storeIds.length} {storeIds.length === 1 ? "store selected" : "stores selected"}; up to{" "}
+          {props.maxStores}. Use your device's multi-select controls.
+        </p>
+        {storeIds.length ? (
+          <ul className="footnote">
+            {storeIds.map((id) => (
+              <li key={id}>{stores.find((s) => s.id === id)?.name ?? id}</li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="footnote">
+          Price not yet quoted.{" "}
+          {props.maxCreditsPerTask !== undefined
+            ? `Credit ceiling: ${props.maxCreditsPerTask} per store; ${storeIds.length * props.maxCreditsPerTask} for this order. This is a spending limit, not a price.`
+            : "The Sokosumi quote determines the price."}
+        </p>
+        <p className="footnote">
+          One shelf check per store. Shelfie places the order on your behalf. Payment uses Masumi
+          escrow; a withheld result follows the refund path.
+        </p>
+        {props.fake ? (
+          <p className="form-error">
+            Fake orders: local rehearsal, no Sokosumi purchase or real escrow.
+          </p>
+        ) : null}
+        {!props.enabled ? (
+          <p className="footnote">
+            Orders are unavailable on this engine. Real ordering is not available yet.
+          </p>
+        ) : null}
+        <Button type="submit" disabled={!ready || busy}>
+          {busy ? "Placing order…" : "Place order"}
         </Button>
-      </section>
+      </form>
       {error ? (
         <p className="form-error" role="alert">
           {error}
