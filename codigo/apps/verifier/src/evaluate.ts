@@ -23,7 +23,8 @@ import {
 import type { Lang, Thresholds } from "@shelfie/domain-shelf";
 import { enforceSchema } from "@shelfie/vision";
 import {
-  gateCodeMatch,
+  gateChallenge,
+  gateNotScreen,
   gateImageOk,
   gateLabelMatch,
   gateLabelVisible,
@@ -146,7 +147,8 @@ export function createEvaluator(deps: EvaluatorDeps): Evaluator {
       extraction = called.extraction;
       model = called.model;
 
-      results.set("code_match", gateCodeMatch(task.expectedCode, extraction.code, t));
+      results.set("code_match", gateChallenge(task, extraction, t));
+      results.set("not_screen", gateNotScreen(extraction.advisory, t));
       if (task.outcome === "OBSERVED") {
         const x = extraction as ObservedExtraction;
         const g3 = gateReadable(x, t);
@@ -208,8 +210,13 @@ export function createEvaluator(deps: EvaluatorDeps): Evaluator {
       extraction: extractionOut,
       workerMessage: workerMessage(
         firstFailed,
-        { expected: task.expectedCode, product: task.product.name },
+        {
+          // gesture mode: the message never names the gesture (ADR-19)
+          expected: task.expectedGesture ? "" : task.expectedCode,
+          product: task.product.name,
+        },
         lang,
+        task.expectedGesture !== undefined,
       ),
       model,
       cached: false,

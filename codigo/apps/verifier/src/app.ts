@@ -181,6 +181,8 @@ export function createApp(deps: AppDeps): express.Express {
           body.task.taskId,
           body.task.outcome,
           body.task.expectedCode,
+          body.task.expectedGesture ?? null,
+          body.task.challengeRevealedAt ?? null,
           body.task.product.ean,
           body.task.receivedAt,
           body.previousImageSha256,

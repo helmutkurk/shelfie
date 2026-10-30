@@ -234,6 +234,11 @@ export function createApp(opts: AppOptions): express.Express {
     }),
   );
   app.post(
+    "/api/claims/:claimId/challenge",
+    workerLimit,
+    h((req, res) => res.json(engine.revealChallenge(param(req, "claimId")))),
+  );
+  app.post(
     "/api/claims/:claimId/release",
     workerLimit,
     h((req, res) => res.json(engine.releaseClaim(param(req, "claimId")))),

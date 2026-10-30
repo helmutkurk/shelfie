@@ -31,7 +31,7 @@ import {
   SubmissionStateSchema,
   TaskStateSchema,
 } from "./states.js";
-import { ExtractionSchema, GateNameSchema } from "./verify.js";
+import { ExtractionSchema, GateNameSchema, GestureChallengeSchema } from "./verify.js";
 
 // Request/response schemas for contracts.md sections 1 (engine). Verifier schemas: ./verify.ts.
 
@@ -223,6 +223,20 @@ export const ClaimResponseSchema = z.object({
   task: z.object({ product: z.string(), store: z.string() }),
 });
 export type ClaimResponse = z.infer<typeof ClaimResponseSchema>;
+
+/**
+ * POST /api/claims/{claimId}/challenge (gesture mode, ADR-19). Reveals the gesture once; later
+ * calls return the same gesture and reveal time (no re-roll). The photo must reach the engine
+ * within `answerWithinSec` of `revealedAt` (G6 `challenge_stale`).
+ */
+export const RevealChallengeResponseSchema = z.object({
+  claimId: ClaimIdSchema,
+  gesture: GestureChallengeSchema,
+  revealedAt: IsoTimestampSchema,
+  answerWithinSec: z.number().int().positive(),
+  instruction: z.string(),
+});
+export type RevealChallengeResponse = z.infer<typeof RevealChallengeResponseSchema>;
 
 /** POST /api/claims/{claimId}/release. Response shape not fixed in contracts. // verify Friday */
 export const ReleaseClaimResponseSchema = z.object({

@@ -293,3 +293,58 @@ describe("input hygiene (E10, E12)", () => {
     expect(res.status).toBe(422);
   });
 });
+
+describe("gesture challenge (ADR-19)", () => {
+  it("no gesture leaks before the reveal: claim response, task list and config", async () => {
+    rig = await makeRig({ env: { CHALLENGE_MODE: "gesture" } });
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    const c = await rig.claim(taskId);
+    const leaks = [
+      c.json,
+      (await rig.call("GET", "/api/tasks")).json,
+      (await rig.call("GET", "/api/config")).json,
+      (await rig.call("GET", `/api/jobs/${job.json.job.id}`)).json,
+    ].map((j) => JSON.stringify(j));
+    for (const text of leaks) expect(text).not.toMatch(/fingers|"side"/);
+    expect(rig.logs.join("\n")).not.toMatch(/fingers/);
+  });
+
+  it("refuses a submission before the reveal: no verify call, no fee, no attempt", async () => {
+    rig = await makeRig({ env: { CHALLENGE_MODE: "gesture" } });
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    const c = await rig.claim(taskId);
+    const s = await rig.submit(taskId, c.json.claim.id as string);
+    expect(s.status).toBe(409);
+    expect(s.json.error.code).toBe("challenge_not_revealed");
+    await rig.engine.idle();
+    expect(rig.verify.calls).toHaveLength(0);
+    // after the reveal the same claim can submit
+    await rig.call("POST", `/api/claims/${c.json.claim.id}/challenge`);
+    expect((await rig.submit(taskId, c.json.claim.id as string)).status).toBe(202);
+  });
+
+  it("reveal refuses malformed, released and used claims", async () => {
+    rig = await makeRig({ env: { CHALLENGE_MODE: "gesture" } });
+    const job = await rig.createJob();
+    const taskId = job.json.tasks[0].id as string;
+    expect((await rig.call("POST", "/api/claims/..%2F..%2Fetc/challenge")).status).toBe(404);
+    const c = await rig.claim(taskId);
+    const id = c.json.claim.id as string;
+    await rig.call("POST", `/api/claims/${id}/challenge`);
+    await rig.submit(taskId, id);
+    await rig.engine.idle();
+    expect((await rig.call("POST", `/api/claims/${id}/challenge`)).json.error.code).toBe(
+      "already_submitted",
+    );
+    const job2 = await rig.createJob({ externalRef: "sec-gesture-2" });
+    const t2 = job2.json.tasks[0].id as string;
+    const c2 = await rig.claim(t2, "B");
+    const id2 = c2.json.claim.id as string;
+    await rig.call("POST", `/api/claims/${id2}/release`);
+    expect((await rig.call("POST", `/api/claims/${id2}/challenge`)).json.error.code).toBe(
+      "claim_expired",
+    );
+  });
+});

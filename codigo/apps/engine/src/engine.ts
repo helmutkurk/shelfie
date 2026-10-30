@@ -24,6 +24,7 @@ import {
   addSeconds,
   isTerminal,
   makeChallengeCode,
+  makeGestureChallenge,
   newClaimId,
   newJobId,
   newSettlementId,
@@ -37,7 +38,9 @@ import {
 import type {
   CaptureLocation,
   CatalogResponse,
+  ChallengeMode,
   Claim,
+  RevealChallengeResponse,
   Clock,
   ConfigResponse,
   EngineEnv,
@@ -790,6 +793,7 @@ export class Engine {
       ...(req.displayName !== undefined ? { displayName: req.displayName } : {}),
       payoutAddress: req.payoutAddress,
       challengeCode: this.newChallengeCode(),
+      ...(this.challengeMode() === "gesture" ? { gesture: makeGestureChallenge(this.rand) } : {}),
       issuedAt: now,
       expiresAt: addSeconds(now, this.env.CLAIM_TTL_SEC),
       state: "ACTIVE",
@@ -828,9 +832,23 @@ export class Engine {
     throw new AppError("internal", "Could not generate a unique challenge code.");
   }
 
+  /** Env `CHALLENGE_MODE` overrides the pack (kill switch back to codes, ADR-19). */
+  private challengeMode(): ChallengeMode {
+    return this.env.CHALLENGE_MODE ?? this.d.pack.config.worker.challenge?.mode ?? "handwritten";
+  }
+
+  /** Gesture answer window in seconds: pack rule `timing.maxSecondsAfterReveal`, default 90. */
+  private answerWithinSec(): number {
+    const v = this.d.pack.config.rules.find((r) => r.name === "timing")?.params[
+      "maxSecondsAfterReveal"
+    ];
+    return typeof v === "number" && Number.isInteger(v) && v > 0 ? v : 90;
+  }
+
   private claimResponse(claim: Claim, task: Task): unknown {
     const store = this.d.catalog.store(task.spec.storeId);
     const product = this.d.catalog.product(task.spec.productEan);
+    const gesture = claim.gesture !== undefined;
     return {
       claim: {
         id: claim.id,
@@ -838,12 +856,50 @@ export class Engine {
         expiresAt: claim.expiresAt,
         ttlSec: this.env.CLAIM_TTL_SEC,
       },
-      challenge: {
-        code: claim.challengeCode,
-        mode: this.d.pack.config.worker.challenge?.mode ?? "handwritten",
-        instruction: "Write this code on paper and hold it next to the price tag.",
-      },
+      // Gesture mode: the gesture itself is only sent by revealChallenge (late reveal, ADR-19).
+      challenge: gesture
+        ? {
+            code: "",
+            mode: "gesture",
+            instruction: `Open the camera when you stand at the product: it shows a hand sign, then you have ${this.answerWithinSec()} s for the photo.`,
+          }
+        : {
+            code: claim.challengeCode,
+            mode: this.challengeMode(),
+            instruction: "Write this code on paper and hold it next to the price tag.",
+          },
       task: { product: product?.name ?? "", store: store?.name ?? "" },
+    };
+  }
+
+  /**
+   * POST /api/claims/{claimId}/challenge: reveal the gesture of an active claim. The first call
+   * stores the reveal time (engine clock); later calls return the same gesture and time, so a
+   * worker cannot re-roll the gesture or restart the answer window.
+   */
+  revealChallenge(claimId: string): RevealChallengeResponse {
+    this.sweep();
+    const parsed = ClaimIdSchema.safeParse(claimId);
+    const found = parsed.success ? this.d.store.claims.get(parsed.data) : undefined;
+    if (!found) throw new AppError("not_found", "Claim not found.");
+    if (found.state === "USED")
+      throw new AppError("already_submitted", "This claim already has a photo.");
+    if (found.state !== "ACTIVE")
+      throw new AppError("claim_expired", "Claim expired, claim the task again.");
+    if (!found.gesture) throw new AppError("invalid_request", "This claim has no hand sign.");
+    let claim = found;
+    if (!claim.challengeRevealedAt) {
+      claim = { ...claim, challengeRevealedAt: this.d.clock.nowIso() };
+      this.d.store.claims.put(claim);
+      this.d.logger.info("challenge_revealed", { taskId: claim.taskId, claimId: claim.id });
+    }
+    const { fingers, side } = claim.gesture!;
+    return {
+      claimId: claim.id,
+      gesture: { fingers, side },
+      revealedAt: claim.challengeRevealedAt!,
+      answerWithinSec: this.answerWithinSec(),
+      instruction: `Hold up ${fingers} fingers, hand on the ${side} side.`,
     };
   }
 
@@ -900,6 +956,12 @@ export class Engine {
     const checkLocation = this.env.LOCATION_CHECK === "on";
     if (checkLocation && !req.location) {
       throw new AppError("location_required", "Allow location access to submit the photo.");
+    }
+
+    // Gesture mode: no photo before the reveal, so a throwaway submission cannot fish for the
+    // gesture in a rejection and the answer window always starts at the reveal (ADR-19).
+    if (claim.state === "ACTIVE" && claim.gesture && !claim.challengeRevealedAt) {
+      throw new AppError("challenge_not_revealed", "Open the camera first to see your hand sign.");
     }
 
     const bytes = decodeBase64Strict(req.imageBase64, this.env.MAX_IMAGE_BYTES);
@@ -1079,6 +1141,13 @@ export class Engine {
         },
         store: { id: store.id, name: store.name },
         expectedCode: claim.challengeCode,
+        ...(claim.gesture
+          ? {
+              expectedGesture: claim.gesture,
+              // submitPhoto refuses unrevealed claims; the fallback only keeps the type total
+              challengeRevealedAt: claim.challengeRevealedAt ?? claim.issuedAt,
+            }
+          : {}),
         outcome: sub.outcome,
         claimIssuedAt: claim.issuedAt,
         claimExpiresAt: claim.expiresAt,
@@ -1463,7 +1532,7 @@ export class Engine {
       ui: this.d.pack.config.ui,
       explorerTxBase: this.env.EXPLORER_TX_BASE,
       explorerAddressBase: this.env.EXPLORER_ADDRESS_BASE,
-      challengeMode: this.d.pack.config.worker.challenge?.mode ?? "none",
+      challengeMode: this.d.pack.config.worker.challenge ? this.challengeMode() : "none",
       secureContext,
       demoOverrideEnabled: this.env.ALLOW_DEMO_OVERRIDE,
     };

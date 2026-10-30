@@ -35,6 +35,8 @@ export function describeError(err: unknown): string {
         : "This task is in another city; you appear to be elsewhere.";
     case "claim_window_closed":
       return "Too late to start this task.";
+    case "challenge_not_revealed":
+      return "Open the camera first to see your hand sign.";
     case "already_submitted":
       return "This task already has a photo.";
     case "image_too_large":

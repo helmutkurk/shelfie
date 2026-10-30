@@ -72,6 +72,8 @@ export class FakeVerifyClient implements VerifyClient {
       message = o.workerMessage ?? "";
     } else if (bytes.includes("STUB_VERDICT=FAIL_CODE")) {
       failed = ["code_match"];
+    } else if (bytes.includes("STUB_VERDICT=FAIL_SCREEN")) {
+      failed = ["not_screen"];
     } else if (bytes.includes("STUB_VERDICT=FAIL_PRICE") && outcome === "OBSERVED") {
       failed = ["price_sanity"];
     } else if (bytes.includes("STUB_VERDICT=PRODUCT_PRESENT") && outcome === "OUT_OF_STOCK") {
@@ -112,6 +114,8 @@ function reasonFor(name: GateName): GateResult["reasonCode"] {
   switch (name) {
     case "code_match":
       return "code_mismatch";
+    case "not_screen":
+      return "screen_recapture";
     case "price_sanity":
       return "price_out_of_range";
     case "slot_empty":

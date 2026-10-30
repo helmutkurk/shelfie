@@ -167,6 +167,10 @@ async function claimAndSubmit(
   });
   const claimId = claim.json?.claim?.id as string;
   if (claim.status !== 201) return { claim, sub: null, claimId };
+  // gesture mode (ADR-19): reveal the hand sign first, as the worker app does on camera open
+  if (claim.json?.challenge?.mode === "gesture") {
+    await call("POST", `/api/claims/${claimId}/challenge`, {});
+  }
   const sub = await call("POST", `/api/tasks/${taskId}/submissions`, {
     claimId,
     outcome: opts.outcome ?? "OBSERVED",

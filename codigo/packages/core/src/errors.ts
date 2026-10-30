@@ -22,6 +22,7 @@ export const ERROR_STATUS = {
   already_submitted: 409,
   claim_already_active: 409,
   claim_window_closed: 409,
+  challenge_not_revealed: 409, // gesture mode: submit before POST /api/claims/{id}/challenge
   invalid_transition: 409, // extra: illegal state machine transition
   // 413
   image_too_large: 413,

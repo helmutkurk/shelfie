@@ -13,6 +13,8 @@ export const UI_LABELS: Record<Lang, Record<string, string>> = {
     outOfStockButton: "Product not on the shelf",
     codeInstruction: "Write this code on paper and hold it next to the price tag.",
     codeInstructionOos: "Write this code on paper and hold it next to the shelf label.",
+    gestureInstruction: "Hold up {fingers} fingers to the {side} of the price tag.",
+    gestureInstructionOos: "Hold up {fingers} fingers to the {side} of the shelf label.",
     verdictPass: "Verified",
     verdictFail: "Not accepted",
     outcomeObserved: "Price observed",
@@ -28,6 +30,8 @@ export const UI_LABELS: Record<Lang, Record<string, string>> = {
     outOfStockButton: "Produkt nicht im Regal",
     codeInstruction: "Schreibe diesen Code auf Papier und halte ihn neben das Preisschild.",
     codeInstructionOos: "Schreibe diesen Code auf Papier und halte ihn neben das Regaletikett.",
+    gestureInstruction: "Zeige {fingers} Finger {side} neben dem Preisschild.",
+    gestureInstructionOos: "Zeige {fingers} Finger {side} neben dem Regaletikett.",
     verdictPass: "Geprüft",
     verdictFail: "Nicht akzeptiert",
     outcomeObserved: "Preis erfasst",
@@ -44,6 +48,7 @@ const MESSAGES: Record<Lang, Record<GateName, string>> = {
   en: {
     image_ok: "The photo could not be used. Take a new one.",
     code_match: "We could not read the code {expected} in your photo. Hold the paper closer and try again.",
+    not_screen: "This looks like a photo of a screen. Photograph the real shelf.",
     readable: "The price tag is not readable. Move closer and avoid glare.",
     product_match: "This does not look like {product}. Check that you are at the right product.",
     price_sanity: "That price looks wrong. Check the tag again.",
@@ -56,6 +61,7 @@ const MESSAGES: Record<Lang, Record<GateName, string>> = {
   de: {
     image_ok: "Das Foto konnte nicht verwendet werden. Mache ein neues.",
     code_match: "Wir konnten den Code {expected} auf deinem Foto nicht lesen. Halte das Papier näher und versuche es erneut.",
+    not_screen: "Das sieht nach dem Foto eines Bildschirms aus. Fotografiere das echte Regal.",
     readable: "Das Preisschild ist nicht lesbar. Gehe näher heran und vermeide Spiegelungen.",
     product_match: "Das sieht nicht nach {product} aus. Prüfe, ob du beim richtigen Produkt bist.",
     price_sanity: "Der Preis wirkt falsch. Prüfe das Schild noch einmal.",
@@ -67,6 +73,49 @@ const MESSAGES: Record<Lang, Record<GateName, string>> = {
   },
 };
 
+/**
+ * G2 and G6 messages in gesture mode (ADR-19). They never name the expected gesture: a rejection
+ * must not tell a worker which sign would have passed.
+ */
+const GESTURE_MESSAGES: Record<Lang, { code_match: string; timing: string }> = {
+  en: {
+    code_match: "We could not see the hand sign you were given. Keep your hand and the tag in frame and try again.",
+    timing: "The photo came too late after the hand sign was shown. Take the task again.",
+  },
+  de: {
+    code_match: "Wir konnten dein Handzeichen nicht erkennen. Halte Hand und Schild ins Bild und versuche es erneut.",
+    timing: "Das Foto kam zu spät nach dem Handzeichen. Übernimm die Aufgabe erneut.",
+  },
+};
+
+const SIDE_WORDS: Record<Lang, Record<"left" | "right", string>> = {
+  en: { left: "left", right: "right" },
+  de: { left: "links", right: "rechts" },
+};
+
+/** "3 fingers to the left of the tag" (en) or "3 Finger links neben dem Schild" (de). */
+export function describeGesture(
+  g: { fingers: number; side: "left" | "right" },
+  lang: Lang = "en",
+): string {
+  const side = SIDE_WORDS[lang][g.side];
+  return lang === "de"
+    ? `${g.fingers} Finger ${side} neben dem Schild`
+    : `${g.fingers} fingers to the ${side} of the tag`;
+}
+
+/** Worker-facing instruction for a revealed gesture. */
+export function gestureInstruction(
+  g: { fingers: number; side: "left" | "right" },
+  outOfStock: boolean,
+  lang: Lang = "en",
+): string {
+  const key = outOfStock ? "gestureInstructionOos" : "gestureInstruction";
+  return (UI_LABELS[lang][key] ?? "")
+    .replace("{fingers}", String(g.fingers))
+    .replace("{side}", SIDE_WORDS[lang][g.side]);
+}
+
 export const PASS_MESSAGE: Record<Lang, string> = {
   en: "Verified. Payment is on its way.",
   de: "Geprüft. Die Zahlung ist unterwegs.",
@@ -77,9 +126,14 @@ export function workerMessage(
   failedGate: GateName | null,
   vars: Vars = {},
   lang: Lang = "en",
+  gestureMode = false,
 ): string {
   if (failedGate === null) return PASS_MESSAGE[lang];
-  return MESSAGES[lang][failedGate]
+  const text =
+    gestureMode && (failedGate === "code_match" || failedGate === "timing")
+      ? GESTURE_MESSAGES[lang][failedGate]
+      : MESSAGES[lang][failedGate];
+  return text
     .replace("{expected}", vars.expected ?? "")
     .replace("{product}", vars.product ?? "");
 }
@@ -93,6 +147,10 @@ export const REASON_TEXT: Record<ReasonCode, string> = {
   code_missing: "No challenge code was seen in the photo.",
   code_mismatch: "The code in the photo differs from the issued code.",
   code_low_confidence: "The code was read with low confidence.",
+  gesture_missing: "No hand with raised fingers was seen in the photo.",
+  gesture_mismatch: "The finger count or the hand side differs from the issued gesture.",
+  gesture_low_confidence: "The gesture was read with low confidence.",
+  screen_recapture: "The photo shows a display screen, not the real shelf.",
   price_unreadable: "The price could not be parsed.",
   product_unreadable: "The product text is empty.",
   low_confidence: "Overall extraction confidence is below the threshold.",
@@ -104,6 +162,7 @@ export const REASON_TEXT: Record<ReasonCode, string> = {
   submitted_too_early: "Photo arrived before the minimum time after claim.",
   claim_expired: "Photo arrived after the claim expired.",
   window_closed: "Photo arrived after the task window closed.",
+  challenge_stale: "Photo arrived too long after the gesture was revealed.",
   duplicate_image: "Identical image already used in this job.",
   near_duplicate_image: "Near-identical image already used in this job.",
   label_not_visible: "No shelf-edge label visible.",

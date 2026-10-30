@@ -1154,6 +1154,17 @@ code,
   font-weight: 600;
   letter-spacing: 0.06em;
 }
+.gesture-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.gesture-count {
+  font-size: 1.75rem;
+  line-height: 1;
+}
 .camera-meta .countdown {
   padding: 2px 10px;
   border-radius: 999px;

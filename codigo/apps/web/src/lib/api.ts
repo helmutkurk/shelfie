@@ -12,6 +12,7 @@ import {
   LedgerListResponseSchema,
   PayoutListResponseSchema,
   ReleaseClaimResponseSchema,
+  RevealChallengeResponseSchema,
   SubmissionViewSchema,
   SubmitPhotoResponseSchema,
   TaskListResponseSchema,
@@ -145,6 +146,14 @@ export class ApiClient {
       method: "POST",
       body,
     });
+  }
+  /** Gesture mode (ADR-19): reveal the hand sign when the camera opens; idempotent. */
+  revealChallenge(claimId: string) {
+    return this.request(
+      RevealChallengeResponseSchema,
+      `/api/claims/${encodeURIComponent(claimId)}/challenge`,
+      { method: "POST", body: {} },
+    );
   }
   release(claimId: string) {
     return this.request(

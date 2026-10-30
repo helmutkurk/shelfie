@@ -115,6 +115,8 @@ const engineBase = z.object({
   CLAIM_TTL_SEC: intVar(300),
   VERIFY_BUDGET_SEC: intVar(120),
   LOCATION_CHECK: z.enum(["on", "off"]).default("on"),
+  // ADR-19: overrides the pack's challenge mode (kill switch: "card-pool" or "handwritten").
+  CHALLENGE_MODE: z.enum(["gesture", "handwritten", "card-pool"]).optional(),
   MAX_ATTEMPTS: intVar(3),
   MAX_IMAGE_BYTES: intVar(2_000_000),
   PAYOUT_LOVELACE: lovelaceVar("3000000"),

@@ -127,6 +127,10 @@ Response 201:
 ```
 Errors: 409 `task_not_open`, 409 `claim_already_active`, 422 `invalid_payout_address` (must parse as a preprod address), 403 `location_required` (permission denied or missing `location`), 403 `wrong_city` (worker is not in the store's city; `details.storeCity`), 409 `claim_window_closed` (after the claim cutoff, see section 1.6), 429. Repeating the call by the same worker while the claim is active returns the same claim.
 
+Gesture mode (ADR-19, pack default): `challenge` is `{ "code": "", "mode": "gesture", "instruction": "Open the camera when you stand at the product: it shows a hand sign, then you have 90 s for the photo." }`; the gesture is not in the claim response.
+
+**POST /api/claims/{claimId}/challenge** (gesture mode) reveals the hand sign when the worker opens the camera. Response `200 { "claimId", "gesture": { "fingers": 2-5, "side": "left"|"right" }, "revealedAt", "answerWithinSec": 90, "instruction" }`. The first call stores `revealedAt` (engine clock); later calls return the same body (no re-roll, the window does not restart). Errors: 404 `not_found`, 409 `already_submitted`, 409 `claim_expired` (claim not active), 400 `invalid_request` (claim in a code mode). The photo must reach the engine within `answerWithinSec` of `revealedAt` (G6 `challenge_stale`, a normal rejection). A submission before the reveal gets 409 `challenge_not_revealed` (no verify, no fee, no attempt).
+
 **POST /api/claims/{claimId}/release** gives the task back (worker taps cancel).
 
 ### 1.3 Submissions
@@ -227,6 +231,8 @@ Request body:
     "product": { "name": "Example Pale Ale 0.33l", "ean": "4000000000000", "aliases": ["example pale ale"] },
     "store": { "id": "s1", "name": "Store A" },
     "expectedCode": "K7Q-4XM",
+    "expectedGesture": { "fingers": 3, "side": "left" },
+    "challengeRevealedAt": "2026-10-30T10:00:30Z",
     "outcome": "OBSERVED",
     "claimIssuedAt": "...", "taskWindowEndsAt": "...", "receivedAt": "..."
   },
@@ -299,7 +305,7 @@ Fake adapters: `FakePayoutAdapter` (instant fake hashes, can inject timeouts, du
 
 ### 5.2 Engine
 
-`ENGINE_PORT`, `PUBLIC_BASE_URL`, `DEFAULT_GEOFENCE_M` (150), `ACCURACY_CAP_M` (100), `LOCATION_MAX_TRIES` (3), `ALLOW_TEST_UPLOAD` (false), `SHELL_TOKEN`, `ENGINE_TOKEN`, `VERIFIER_URL`, `VERIFIER_PAYMENT` (`on` or `off`), `FAKE_PAYMENTS`, `JOB_WINDOW_SEC`, `CLAIM_TTL_SEC`, `VERIFY_BUDGET_SEC`, `LOCATION_CHECK` (`on` or `off`), `MAX_ATTEMPTS`, `MAX_IMAGE_BYTES`, `PAYOUT_LOVELACE`, `PAYOUT_MAX_ATTEMPTS`, `PAYOUT_WALLETS`, `VBUY_WALLETS`, `MIN_WALLET_LOVELACE`, `ALLOW_DEMO_OVERRIDE`, `STORE_PATH`, `LEDGER_PATH`, `BLOCKFROST_PROJECT_ID`, `PAY_MNEMONIC_1`, `PAY_MNEMONIC_2` (one variable per payout wallet, never a list), `VBUY_MNEMONIC_1`, `VBUY_MNEMONIC_2`, `VERIFY_MAX_PRICE_LOVELACE`, `VERIFY_RUN_CAP_LOVELACE` (50000000), `FACILITATOR_URL`.
+`ENGINE_PORT`, `PUBLIC_BASE_URL`, `DEFAULT_GEOFENCE_M` (150), `ACCURACY_CAP_M` (100), `LOCATION_MAX_TRIES` (3), `ALLOW_TEST_UPLOAD` (false), `SHELL_TOKEN`, `ENGINE_TOKEN`, `VERIFIER_URL`, `VERIFIER_PAYMENT` (`on` or `off`), `FAKE_PAYMENTS`, `JOB_WINDOW_SEC`, `CLAIM_TTL_SEC`, `VERIFY_BUDGET_SEC`, `LOCATION_CHECK` (`on` or `off`), `CHALLENGE_MODE` (optional: `gesture` | `card-pool` | `handwritten`, overrides the pack, ADR-19), `MAX_ATTEMPTS`, `MAX_IMAGE_BYTES`, `PAYOUT_LOVELACE`, `PAYOUT_MAX_ATTEMPTS`, `PAYOUT_WALLETS`, `VBUY_WALLETS`, `MIN_WALLET_LOVELACE`, `ALLOW_DEMO_OVERRIDE`, `STORE_PATH`, `LEDGER_PATH`, `BLOCKFROST_PROJECT_ID`, `PAY_MNEMONIC_1`, `PAY_MNEMONIC_2` (one variable per payout wallet, never a list), `VBUY_MNEMONIC_1`, `VBUY_MNEMONIC_2`, `VERIFY_MAX_PRICE_LOVELACE`, `VERIFY_RUN_CAP_LOVELACE` (50000000), `FACILITATOR_URL`.
 
 Additional engine names: `SELLER_ADDRESS` (public preprod payee pin, required for real paid verification), `PAYOUT_DAILY_CAP_LOVELACE` (integer lovelace, default 50000000), `ALLOWED_HOSTS` (comma-separated hostnames), `ALLOWED_ORIGINS` (comma-separated exact origins such as `https://app.example.me`, no wildcards, no paths; extra browser origins accepted by the Origin guard on state-changing requests, for a Vercel frontend that proxies `/api`; invalid entries fail boot), `CATALOG_DIR` (catalog directory), `WEB_DIST` (built web directory), `VERIFY_CLIENT` (`fake` or `real`; defaults to fake with fake payments), `PAYMENTS_IMPL` (`package` or `engine-fake`; default package), `PAYOUT_STORE_PATH` (queue file, default `payout-queue.json` beside `STORE_PATH`), `EVIDENCE_RUN_LOCKED` (false; locks admin reset).
 
@@ -334,7 +340,7 @@ Declarative `pack.config.json` plus a TypeScript module for logic. Illustrative:
   "worker": {
     "kind": "human",
     "capture": "photo",
-    "challenge": { "mode": "handwritten", "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "length": 6, "ttlSec": 300, "cardPool": null },
+    "challenge": { "mode": "gesture", "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "length": 6, "ttlSec": 300, "cardPool": null },
     "maxAttempts": 3,
     "instructions": ["Find the product", "Write the code on paper", "Hold it next to the price tag", "Take one photo, tag and code readable"]
   },

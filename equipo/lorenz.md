@@ -4,10 +4,10 @@
 - Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
-Real vision: first live eval run (C-05 real call, C-09), then the photo set (C-03: 6 of 28, no photo with a challenge code yet, no OOS photo). Gates, endpoints and injection tests are done (C-02, C-04, C-06, C-07, C-12, C-15).
+Gesture challenge (ADR-19, C-16) built on `dev`; next: gesture eval photos and a live run against the ADR-19 kill criteria, then C-03/C-09 (OOS photos).
 
 ## Active branch
-`feature/c-live-vision`, merged into `dev` and pushed (live vision eval, `set-secret.sh`, safe provider errors, G7 test C-15).
+`dev`, ADR-19 commit not pushed yet.
 
 ## Components I added
 | Name | Path | What it does | How to run | Status | Depends on |
@@ -16,8 +16,9 @@ Real vision: first live eval run (C-05 real call, C-09), then the photo set (C-0
 | set-secret | `codigo/scripts/set-secret.sh` | Key once into git-ignored `codigo/.env`, hidden input | `cd codigo && bash scripts/set-secret.sh VISION_API_KEY` | works | - |
 
 ## Open questions
+- Does flash-lite count fingers and flag screens reliably? Gesture eval decides (Lorenz).
 - Exact Gemini/OpenAI model ids and base URLs for the live run (verify Friday, Lorenz).
 - Real OOS photos on the props shelf (C-08), with Helmut (D).
 
 ## Last updated
-2026-10-30 15:35 by Claude Opus 5.5 (Lorenz's session)
+2026-10-30 17:30 by Claude Opus 5.5 (Lorenz's session)

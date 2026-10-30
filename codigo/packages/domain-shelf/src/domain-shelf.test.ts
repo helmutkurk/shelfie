@@ -20,13 +20,36 @@ import {
   thresholdsFromPack,
   tokenSimilarity,
   workerMessage,
+  describeGesture,
+  gestureInstruction,
 } from "./index.js";
+
+describe("gesture labels (ADR-19)", () => {
+  it("describes the gesture in en and de without the expected code", () => {
+    expect(describeGesture({ fingers: 3, side: "left" })).toBe("3 fingers to the left of the tag");
+    expect(describeGesture({ fingers: 5, side: "right" }, "de")).toBe("5 Finger rechts neben dem Schild");
+    expect(gestureInstruction({ fingers: 2, side: "right" }, true)).toBe(
+      "Hold up 2 fingers to the right of the shelf label.",
+    );
+  });
+  it("uses gesture wording for G2 and G6 only in gesture mode", () => {
+    const g = workerMessage("code_match", { expected: "3 fingers to the left of the tag" }, "en", true);
+    expect(g).toContain("hand sign");
+    expect(g).not.toContain("3 fingers");
+    expect(workerMessage("timing", {}, "en", true)).toContain("hand sign");
+    expect(workerMessage("code_match", { expected: "K7Q-4XM" })).toContain("code K7Q-4XM");
+    expect(workerMessage("not_screen")).toContain("screen");
+  });
+});
 
 describe("pack", () => {
   it("validates against the core PackConfigSchema and has the documented thresholds", () => {
     expect(shelfPack.id).toBe("shelf-check");
     const t = thresholdsFromPack();
-    expect(t.code).toEqual({ maxEditDistance: 0, minConfidence: 0.7 });
+    expect(t.code).toEqual({ maxEditDistance: 0, minConfidence: 0.7, minGestureConfidence: 0.7 });
+    expect(t.timing).toEqual({ minSecondsAfterClaim: 5, maxSecondsAfterReveal: 90 });
+    expect(t.screen).toEqual({ enabled: true });
+    expect(shelfPack.worker.challenge?.mode).toBe("gesture");
     expect(t.price).toEqual({ minEur: 0.2, maxEur: 60, maxDeviationFromRef: 0.6 });
     expect(t.slot.minConfidence).toBe(0.7);
     expect(shelfPack.settlement.kDefault).toBe("n");
@@ -190,5 +213,16 @@ describe("labels and report", () => {
     expect(md).toContain("Not on the shelf");
     expect(md).toContain("not a stock count");
     expect(md).toContain("simulated");
+  });
+});
+
+describe("prompts never carry expected values (ADR-19)", () => {
+  it("contain no gesture, code or price from a task", () => {
+    for (const outcome of ["OBSERVED", "OUT_OF_STOCK"] as const) {
+      const p = buildExtractPrompt(outcome);
+      expect(p).not.toMatch(/\b[2-5] fingers\b/);
+      expect(p).not.toMatch(/K7Q|4XM/);
+      expect(p).toContain("is NOT a screen");
+    }
   });
 });

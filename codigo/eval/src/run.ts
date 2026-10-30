@@ -132,6 +132,13 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
       product: label.product,
       store: label.store,
       expectedCode: label.expectedCode,
+      ...(label.expectedGesture
+        ? {
+            expectedGesture: label.expectedGesture,
+            // synthetic: the sign was revealed 30 s before receipt (inside the 90 s window)
+            challengeRevealedAt: addSeconds(claimIssuedAt, Math.max(0, label.claimOffsetSec - 30)),
+          }
+        : {}),
       outcome: label.outcome,
       claimIssuedAt,
       claimExpiresAt: addSeconds(claimIssuedAt, 300),
@@ -164,6 +171,8 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
         label.expect.reasonCodesAnyOf.some((c) => reasonCodes.includes(c));
       const seenCode =
         (verdict.extraction["code"] as { text?: string | null } | undefined)?.text ?? null;
+      const seenGesture = verdict.extraction["gesture"] as
+        { fingers?: number | null; side?: string | null } | null | undefined;
       const priceSeen = verdict.extraction["verifierPriceValue"];
       const r: EntryResult = {
         ...base,
@@ -179,8 +188,13 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
         },
         matched: decisionCorrect && gatesOk && reasonsOk && anyOk,
         decisionCorrect,
-        codeReadExact:
-          label.truth.code === undefined || label.truth.code === null
+        // challenge read: the gesture in gesture labels, else the written code
+        codeReadExact: label.expectedGesture
+          ? label.truth.gesture === undefined || label.truth.gesture === null
+            ? null
+            : seenGesture?.fingers === label.truth.gesture.fingers &&
+              seenGesture.side === label.truth.gesture.side
+          : label.truth.code === undefined || label.truth.code === null
             ? null
             : normalize(seenCode) === normalize(label.truth.code),
         priceExact:

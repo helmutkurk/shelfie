@@ -156,13 +156,51 @@ describe("evaluate: price photo (OBSERVED)", () => {
     expect(v.extraction["verifierNotes"]).toContain("people_visible");
   });
 
-  it("advisory flags are copied but do not gate by default", async () => {
-    const { gate } = setup(
-      observed({ advisory: { tamperSuspected: true, looksLikeScreenPhoto: true, exifTime: null } }),
+  it("advisory flags are copied; only looksLikeScreenPhoto gates (G8 not_screen)", async () => {
+    const tamper = setup(
+      observed({
+        advisory: { tamperSuspected: true, looksLikeScreenPhoto: false, exifTime: null },
+      }),
     );
-    const v = await gate.evaluate(task(), image(), ctx());
+    const v = await tamper.gate.evaluate(task(), image(), ctx());
     expect(v.pass).toBe(true);
     expect((v.extraction["advisory"] as Record<string, unknown>)["tamperSuspected"]).toBe(true);
+
+    const screen = setup(
+      observed({
+        advisory: { tamperSuspected: false, looksLikeScreenPhoto: true, exifTime: null },
+      }),
+    );
+    const s = await screen.gate.evaluate(task(), image(), ctx());
+    expect(s.pass).toBe(false);
+    expect(s.failedGates).toEqual(["not_screen"]);
+    expect(s.workerMessage).toContain("screen");
+  });
+
+  it("gesture mode: G2 compares the hand sign, G6 bounds the answer window", async () => {
+    const gesture = { fingers: 3, side: "left" as const };
+    const revealed = { expectedGesture: gesture, challengeRevealedAt: "2026-10-30T10:00:30.000Z" };
+    const seen = { handVisible: true, fingers: 3, side: "left" as const, confidence: 0.9 };
+    const ok = setup(observed({ code: { text: null, confidence: 0 }, gesture: seen }));
+    const v = await ok.gate.evaluate(task(revealed), image(), ctx());
+    expect(v.pass).toBe(true);
+    expect(v.gates.find((g) => g.name === "code_match")?.detail).toMatchObject({ mode: "gesture" });
+
+    const wrong = setup(observed({ gesture: { ...seen, fingers: 4 } }));
+    const w = await wrong.gate.evaluate(task(revealed), image(), ctx());
+    expect(w.failedGates).toEqual(["code_match"]);
+    expect(w.workerMessage).toContain("hand sign");
+    expect(w.workerMessage).not.toMatch(/3|left|K7Q/);
+    expect(JSON.stringify(w.gates)).not.toContain("expected");
+
+    const late = setup(observed({ gesture: seen }));
+    const l = await late.gate.evaluate(
+      task({ ...revealed, challengeRevealedAt: "2026-10-30T09:59:00.000Z" }),
+      image(),
+      ctx(),
+    );
+    expect(l.failedGates).toEqual(["timing"]);
+    expect(l.gates.find((g) => g.name === "timing")?.reasonCode).toBe("challenge_stale");
   });
 
   it("a malformed or injected extraction becomes vision_unavailable (503), never a verdict", async () => {

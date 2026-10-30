@@ -2,7 +2,10 @@ import { useState } from "react";
 import type { ClaimResponse } from "@shelfie/core/browser";
 import { Button, Countdown, Icon, NavBar, TextButton } from "../ui/index.js";
 
-/** W3: the challenge code is the one memorable element; open the camera or report an empty spot. */
+/**
+ * W3: the challenge code is the one memorable element; open the camera or report an empty spot.
+ * Gesture mode (ADR-19): no code here, the hand sign is revealed only when the camera opens.
+ */
 export function Claimed(props: {
   claim: ClaimResponse;
   onOpenCamera: () => void;
@@ -23,13 +26,22 @@ export function Claimed(props: {
           <Countdown expiresAt={claim.expiresAt} onExpire={props.onExpire} />
         </span>
       </div>
-      <section className="code-card" aria-label="Your code">
-        <p className="code-label">Your code</p>
-        <p className="code-display" translate="no" data-testid="challenge-code">
-          {challenge.code}
-        </p>
-        <p className="code-instruction">{challenge.instruction}</p>
-      </section>
+      {challenge.mode === "gesture" ? (
+        <section className="code-card" aria-label="Your hand sign">
+          <p className="code-label">Hand sign</p>
+          <p className="code-instruction" data-testid="gesture-intro">
+            {challenge.instruction}
+          </p>
+        </section>
+      ) : (
+        <section className="code-card" aria-label="Your code">
+          <p className="code-label">Your code</p>
+          <p className="code-display" translate="no" data-testid="challenge-code">
+            {challenge.code}
+          </p>
+          <p className="code-instruction">{challenge.instruction}</p>
+        </section>
+      )}
       <div className="action-bar">
         <Button onClick={props.onOpenCamera}>Open camera</Button>
         <TextButton onClick={props.onOutOfStock}>Product not on the shelf</TextButton>
