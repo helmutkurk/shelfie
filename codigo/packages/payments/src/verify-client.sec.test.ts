@@ -104,6 +104,25 @@ describe("X402VerifyClient double-pay guard (P5)", () => {
     expect(c.uncertainKeys).toEqual([KEY]);
   });
 
+  it("402 after the signed retry freezes the key (settlement may have been submitted)", async () => {
+    const c = client(() => Promise.resolve(json(402, "{}")));
+    await expect(c.verify(req, KEY)).rejects.toMatchObject({ details: { reason: "payment_uncertain" } });
+    expect(c.uncertainKeys).toEqual([KEY]);
+  });
+
+  it("a foreign 4xx (proxy, rate limit) after the signed retry freezes the key", async () => {
+    const c = client(() => Promise.resolve(json(429, "too many requests")));
+    await expect(c.verify(req, KEY)).rejects.toMatchObject({ details: { reason: "payment_uncertain" } });
+    expect(c.uncertainKeys).toEqual([KEY]);
+  });
+
+  it("our own error body after the signed retry means settlement was cancelled: no freeze", async () => {
+    const body = JSON.stringify({ error: { code: "invalid_request", message: "bad image", details: {} } });
+    const c = client(() => Promise.resolve(json(422, body)));
+    await expect(c.verify(req, KEY)).rejects.toMatchObject({ code: "invalid_request" });
+    expect(c.uncertainKeys).toEqual([]);
+  });
+
   it("a failure before any signature stays retryable (no freeze)", async () => {
     const c = new X402VerifyClient({
       verifierUrl: "http://127.0.0.1:4021",

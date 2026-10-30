@@ -42,7 +42,7 @@ const out = (line: string): void => {
 const short = (s: string): string => `${s.slice(0, 14)}...${s.slice(-6)}`;
 
 async function getJson(url: string): Promise<unknown> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(10_000), redirect: "error" });
   if (!res.ok) throw new Error(`HTTP ${String(res.status)} from ${new URL(url).pathname}`);
   return res.json();
 }

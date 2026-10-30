@@ -215,6 +215,7 @@ export class X402VerifyClient implements VerifyClient {
         },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(this.opts.timeoutMs ?? 120_000),
+        redirect: "error", // never forward the engine token or a signed payment to another host
       });
     } catch {
       if (!paymentSent) {
@@ -240,7 +241,16 @@ export class X402VerifyClient implements VerifyClient {
 
     const json = await readJson(res);
     if (res.status === 402) {
-      // payment was refused after we offered one (or no scheme matched): not retried automatically
+      if (paymentSent) {
+        // 402 after the signed retry: x402 servers also answer 402 when settlement fails, and the
+        // tx may already be submitted. Freeze the key; an operator checks the explorer first.
+        this.uncertain.add(key);
+        throw new AppError("dependency_unavailable", "Payment refused after signing, outcome unclear.", undefined, {
+          reason: "payment_uncertain",
+          key,
+        });
+      }
+      // no payment was signed (no scheme matched or the offer was refused): not retried automatically
       throw new AppError("payment_required", "The verifier did not accept the payment.", 402, {
         reason: "payment_refused",
         key,
@@ -248,8 +258,8 @@ export class X402VerifyClient implements VerifyClient {
     }
     if (!res.ok) {
       const parsedError = ErrorBodySchema.safeParse(json);
-      if (!parsedError.success && paymentSent && res.status >= 500) {
-        // not our error body: the failure may have happened around settlement
+      if (!parsedError.success && paymentSent) {
+        // not our error body (proxy, tunnel, crash): the failure may have happened around settlement
         this.uncertain.add(key);
         throw new AppError("dependency_unavailable", "Verifier failed after payment, outcome unclear.", undefined, {
           reason: "payment_uncertain",
