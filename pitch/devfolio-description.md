@@ -27,29 +27,29 @@ Shelfie is a lead agent that turns "check product X in this store" into one smal
 The three things to remember:
 
 1. Paid only when the photo is true.
-2. The code in the photo: each task has a one-time challenge code that must appear next to the price tag.
+2. The sign in the photo: each claim gets a one-time hand sign (2-5 fingers, left or right of the tag), shown only when the camera opens, to be answered within 90 seconds.
 3. Cardano escrow makes sure nobody pays for a photo that isn't true.
 
 ## How it works
 
 1. **Hire.** The brand starts a Shelfie job on Sokosumi (product and one store from the seeded Munich catalog, deadline). The fee is locked in Masumi escrow on Cardano preprod. Lock tx: [LOCK_TX_HASH] ([EXPLORER_LINK]).
-2. **Plan.** The engine first checks the job against the catalog (known Munich store and product), then creates one task with a time window. The one-time challenge code is issued when a person claims it.
-3. **Capture.** A person near the store opens a mobile web page, claims the task (the task is shown to all workers in the city and the first to claim it gets it; a soft browser-location check confirms the city), writes the code on paper (or holds a printed card) and photographs the price tag with the code beside it. Capture is with the live in-app camera only, no gallery, and the browser location at the shutter is checked against the store (150 m default); both checks are deterrents, not proof. If the product is not on the shelf, the worker photographs the empty shelf spot with its shelf label instead, and the brand receives an out-of-stock report.
-4. **Verify.** The lead agent (its engine) pays a separate verifier agent per check over x402 on preprod (1 tADA per check, pass or fail). The verifier applies a deterministic gate: the code is present, the price and product can be read by a vision model and parse, the product matches the requested name/EAN, the price is in a plausible range, and the server-side timestamp is inside the window, and the photo is not a duplicate of an earlier one. x402 tx: [X402_TX_HASH].
-5. **Pay.** If the photo passes, the lead pays the person immediately on preprod with a plain transfer (3 tADA in the demo). Payout tx: [PAYOUT_TX_HASH] ([CARDANOSCAN_LINK]). If it fails, nothing is paid and the worker can retry with a new code until the attempts or the window run out.
-6. **Deliver or refund.** If the photo passes, the report is submitted and escrow settles. Settlement tx: [SETTLE_TX_HASH]. If no photo passes in the window, the result is withheld and the brand is refunded. Refund tx: [REFUND_TX_HASH].
+2. **Plan.** The engine first checks the job against the catalog (known Munich store and product), then creates one task with a time window. The one-time hand sign is drawn when a person claims it and revealed only when they open the camera.
+3. **Capture.** A person near the store opens a mobile web page, claims the task (the task is shown to all workers in the city and the first to claim it gets it; a soft browser-location check confirms the city), opens the camera at the shelf, sees the hand sign and has 90 seconds to photograph the price tag with that hand beside it. Capture is with the live in-app camera only, no gallery, and the browser location at the shutter is checked against the store (150 m default); both checks are deterrents, not proof. If the product is not on the shelf, the worker photographs the empty shelf spot with its shelf label instead, and the brand receives an out-of-stock report.
+4. **Verify.** The lead agent (its engine) pays a separate verifier agent per check over x402 on preprod (1 tADA per check, pass or fail). The vision model only reads; plain code decides. The gates: the image is usable, the hand sign matches (finger count and side), the photo does not show a display screen, price and product are readable and parse, the product matches the requested name/EAN, the price is in a plausible range, the photo arrived within 90 s of the sign being shown (engine clock), and it is not a duplicate of an earlier photo. Location is checked by the engine before the verifier is called, so a photo from outside the geofence costs no fee. Each check is its own preprod transaction. x402 tx (first paid check, verdict from a stub reader): [cbc9cb5d...](https://preprod.cardanoscan.io/transaction/cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d).
+5. **Pay.** If the photo passes, the lead pays the person immediately on preprod with a plain transfer (3 tADA in the demo). Payout tx: [PAYOUT_TX_HASH] ([CARDANOSCAN_LINK]). If it fails, nothing is paid and the task reopens: a new claim gets a new hand sign, up to 3 verified photos per task or until the window runs out.
+6. **Deliver or refund.** If the photo passes, the report is submitted and escrow settles. Settlement tx: [SETTLE_TX_HASH] (use a Shelfie-registration Task; the settlement on record so far is from the Masumi starter agent). If no photo passes in the window, the result is withheld and the brand is refunded. Refund tx: [REFUND_TX_HASH] (the refund on record ran through our bridge with the engine on fakes; say so if it is the one used).
 
-Cheat attempt: an old photo (aimed at with the live camera, since the app has no gallery path) fails because it cannot contain the new code. The video and the live demo show this. Evidence: [VIDEO_LINK] at [TIMESTAMP].
+Cheat attempt: an old photo (aimed at with the live camera, since the app has no gallery path) fails because it cannot show the new hand sign; a model-based screen check is a second, weaker line. The video and the live demo show this. Evidence: [VIDEO_LINK] at [TIMESTAMP].
 
 ## Cardano tools used
 
-- **Masumi / Sokosumi:** the agent is a Coworker on Sokosumi; payment is in escrow until delivery, with refund on non-delivery. Registry/agent ID: [AGENT_ID].
-- **x402 on Cardano preprod:** per-request payment from the lead agent to the verifier agent. Package/template used: [X402_PACKAGE].
-- **Cardano preprod:** all transactions; explorer: preprod.cardanoscan.io. Payout done with [CARDANO_SDK_OR_LIBRARY] from the lead agent wallet.
+- **Masumi / Sokosumi:** the agent is a Coworker on Sokosumi; payment is in escrow until delivery, with refund on non-delivery. Registry: Masumi agent "Shelfie", registration `cmvv55cpy00301w904q3bezzk` (preprod).
+- **x402 on Cardano preprod:** per-request payment from the lead agent to the verifier agent. Packages: `@x402/*` 2.26.0 (as pinned in the x402-express template), hosted preprod facilitator.
+- **Cardano preprod:** all transactions; explorer: preprod.cardanoscan.io. Payout done with `@evolution-sdk/evolution` 0.5.14 from the lead agent's payout wallet, through a serial payout queue with idempotency (no double pay on retry or restart).
 - **Blockfrost (preprod):** chain queries [VERIFY_IF_USED].
-- Test funds: tADA from the faucet and the Masumi dispenser; the escrowed job fee is a Masumi/Sokosumi quote [VERIFY_ASSET].
+- Test funds: tADA from the faucet and the Masumi dispenser; the escrowed job fee is 1 test USDM (100 Sokosumi credits).
 
-Limits we state openly: preprod only, the Cardano x402 facilitator is preprod-only today, the human payout is a plain transfer rather than x402, and the location is not proven (the code proves freshness, not place).
+Limits we state openly: preprod only, the Cardano x402 facilitator is preprod-only today, the human payout is a plain transfer rather than x402, and the location is not proven (the hand sign proves freshness, not place; browser location is a deterrent).
 
 ## How it could run for real
 
@@ -87,7 +87,7 @@ The engine is a generic verified micro-task loop: job, tasks, worker (human or a
 
 ## What we built in the hackathon
 
-Lead agent and task splitter; phone web page with one-time challenge codes; verifier service with rule-based gate; x402 payment from lead to verifier; preprod payout to a worker wallet; Sokosumi/Masumi job with escrow lock and settlement/refund; brand report view. Teammates acted as workers and printed price tags were used in the demo. Built on the organisers' starters (x402-express for the verifier, tum-hackathon-quickstart for the Sokosumi shell); everything else was written during the event [CONFIRM_TEMPLATE_RULE]. List only what exists in the final repo, and name the demo manual override if it was used anywhere.
+Lead agent and task splitter; phone web page with live camera, location check and one-time hand signs (printed code cards as fallback mode); verifier service with rule-based gate; x402 payment from lead to verifier; preprod payout to a worker wallet; Sokosumi/Masumi job with escrow lock and settlement/refund; brand report view. Teammates acted as workers and printed price tags were used in the demo. Built on the organisers' starters (x402-express for the verifier, tum-hackathon-quickstart for the Sokosumi shell); everything else was written during the event [CONFIRM_TEMPLATE_RULE]. List only what exists in the final repo, and name the demo manual override if it was used anywhere.
 
 ## Links
 
@@ -95,7 +95,7 @@ Lead agent and task splitter; phone web page with one-time challenge codes; veri
 - Demo video (max 2:30): [VIDEO_LINK]
 - Live demo / app: [APP_URL]
 - Sokosumi coworker: [SOKOSUMI_LINK]
-- Transactions: lock [LOCK_TX_HASH], x402 [X402_TX_HASH], payout [PAYOUT_TX_HASH], settle [SETTLE_TX_HASH], refund [REFUND_TX_HASH]
+- Transactions: lock [LOCK_TX_HASH], x402 `cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d`, payout [PAYOUT_TX_HASH] (engine payout queue run: `1abef82575d1bfa75e64d9f0d9e40e733fe964e9bc6c9cee333e23a994e510d8`; prefer the payout of a verified photo once logged), settle [SETTLE_TX_HASH], refund [REFUND_TX_HASH]
 - Homepage: [HOMEPAGE_URL]
 
 ## Team

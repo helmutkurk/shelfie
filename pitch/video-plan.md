@@ -15,6 +15,8 @@ The strongest proof is a single job that runs through every step on camera: the 
 
 The cheat (shot 10) is a separate job at a laptop; it is never paired with a hash from the real run.
 
+Escrow deadline (plan A): the starter submits the result within 20 min of the payment request and the shell bridge stops waiting 300 s (`SHELL_DEADLINE_MARGIN_SEC`) before that, so the photo must pass about 8-10 min after the lock (`../codigo/docs/verified.md`, M4 timing and Masumi 1:1 rows). A later pass still pays the worker, but the escrow refunds instead of settling. Do not lengthen `JOB_WINDOW_SEC` for escrow-backed jobs (C-17) without lengthening the starter's deadlines too.
+
 ## 2. Saturday timeline
 
 | Time | What | Who | Done when |
@@ -23,7 +25,7 @@ The cheat (shot 10) is a separate job at a laptop; it is never paired with a has
 | 07:00 | Fund W-VBUY (0 tADA on Fri evening; verifier fees fail without it). Log Friday's payout tx `7000899...` (job `job_c88c9da1cb68`) via `/log-evidence`, hash copied from the explorer | Isabel / Lorenz | balance > 0; row committed |
 | 07:15 | Store: B-roll (shots 1, 2), every take twice | Lorenz + helper | files in `~/shelfie-video/raw/` |
 | 07:30 | Go/no-go plan A (section 1) | Isabel | decision in chat |
-| 07:45 | Order placed, screen recorded (shot 4); in-store phone claims and shoots (5, 6, 7, 8) | Isabel at a laptop, Lorenz + helper in store | payout tx on the explorer |
+| 07:45 | Order placed, screen recorded (shot 4); in-store phone claims and shoots (5, 6, 7, 8) within 8 min of the lock | Isabel at a laptop, Lorenz + helper in store | payout tx on the explorer |
 | 08:00 | If plan B: start the paid escrow cycle (> 60 min) | Isabel, Fernando | lock tx logged |
 | 08:30-09:30 | Voice-over, one take per shot (`vo_sNN.wav`); shot 6 names the sign that actually appeared | one narrator | 12 files |
 | 09:00-11:00 | Screen takes: report and escrow result (9), refund from an earlier run (9), cheat (10), Cardanoscan zooms (8) | Lorenz | all EDL sources present |
@@ -36,7 +38,7 @@ The cheat (shot 10) is a separate job at a laptop; it is never paired with a has
 
 ## 3. Edit decision list (16:9, 1920x1080, 30 fps)
 
-Each shot lasts as long as its voice-over take plus 0.7 s, at least the picture minimum below. Dry run with synthetic footage and a 140 wpm read of the 307-word script: 141 s.
+Each shot lasts as long as its voice-over take plus 0.7 s, at least the picture minimum below. Dry run with synthetic footage and a 140 wpm read of the 316-word script: 145 s.
 
 | # | Min (s) | Picture | Title (top left) | Label (top right) | Source files |
 |---|---|---|---|---|---|
@@ -46,10 +48,10 @@ Each shot lasts as long as its voice-over take plus 0.7 s, at least the picture 
 | 4 | 10 | Order, escrow "funds locked", lock tx | 1 · Order: fee locked in escrow | plan B: "separate escrow run" | `s04_order`, `s04_lock` |
 | 5 | 6 | Phone: task appears, claim | 2 · Task offered, first to claim | - | `s05_phone_claim` |
 | 6 | 15 | Phone: sign + countdown; match cut to over-shoulder hand by tag; shutter; box | 3 · One-time hand sign, 90 s | Live recording · 31.10.2026 | `s06_phone_sign`, `s06_cam_hand` |
-| 7 | 11 | Split: phone result / dashboard gates green, 6x | 4 · Verifier agent, paid per check via x402 | 6x · real time | `s07_phone_result`, `s07_dash_green` |
+| 7 | 11 | Split: phone verdict card / dashboard PASS verdict row, 6x | 4 · Verifier agent, paid per check via x402 | 6x · real time | `s07_phone_result`, `s07_dash_green` |
 | 8 | 9 | Payout row, Cardanoscan with zoom on hash and amount (2.5 s hold) | 5 · Worker paid on Cardano preprod | - | `s08_payout`, `s08_cardanoscan` |
-| 9 | 10 | Report, escrow result; refund tx | 6 · Report delivered, escrow settles · else refund | "earlier run" on the refund | `s09_report`, `s09_refund` |
-| 10 | 9 | Split: phone camera at laptop with old photo / dashboard red `screen_recapture`, payout 0 | Cheat: photo of a screen, rejected, €0 | - | `s10_phone_cheat`, `s10_dash_red` |
+| 9 | 10 | Report, escrow result; refund tx | 6 · Report delivered, escrow settles · else refund | "earlier test run" on the refund | `s09_report`, `s09_refund` |
+| 10 | 9 | Split: phone camera at laptop with old photo, no hand / phone red card and dashboard FAIL row (`code_match`), no payout | Cheat: old photo, no sign, rejected, €0 (screen variant: `video-script.md`) | - | `s10_phone_cheat`, `s10_dash_red` |
 | 11 | 8 | Business card (illustrative pricing) | - | - | cards |
 | 12 | 11 | "Today and next" card, end card with repo link | - | - | cards |
 
@@ -79,7 +81,7 @@ Privacy in every frame: no faces, no customers or staff, no tokens, env files or
 
 | If | Then |
 |---|---|
-| Live store run fails | Friday's run: job `job_c88c9da1cb68`, payout tx `7000899...` on preprod.cardanoscan.io, label "recorded Fri 30.10."; full hash from `tx-hashes.md` |
+| Live store run fails | Friday's run: job `job_c88c9da1cb68`, payout tx `7000899...` on preprod.cardanoscan.io, label "recorded Fri 30.10."; full hash from `tx-hashes.md` (not logged yet: log it at 07:00 first, else this fallback is not usable) |
 | Escrow result not in by 11:00 | Lock and settlement or refund from earlier runs (`tx-hashes.md` M4, M5 rows), label "earlier run" |
 | Verifier fails on a real take | Re-shoot (light, distance, tag); never the override |
 | W-VBUY still empty | No live verifier take; Friday's run as above |
