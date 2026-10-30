@@ -19,5 +19,5 @@ paths:
 - Plain transfers from the SDK are a "verify Friday" item; record the answer in `codigo/docs/verified.md`.
 - Security baseline (`diseno/security.md` section 3.1): hard caps in code (`MAX_PAYOUT_LOVELACE`, per-run and daily totals); payout address comes from the stored claim, never from the triggering request; payee of an x402 payment must equal `SELLER_ADDRESS`; only this package reads `*_MNEMONIC_*`.
 - Never move `UNKNOWN` to `QUEUED` without a successful reconcile; never resend after an inconclusive reconcile.
-- A payout needs an effective pass Verdict, unique `payout:<taskId>` and the fault-injection tests (timeout, crash after write-ahead, concurrent enqueue) in the same PR.
+- A payout needs an effective pass Verdict, unique `payout:<taskId>` and the fault-injection tests (timeout, crash after write-ahead, concurrent enqueue) in the same commit.
 - Verifier: `POST /v1/verify` only behind x402; `ENABLE_DRY=false` outside dev; `X-Engine-Token` required; bind `127.0.0.1`.

@@ -12,10 +12,10 @@ Adapted from an earlier agent setup used on a previous project. Each line: what 
 | Hooks reading stdin in a subshell lost the input | Hooks read stdin once, directly, into a variable |
 | `settings.local.json` is auto-ignored only on the creator's machine | Listed in `.gitignore` |
 | Settings precedence is managed > CLI > local > project > user | Documented in `CLAUDE.md`; do not rely on user-level settings for rules |
-| Without explicit choices agents rebuild existing functionality or add libraries | Pinned stack in `diseno/repo-layout.md`; new dependency needs a PR reason; `ask` on `npm install <pkg>` |
-| Docs drift from code (earlier prototype audit) | Docs updated in the same PR; `docs-keeper` agent; design is canonical |
+| Without explicit choices agents rebuild existing functionality or add libraries | Pinned stack in `diseno/repo-layout.md`; new dependency needs a reason in the commit message; `ask` on `npm install <pkg>` |
+| Docs drift from code (earlier prototype audit) | Docs updated in the same commit; `docs-keeper` agent; design is canonical |
 | Temporary open routes and "to be wired" auth survive | No unauthenticated routes, not even temporarily (`security.md`); override is flagged and off by default |
-| Checks that only warn are ignored | CI runs on every PR; branch protection where the plan allows; human rule in CONTRIBUTING |
+| Checks that only warn are ignored | CI runs on every push and on the release PR; branch protection on `main` where the plan allows; agent peer review on `dev`; human rule in CONTRIBUTING |
 | Agent access to Docker is root-equivalent | `docker` denied for the agent |
 | Formatters can break Markdown front matter | Prettier hook runs on code files in `codigo/` only, never on Markdown |
 | Short observations get lost | `docs/ai-log.md`, append-only; lasting ones are promoted to this folder |

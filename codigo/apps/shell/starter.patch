@@ -1,0 +1,60 @@
+diff --git a/client.mjs b/client.mjs
+index 3a74bb4..98fd6e4 100644
+--- a/client.mjs
++++ b/client.mjs
+@@ -1,7 +1,10 @@
+ import { Client } from 'eve/client';
+ import { writeFileSync } from 'node:fs';
++import { createBridge, createStarterAnswer, loadBridgeConfig } from '../bridge/index.js';
+ export const client=new Client({host:process.env.EVE_URL});
+-export async function answer(input,journal,deadline) {
++// Shelfie: with SHELL_TOKEN set, the Shelfie engine decides through the bridge instead of the model.
++export const answer=process.env.SHELL_TOKEN?.trim()?createStarterAnswer(createBridge(loadBridgeConfig())):modelAnswer;
++async function modelAnswer(input,journal,deadline) {
+  if(typeof input!=='string'||!input.trim()||input.length>16000) throw new Error('Input must contain 1 to 16000 characters');
+  const {session}=await client.sessions.create();
+  writeFileSync(journal,JSON.stringify({sessionId:session.state.sessionId,phase:'sending'}),{mode:0o600});
+diff --git a/sokosumi-runtime.mjs b/sokosumi-runtime.mjs
+index d95c7c2..7a7f83f 100644
+--- a/sokosumi-runtime.mjs
++++ b/sokosumi-runtime.mjs
+@@ -1,10 +1,16 @@
+ import {execFileSync} from 'node:child_process';
+-import {dirname,join,isAbsolute} from 'node:path';
++import {basename,dirname,join,isAbsolute} from 'node:path';
+ import {pathToFileURL} from 'node:url';
+ let loaded;
+-export function sokosumiRoot(run=execFileSync){
+- const skillsPath=run('sokosumi',['skills','path'],{encoding:'utf8',timeout:30000}).trim();
+- if(!isAbsolute(skillsPath)||!skillsPath.endsWith('/skills'))throw new Error('sokosumi skills path returned an invalid package path');
++// On Windows the npm shim is sokosumi.cmd, which execFileSync cannot start without a shell; run the package's JS entry with node instead.
++export function execSokosumi(command,args,options){
++ if(process.platform!=='win32')return execFileSync(command,args,options);
++ const shim=execFileSync('where.exe',[`${command}.cmd`],{encoding:'utf8'}).split(/\r?\n/)[0].trim();
++ return execFileSync(process.execPath,[join(dirname(shim),'node_modules','@masumi_network','sokosumi','dist','bin','sokosumi.js'),...args],options);
++}
++export function sokosumiRoot(run=execSokosumi){
++ const skillsPath=run('sokosumi',['skills','path'],{encoding:'utf8',timeout:30000}).trim().replace(/[\\/]+$/,'');
++ if(!isAbsolute(skillsPath)||basename(skillsPath)!=='skills')throw new Error('sokosumi skills path returned an invalid package path');
+  return join(dirname(skillsPath),'dist','src');
+ }
+ export async function loadSokosumiRuntime(){
+diff --git a/worker.mjs b/worker.mjs
+index 54308fc..04bc2b2 100644
+--- a/worker.mjs
++++ b/worker.mjs
+@@ -1,4 +1,4 @@
+-import {execFileSync} from 'node:child_process';
++import {execSokosumi} from './sokosumi-runtime.mjs';
+ import {existsSync,readFileSync,writeFileSync} from 'node:fs';
+ import {acquireWorkerLock} from './worker-lock.mjs';
+ import {answer,client} from './client.mjs';
+@@ -10,7 +10,7 @@ const id=target.coworkerId;
+ const releaseLock=acquireWorkerLock();
+ process.once('exit',releaseLock);
+ for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>{releaseLock();process.exit(0)});
+-function cli(args){return JSON.parse(execFileSync('sokosumi',['--preprod',...args,'--json'],{encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024}));}
++function cli(args){return JSON.parse(execSokosumi('sokosumi',['--preprod',...args,'--json'],{encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024}));}
+ await client.health();
+ const paid=await createPaidAdapter({target,answer,save:async(taskId,state)=>writeFileSync(`.local/${taskId}.json`,JSON.stringify(state),{mode:0o600})});
+ console.log('Continuous worker running',process.pid);

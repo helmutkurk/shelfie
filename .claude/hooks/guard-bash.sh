@@ -15,7 +15,7 @@ cmd_re() { echo "(^|[;&|(]|\\\$\\()[[:space:]]*((sudo|env|command)[[:space:]]+)*
 # 1. Publishing and repository-wide GitHub changes are human-only
 if [[ "$cmd" =~ $(cmd_re gh) ]]; then
   [[ "$cmd" =~ gh[[:space:]]+repo[[:space:]]+(delete|edit|create|rename|archive) ]] && block "no gh repo changes (visibility, delete, create); a human does this, see docs/public-release.md"
-  [[ "$cmd" =~ gh[[:space:]]+pr[[:space:]]+merge[^\;\&\|]*--admin ]] && block "no admin merge; reviews are required"
+  [[ "$cmd" =~ gh[[:space:]]+pr[[:space:]]+merge[^\;\&\|]*--admin ]] && block "no admin merge from the agent; Helmut only, for the emergency exception (docs/adr/0006)"
   [[ "$cmd" =~ gh[[:space:]]+(secret|variable)[[:space:]] ]] && block "no gh secrets or variables from the agent"
   [[ "$cmd" =~ gh[[:space:]]+api[^\;\&\|]*(-X|--method)[[:space:]]*(DELETE|PUT|PATCH) ]] && block "no mutating gh api calls"
 fi
@@ -72,20 +72,21 @@ if [[ "$cmd" =~ $(cmd_re "(grep|egrep|fgrep)")([^\;\&\|]*[[:space:]])?(-[a-zA-Z]
   ask_reason="recursive read may include .env files; confirm or narrow the paths (use the Grep tool, which honours the .env deny rules)"
 fi
 
-# 6. New npm dependencies need a reason in the PR -> ask (bare install / ci is fine)
+# 6. New npm dependencies need a reason in the commit message -> ask (bare install / ci is fine)
 if [[ "$cmd" =~ (npm|pnpm|yarn)[[:space:]]+(install|i|add)[[:space:]]+[^-\;\&\|] ]]; then
-  ask_reason="new dependency: pinned versions only, one-line reason in the PR (AGENTS.md > Dependencies)"
+  ask_reason="new dependency: pinned versions only, one-line reason in the commit message (AGENTS.md > Dependencies)"
 fi
 
-# 7. git push: never to main, never forced, never with an implicit main
+# 7. git push: dev is allowed (explicit or implicit), never main/master, never forced
 if [[ "$cmd" =~ git[[:space:]]+push ]]; then
   push_args=${cmd#*git push}
   push_args=${push_args%%[;&|]*}
-  positional=0
+  positional=0; lease=0
   for arg in $push_args; do
     case "$arg" in
-      --force|-f|--force=*|--mirror|--delete|-d) block "no force push, mirror or delete; use --force-with-lease on your own feature branch" ;;
-      --all) block "no push --all; push one named feature branch" ;;
+      --force-with-lease*) lease=1; continue ;;
+      --force|-f|--force=*|--mirror|--delete|-d) block "no force push, mirror or delete; never rewrite shared history (dev/main)" ;;
+      --all) block "no push --all; push dev or one named branch" ;;
       -*) continue ;;
     esac
     positional=$((positional + 1))
@@ -94,11 +95,15 @@ if [[ "$cmd" =~ git[[:space:]]+push ]]; then
     if [[ "$dest" == "HEAD" ]]; then
       dest=$(git -C "${CLAUDE_PROJECT_DIR:-.}" branch --show-current 2>/dev/null)
     fi
-    [[ "$dest" == "main" || "$dest" == "master" ]] && block "no direct push to $dest; open a PR"
+    [[ "$dest" == "main" || "$dest" == "master" ]] \
+      && block "main only via the release PR dev -> main; push to dev instead"
+    [[ $lease -eq 1 && "$dest" == "dev" ]] && block "never force-push dev; fix forward with a new commit"
   done
   if [[ $positional -le 1 ]]; then
     cur=$(git -C "${CLAUDE_PROJECT_DIR:-.}" branch --show-current 2>/dev/null)
-    [[ "$cur" == "main" || "$cur" == "master" ]] && block "you are on $cur; create feature/<role>-<topic> first"
+    [[ "$cur" == "main" || "$cur" == "master" ]] \
+      && block "you are on $cur; main only via the release PR dev -> main. Switch to dev"
+    [[ $lease -eq 1 && "$cur" == "dev" ]] && block "never force-push dev; fix forward with a new commit"
   fi
 fi
 

@@ -22,35 +22,35 @@ A PreToolUse hook (`context-gate.sh`) blocks edits and write-type Bash until you
 ## Hooks (wired in `.claude/settings.json`)
 | Hook | Script | Effect |
 |---|---|---|
-| SessionStart | `session-context.sh` | Prints branch, time left in the build window, open TODO/Handoff lines from `docs/ai-log.md` |
+| SessionStart | `session-context.sh` | Prints branch, time left in the build window, open TODO/Handoff lines from `docs/ai-log.md`, and the reminder to run `scripts/peer-review.sh pending` |
 | UserPromptSubmit | `prompt-guard.sh` | Blocks pasted keys/secret literals; warns on a 24-word mnemonic |
 | PreToolUse Edit/Write/MultiEdit/NotebookEdit/Bash | `context-gate.sh` | Blocks changes until this session ran `scripts/context-ack.sh` (ack expires when purpose docs change) |
-| PreToolUse Bash | `guard-bash.sh` | Blocks `.env` access (also `cat`, globs), push to main, force push, mainnet, `curl \| sh`, gh repo changes; asks on new deps and recursive greps |
+| PreToolUse Bash | `guard-bash.sh` | Blocks `.env` access (also `cat`, globs), push to main, force push (also `--force-with-lease` to dev), mainnet, `curl \| sh`, gh repo changes; asks on new deps and recursive greps |
 | PreToolUse Read/Edit/Write/Grep/Glob | `protect-files.sh` | Blocks `.env*` (not `.env.example`), key files, `invoice/`, lockfile and `.git` edits |
 | PostToolUse Edit/Write | `format-file.sh` | Prettier on the edited file once `codigo/` has dependencies; no-op before |
 | Stop | `typecheck-on-stop.sh` | Typecheck when TS files changed; no-op before `codigo/package.json` |
 | Stop | `tasks-on-stop.sh` | Reminds you (exit 2, once per 15 min) to run `scripts/task.sh` when your role's files changed and `equipo/tasks/` did not |
 
-If a hook blocks you, use the replacement it names (e.g. `.env.example`, a feature branch). Do not route around it with an equivalent command. Test the hooks with `.claude/hooks/test-hooks.sh`.
+If a hook blocks you, use the replacement it names (e.g. `.env.example`, `dev` instead of `main`). Do not route around it with an equivalent command. Test the hooks with `.claude/hooks/test-hooks.sh`.
 
 ## Subagents (`.claude/agents/`)
-- `reviewer` (opus): run on the branch diff before opening a PR.
+- `reviewer` (opus): the peer-review agent; at the start of a block it runs `bash scripts/peer-review.sh pending` and reviews other people's dev commits (`ok` / `issue`).
 - `security-reviewer` (sonnet): before any push touching payments, env, scripts or CI.
 - `test-writer` (haiku): tests for settled modules (payout queue, gates, parsers).
 - `docs-keeper` (sonnet): sync `diseno/` and `docs/` after code changes.
 Delegate with a self-contained brief; the subagent does not see this conversation.
 
 ## Skills (`.claude/skills/`, invoke with `/name`)
-- `/pr-description`: draft the PR text from the diff.
+- `/pr-description`: draft the release PR text (`dev` -> `main`) from the commit range.
 - `/adr <title>`: new ADR in `docs/adr/`.
 - `/log-evidence <milestone> <what> <hash>`: row in `codigo/docs/evidence/tx-hashes.md`.
 - `/sync-context`: end-of-block update of `docs/ai-log.md`, handoff, `codigo/docs/verified.md`.
 - `/milestone-check <M1..M6>`: check a milestone against `diseno/repo-layout.md` section 5.
 
 ## Working style
-- Plan before multi-file changes; small PR-sized steps; run `npm run check` in `codigo/` and show the result.
+- Plan before multi-file changes; small commits; run `npm run check` in `codigo/` and show the result.
 - Prefer the Grep and Glob tools over recursive shell greps (they honour the deny rules).
-- Team state and component registry: `equipo/` (read order and rules in `AGENTS.md`). Tasks: `bash scripts/task.sh next <role>` at the start of a block, status updates at the end (`equipo/tasks/`, never hand-edited).
+- Team state and component registry: `equipo/` (read order and rules in `AGENTS.md`). Start of a block: `bash scripts/peer-review.sh pending`, review what it lists. Tasks: `bash scripts/task.sh next <role>`, status updates at the end (`equipo/tasks/`, never hand-edited).
 - Start each session from `investigacion/cardano/official-agent-prompt.md` plus `AGENTS.md` read order.
 - Unknown platform behaviour: say "verify Friday" and look in `investigacion/cardano/*.md` before guessing.
 - Run `/sync-context` before ending a session.

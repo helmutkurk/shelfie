@@ -1,6 +1,19 @@
 # apps/shell
 
-Status: the bridge exists and is tested against a fake engine. The Masumi starter is **not cloned yet**; that is role A's first task on Friday (steps below). The shell stays JavaScript and is the only exception to the TypeScript rule. Links point to the canonical design in `diseno/` at the repo root.
+Status: the bridge exists and is tested against a fake engine. The Masumi starter is pinned at `d93783b907a5b0b7008c67496c6e093faa70553f` and ran unpaid (M3) and paid (M4) Tasks on the hub with the starter's own prompt (2026-10-30, `codigo/docs/verified.md`). The bridge is wired in (A-10): with `SHELL_TOKEN` set, an unpaid Sokosumi Task went through the bridge and the engine (on fakes) to COMPLETED with the Shelfie report. The paid path and WITHHOLD on a real Task are not tested yet (A-12). The shell stays JavaScript and is the only exception to the TypeScript rule. Links point to the canonical design in `diseno/` at the repo root.
+
+Set up the starter (Windows needs the patch; it is a no-op change on Linux and macOS):
+
+```sh
+cd codigo/apps/shell
+git clone https://github.com/masumi-network/tum-hackathon-quickstart.git starter
+git -C starter checkout d93783b907a5b0b7008c67496c6e093faa70553f
+git -C starter apply ../starter.patch
+```
+
+`starter.patch`: on Windows npm installs the CLI as `sokosumi.cmd`, which `execFileSync('sokosumi')` cannot start (`spawnSync sokosumi ENOENT`), so the worker crashed at boot. The patch adds `execSokosumi` in `sokosumi-runtime.mjs` (runs the CLI's JS entry with `node` on `win32`, unchanged elsewhere), uses it in `worker.mjs`, and accepts a `\skills\` path in the `sokosumi skills path` check. It also switches `client.mjs`: when `SHELL_TOKEN` is set, the exported `answer` is `createStarterAnswer(createBridge(loadBridgeConfig()))` from `../bridge/`; otherwise the starter's model call stays. The starter must therefore live at `codigo/apps/shell/starter/`.
+
+Run with the bridge: add the bridge names (`bridge/.env.example`) to the starter's `.env`, start the engine, then `npm start` (Eve, still needed for the worker's health check) and `npm run worker` in the starter. The Sokosumi Task description is the job input, ids only, for example `{"productEan":"5449000000439","storeId":"rewe-81671-august-everding-strasse-20"}`. The worker journal file name carries the Task id, which becomes the engine job's `externalRef`. DELIVER submits the report text; WITHHOLD and intake rejection throw `WithheldError`, so the worker logs "Task blocked" and submits no result.
 
 ## Purpose
 Thin Masumi/Sokosumi bridge: turns a Sokosumi task into an engine job, waits for the engine decision, delivers the report text (the starter hashes and submits it) or withholds it (no hash, so the buyer's no-result auto-refund applies), and reports settlement events. No business logic beyond the bridge.

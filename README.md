@@ -27,11 +27,13 @@ Shelfie lets a brand check what its products really cost on shelves. An agent of
 
 Public team repo (ADR 0003: public from the first push) and single source of truth for people and coding agents (Claude Code and Codex).
 
+Everyone pushes directly to `dev` (agents peer-review each other's commits, `scripts/peer-review.sh`); `main` receives only the release PR from `dev` after check and smoke pass and approval by the three other teammates (ADR-0006).
+
 | Need | File |
 |---|---|
 | Rules for every agent and person | [AGENTS.md](AGENTS.md) (Claude Code loads it through [CLAUDE.md](CLAUDE.md)) |
 | Set up Claude Code or Codex on your machine | [docs/playbook/agent-setup.md](docs/playbook/agent-setup.md) |
-| Branches, PRs, reviews | [CONTRIBUTING.md](CONTRIBUTING.md) · [.github/CODEOWNERS](.github/CODEOWNERS) |
+| Branches, peer review, release PR | [CONTRIBUTING.md](CONTRIBUTING.md) · [docs/adr/0006-direct-push-to-dev-peer-review-by-agents.md](docs/adr/0006-direct-push-to-dev-peer-review-by-agents.md) |
 | Launch the GitHub repo (Fri morning) | [docs/github-setup.md](docs/github-setup.md) |
 | Pre-push audit for the public repo | [docs/public-release.md](docs/public-release.md) (`scripts/export-public.sh` is a deprecated fallback) |
 | Both web apps (workers, customers) | [diseno/webapps.md](diseno/webapps.md) · [diseno/product-roadmap.md](diseno/product-roadmap.md) |

@@ -37,13 +37,13 @@ codigo/
 
 ## 2. Ownership
 
-Roles A-D as in the team plan. People: A Isabel (`mariaisabel16`), B Fernando (`Fmayo444`), C Lorenz (`04Lenz04`), D Helmut (`helmutkurk`); see `scripts/team.conf`. Pairs (Helmut, 2026-10-29): A+B and C+D; a pair reviews each other's PRs first. Extras outside this table (bots, helper scripts) go in the owner's folder or `codigo/tools/<name>/` and are registered in `equipo/components.md`. Each folder has one owner who merges changes to it; others open a PR or ask.
+Roles A-D as in the team plan. People: A Isabel (`mariaisabel16`), B Fernando (`Fmayo444`), C Lorenz (`04Lenz04`), D Helmut (`helmutkurk`); see `scripts/team.conf`. Pairs (Helmut, 2026-10-29): A+B and C+D; a pair reviews each other's commits first in peer review. Extras outside this table (bots, helper scripts) go in the owner's folder or `codigo/tools/<name>/` and are registered in `equipo/components.md`. Each folder has one owner (who knows the area); ownership blocks nothing (ADR-0006): others may edit it and the owner's agent sees it in peer review.
 
 | Folder | Owner | Starts from |
 |---|---|---|
 | `apps/shell` | A | `tum-hackathon-quickstart` (fork, minimal diff; only the bridge file and env additions) |
 | `apps/engine` | A | scratch; uses `packages/*` |
-| `packages/core` | A | scratch; **shared contract**: any change is announced in chat and reviewed by the consumer owner, and mirrored in contracts.md the same commit |
+| `packages/core` | A | scratch; **shared contract**: any change is announced in chat, checked by the consumer owner's agent in peer review, and mirrored in contracts.md the same commit |
 | `packages/payments` | B | x402-express `buyer.ts` and `wallet.ts` patterns; Cardano SDK from the template (`@evolution-sdk/evolution` pinned by the template) for transfers (verify Friday) |
 | `apps/verifier` (x402 wrapper, idempotency cache, routes) | B | x402-express `seller.ts` |
 | `apps/verifier` gate call (`evaluate`) and `packages/domain-shelf`, `packages/vision`, `eval/` | C | scratch |
@@ -56,14 +56,14 @@ Shared rule: the verifier route file has two owners by function. B owns everythi
 ## 3. Conventions
 
 - **TypeScript strict** (`strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`), ESM, Node 24 for everything (x402 needs 22 or higher, Masumi needs 24; one version avoids confusion). The shell stays JavaScript as in the starter; it is the only exception.
-- **Dependencies**: pin exact versions from the x402 template (`@x402/*` 2.26.0, `@evolution-sdk/evolution` 0.5.14, `express` 4.x); do not bump during the event. Add dependencies sparingly; each needs a one-line reason in the PR.
+- **Dependencies**: pin exact versions from the x402 template (`@x402/*` 2.26.0, `@evolution-sdk/evolution` 0.5.14, `express` 4.x); do not bump during the event. Add dependencies sparingly; each needs a one-line reason in the commit message.
 - **Lint and format**: ESLint (typescript-eslint recommended, `no-floating-promises`, `no-explicit-any` as error with escape comments), Prettier defaults with 100 columns. `npm run check` = typecheck + lint + test; run before every push.
 - **Validation**: zod at every boundary (HTTP in, env, model output, file store load). No unvalidated JSON.
 - **Errors**: one `AppError(code, message, status, details)` class; codes from `packages/core`.
 - **Logging**: structured JSON lines with `jobId`, `taskId`, `submissionId`; never log mnemonics, tokens, API keys or image bytes.
 - **Secrets**: only env files, throwaway wallets, never in the repo or in screenshots. A pre-commit grep for `MNEMONIC`, `API_KEY`, `addr_test1` private patterns is optional.
 - **Time and IDs**: injectable clock and id generator (tests and demos).
-- **Git**: trunk-based, short branches, PRs between owners only for shared packages; commit small and often; the repo is public at submission, so keep history clean of secrets from the first commit.
+- **Git**: everyone pushes to `dev` (feature branches optional) and agents peer-review each other's commits; releases use one `dev` -> `main` PR after check and smoke pass and 3 approvals, merged with a merge commit (ADR-0006). See [AGENTS.md](../AGENTS.md) and [CONTRIBUTING.md](../CONTRIBUTING.md) for the rules. Commit small and often; the repo is public, so keep history clean of secrets from the first commit.
 - **Fakes first**: every component runs against fakes of its neighbours (`FAKE_PAYMENTS=1`, `VERIFIER_PAYMENT=off`, `VERIFIER_MODE=stub`, fake shell via `POST /api/jobs` from curl or the dashboard's "demo job" button). This is what lets four people work at once.
 
 ## 4. Test strategy per component

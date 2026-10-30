@@ -11,14 +11,14 @@ Purpose: every member and their coding agent records what they are doing now and
 
 ## Files
 - `isabel.md` (A), `fernando.md` (B), `lorenz.md` (C), `helmut.md` (D): one per person.
-- `tasks/`: per-role task lists (`A.md`-`D.md`, `team.md` for pair and shared tasks) with status, owner, dependencies, milestone, due time, acceptance and evidence. Maintained by coding agents through `bash scripts/task.sh` (`list`, `next`, `start`, `done`, `block`, `add`); humans never need to edit them. Starting a block: `bash scripts/task.sh next <role>`; ending it: update statuses. SessionStart, the context card and the Stop hook surface them; a PR lists its ids in "Tasks:" and CI checks them.
+- `tasks/`: per-role task lists (`A.md`-`D.md`, `team.md` for pair and shared tasks) with status, owner, dependencies, milestone, due time, acceptance and evidence. Maintained by coding agents through `bash scripts/task.sh` (`list`, `next`, `start`, `done`, `block`, `add`); humans never need to edit them. Starting a block: `bash scripts/task.sh next <role>`; ending it: update statuses. SessionStart, the context card and the Stop hook surface them; commits reference task ids in the message (e.g. `(A-10)`); only the release PR keeps a "Tasks:" line that CI checks.
 - `components.md`: single registry of everything contributed outside the planned design (bots, scripts, helper agents, prompts, tools).
 
 ## Rules
-1. Edit only your own `equipo/<name>.md`. Other files: ask the owner or open a PR they review.
+1. Edit only your own `equipo/<name>.md`. Other files: ask the owner or edit and tell them (peer review shows it).
 2. Update your file at the end of every work block (skill `sync-context`): current focus, active branch, components, open questions, last updated.
-3. Anything new that another person's agent might call or rely on is registered in `components.md` in the same PR as the code. `components.md` changes only by PR.
-4. Placement of extras: inside the owning role's folder when it fits the planned layout (`diseno/repo-layout.md` section 1); otherwise in `codigo/tools/<name>/` with its own `README.md` (what, run command, env var names, status). Adding a tool to the npm workspaces needs a one-line reason in the PR.
+3. Anything new that another person's agent might call or rely on is registered in `components.md` in the same commit as the code. Anyone may edit `components.md`; peer review checks it.
+4. Placement of extras: inside the owning role's folder when it fits the planned layout (`diseno/repo-layout.md` section 1); otherwise in `codigo/tools/<name>/` with its own `README.md` (what, run command, env var names, status). Adding a tool to the npm workspaces needs a one-line reason in the commit message.
 5. No secrets, tx hashes or long logs here (tx hashes: `codigo/docs/evidence/tx-hashes.md`). Link to files instead of copying.
 6. Status values: `idea`, `wip`, `works`, `broken`, `retired`.
 
