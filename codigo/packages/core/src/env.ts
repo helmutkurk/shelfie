@@ -207,6 +207,11 @@ export const VerifierEnvSchema = withDevTokens(
   refineWith(verifierBase, (v, add) => {
     if (v.NODE_ENV === "production" && v.VERIFIER_PAYMENT === "off")
       add("VERIFIER_PAYMENT", "must be on in production");
+    // security.md P6: evidence runs use NODE_ENV=production; no unpaid route, engine token required
+    if (v.NODE_ENV === "production" && v.ENABLE_DRY === true)
+      add("ENABLE_DRY", "must be off in production (dry and extract routes stay absent)");
+    if (v.NODE_ENV === "production" && !v.X_ENGINE_TOKEN_REQUIRED)
+      add("X_ENGINE_TOKEN_REQUIRED", "must be on in production");
     guardPreprod(v, add);
     if (!(v.ENABLE_DRY ?? v.VERIFIER_PAYMENT === "off")) {
       if (v.SELLER_ADDRESS === undefined) add("SELLER_ADDRESS", "required unless ENABLE_DRY is on");
