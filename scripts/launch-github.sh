@@ -2,7 +2,7 @@
 # One-shot launch of the PUBLIC team repo (ADR 0003) (runbook: docs/github-setup.md). Run by Helmut, from anywhere:
 #   scripts/launch-github.sh            pre-flight only (changes nothing)
 #   scripts/launch-github.sh --go       pre-flight, git init, first commit, create PUBLIC repo, push, invite
-#   scripts/launch-github.sh --protect  protect main + enable secret scanning and push protection (run after the first CI run)
+#   scripts/launch-github.sh --protect  protect main and dev + enable secret scanning and push protection (run after the first CI run)
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$ROOT"
@@ -85,7 +85,7 @@ case "$MODE" in
     tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
     cat > "$tmp" <<'JSON'
 {
-  "required_status_checks": { "strict": true, "contexts": ["check", "secret-scan", "context-gate"] },
+  "required_status_checks": { "strict": true, "contexts": ["check", "secret-scan", "security", "context-gate"] },
   "enforce_admins": false,
   "required_pull_request_reviews": { "required_approving_review_count": 1, "require_code_owner_reviews": true, "dismiss_stale_reviews": true },
   "restrictions": null,
@@ -93,11 +93,13 @@ case "$MODE" in
   "allow_deletions": false
 }
 JSON
-    if gh api "repos/$OWNER/$REPO/branches/main/protection" -X PUT --input "$tmp" >/dev/null; then
-      ok "main protected (PR + 1 code-owner review + checks check, secret-scan; no force push)"
-    else
-      warn "protection refused. Verify the plan in repo settings; fallback: team convention in CONTRIBUTING.md."
-    fi
+    for branch in main dev; do
+      if gh api "repos/$OWNER/$REPO/branches/$branch/protection" -X PUT --input "$tmp" >/dev/null; then
+        ok "$branch protected (PR + 1 code-owner review + required checks; no force push or deletion)"
+      else
+        warn "$branch protection refused. Verify the plan in repo settings; fallback: team convention in CONTRIBUTING.md."
+      fi
+    done
     if gh api "repos/$OWNER/$REPO" -X PATCH --input - >/dev/null 2>&1 <<'JSON'
 { "security_and_analysis": { "secret_scanning": { "status": "enabled" }, "secret_scanning_push_protection": { "status": "enabled" } } }
 JSON

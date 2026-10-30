@@ -123,3 +123,10 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Failed: `shelfie.pdf` not rebuilt (no LaTeX engine on this machine).
 - TODO: rebuild the slides with `latexmk -xelatex shelfie.tex` in `pitch/slides/` (D). The "10 stores: EUR 120" comparison describes the customer's need; check that it fits the single-store MVP wording (ADR-16) (D). Lead time, unusable-data share and the 5% Masumi fee are still unsourced.
 - Handoff: PR to `main` needs Helmut's review (pitch/ and README are D's; diseno/ is a purpose file, `Purpose-impact: ADR-18`).
+
+## 2026-10-30 (Europe/Berlin) - Codex for Helmut (D) - dev integration / main release workflow
+- Done: recorded ADR-0005 and aligned AGENTS, contributor/setup guides, repo layout, PR template, CI/Security triggers, branch protection tooling, Claude permissions/hooks, reviewer prompts and security controls with the `dev` integration and `main` release model.
+- Verification: `.claude/hooks/test-hooks.sh` passed 108 cases (0 failed), including direct push blocks for both branches and allowed feature/docs pushes. All workflow YAML parsed; 66 relative links resolved in 20 changed Markdown files; `bash -n`, the protection JSON parse, `jq empty .claude/settings.json` and `git diff --check` passed. No app code changed; `npm run check` was not run.
+- Not run: no GitHub settings were applied. `scripts/launch-github.sh --protect` is ready for when both branches exist and the PR has merged.
+- TODO: Fernando (B) reviews the change to B-owned `scripts/launch-github.sh`; Helmut applies and verifies protection for both branches after merge. Seed task D-05 still names `main` as the skeleton target; revise its acceptance before starting through an approved task-tracker change (`task.sh` has no edit command).
+- Handoff: branch `docs/d-dev-workflow` is based on `origin/dev`; working tree remains uncommitted per Helmut's instruction, with no commit or push to this repo. Next task command: `bash scripts/task.sh next D`. PR target: `dev`; trailer and PR Context and purpose value: `Purpose-impact: ADR-0005`.

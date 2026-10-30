@@ -65,15 +65,18 @@ Do not edit another role's folder without a PR that the owner reviews. Current s
 - Docs: English, concise, no emojis.
 
 ## Git and PRs
-- `main` is protected. Work on `feature/<role>-<short>` (example `feature/b-x402-buyer`). Short branches, small commits.
+- `dev` is the long-lived integration branch; `main` holds the final demo/submission state. Create every `feature/<role>-<short>`, `fix/...` and `docs/...` branch from `dev`, then open a PR into `dev`. Keep branches short and commits small.
+- Feature, fix and docs PRs need one review from the pair or a code owner and use squash merge. The PR template is mandatory.
+- Release only through a `dev` -> `main` PR, after `npm run check` and `npm run smoke` pass on `dev` and Helmut (D) approves it. Merge releases with a merge commit, not squash. After each release, fast-forward `dev` to the same commit if needed.
+- Hotfixes start from `main` and go through a PR to `main`; open and merge a follow-up PR from `main` into `dev` within the same hour.
+- Never push directly to `dev` or `main`; do not force-push either branch. Update docs in the same PR.
 - Conventional commits: `feat(payments): ...`, `fix(verifier): ...`, `docs: ...`, `chore: ...`.
-- PR to `main`, 1 review from a code owner, squash merge. PR template is mandatory. Update docs in the same PR.
 - Ask the human before: `git push`, `gh pr merge`, any new dependency.
 
 ## Never do
 - Commit or print secrets: mnemonics, signing keys, Blockfrost key, Masumi `ADMIN_KEY` / `ENCRYPTION_KEY`, LLM keys, Sokosumi tokens. Local `.env` only; `.env.example` has names only.
 - Read `.env*` (except `.env.example`) by any route, or look for ways around the hooks.
-- Push to `main`, force push, skip hooks (`--no-verify`), merge your own PR, change repo visibility.
+- Push directly to `dev` or `main`, force-push either branch, skip hooks (`--no-verify`), merge your own PR, change repo visibility.
 - Use mainnet, real money, or real third-party personal data.
 - Bump pinned dependencies or edit lockfiles by hand.
 - Edit another role's folder without a PR their owner reviews.

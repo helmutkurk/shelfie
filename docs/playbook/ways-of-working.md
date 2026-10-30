@@ -17,10 +17,14 @@ Times follow `diseno/repo-layout.md` and `preparacion/`; if they differ, those f
 
 ## Working on a task
 1. Take or create an issue (template `task`). Name the milestone.
-2. Branch `feature/<role>-<short>`; agent plans, you approve.
+2. Start from `dev`; create `feature/<role>-<short>`, `fix/...` or `docs/...` there. Agent plans, you approve.
 3. Fakes first so you do not wait for neighbours; real components when they come online.
-4. PR with the template; reviewer agent first (`reviewer`), then a human code owner.
-5. Squash merge; delete the branch.
+4. PR into `dev` with the template; reviewer agent first (`reviewer`), then one review from the pair or a code owner.
+5. Squash merge feature/fix/docs PRs into `dev`; delete the branch. Never push directly to `dev` or `main`, and never force-push either.
+
+## Release and hotfix
+- Release with a `dev` -> `main` PR only after `npm run check` and `npm run smoke` pass on `dev` and Helmut (D) approves. Use a merge commit, then fast-forward `dev` to the same commit if needed.
+- Start hotfixes from `main`, PR them into `main`, then open and merge a follow-up PR from `main` into `dev` within the same hour.
 
 ## Shared contracts
 `packages/core` and `diseno/contracts.md` change together. Announce in chat before changing; the consuming owner reviews.

@@ -77,7 +77,7 @@ if [[ "$cmd" =~ (npm|pnpm|yarn)[[:space:]]+(install|i|add)[[:space:]]+[^-\;\&\|]
   ask_reason="new dependency: pinned versions only, one-line reason in the PR (AGENTS.md > Dependencies)"
 fi
 
-# 7. git push: never to main, never forced, never with an implicit main
+# 7. git push: never to dev/main, never forced, never with an implicit protected branch
 if [[ "$cmd" =~ git[[:space:]]+push ]]; then
   push_args=${cmd#*git push}
   push_args=${push_args%%[;&|]*}
@@ -94,11 +94,13 @@ if [[ "$cmd" =~ git[[:space:]]+push ]]; then
     if [[ "$dest" == "HEAD" ]]; then
       dest=$(git -C "${CLAUDE_PROJECT_DIR:-.}" branch --show-current 2>/dev/null)
     fi
-    [[ "$dest" == "main" || "$dest" == "master" ]] && block "no direct push to $dest; open a PR"
+    [[ "$dest" == "main" || "$dest" == "dev" || "$dest" == "master" ]] \
+      && block "no direct push to $dest; open a PR"
   done
   if [[ $positional -le 1 ]]; then
     cur=$(git -C "${CLAUDE_PROJECT_DIR:-.}" branch --show-current 2>/dev/null)
-    [[ "$cur" == "main" || "$cur" == "master" ]] && block "you are on $cur; create feature/<role>-<topic> first"
+    [[ "$cur" == "main" || "$cur" == "dev" || "$cur" == "master" ]] \
+      && block "you are on protected $cur; create a short branch from dev first"
   fi
 fi
 

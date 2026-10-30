@@ -63,7 +63,7 @@ Shared rule: the verifier route file has two owners by function. B owns everythi
 - **Logging**: structured JSON lines with `jobId`, `taskId`, `submissionId`; never log mnemonics, tokens, API keys or image bytes.
 - **Secrets**: only env files, throwaway wallets, never in the repo or in screenshots. A pre-commit grep for `MNEMONIC`, `API_KEY`, `addr_test1` private patterns is optional.
 - **Time and IDs**: injectable clock and id generator (tests and demos).
-- **Git**: trunk-based, short branches, PRs between owners only for shared packages; commit small and often; the repo is public at submission, so keep history clean of secrets from the first commit.
+- **Git**: short feature/fix/docs branches start from `dev` and PR into `dev`; releases use an approved `dev` -> `main` PR after check and smoke pass, merged with a merge commit. See [AGENTS.md](../AGENTS.md) and [CONTRIBUTING.md](../CONTRIBUTING.md) for review, hotfix and branch-protection rules. Commit small and often; the repo is public, so keep history clean of secrets from the first commit.
 - **Fakes first**: every component runs against fakes of its neighbours (`FAKE_PAYMENTS=1`, `VERIFIER_PAYMENT=off`, `VERIFIER_MODE=stub`, fake shell via `POST /api/jobs` from curl or the dashboard's "demo job" button). This is what lets four people work at once.
 
 ## 4. Test strategy per component

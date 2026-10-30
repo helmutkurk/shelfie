@@ -3,9 +3,10 @@
 Four people, one weekend, many agents. These rules keep parallel work from colliding. Agent rules: [AGENTS.md](AGENTS.md). Step-by-step setup: [docs/playbook/agent-setup.md](docs/playbook/agent-setup.md).
 
 ## Branches
-- `main` is protected: no direct pushes, PR only. See [docs/github-setup.md](docs/github-setup.md) for the settings.
-- Work on `feature/<role>-<short>` (example `feature/c-gate-g2`). Fixes: `fix/<role>-<short>`. Docs: `docs/<short>`.
-- Keep branches short (hours, not days). Rebase or merge `main` often.
+- `dev` is the integration branch; `main` is the final demo/submission state. Both are protected. Never push directly to either branch or force-push them.
+- Create `feature/<role>-<short>` (example `feature/c-gate-g2`), `fix/<role>-<short>` and `docs/<short>` from `dev`; open PRs into `dev`.
+- Hotfixes start from `main`, go through a PR to `main`, then an immediate follow-up PR from `main` into `dev` within the same hour.
+- Keep branches short (hours, not days). See [docs/github-setup.md](docs/github-setup.md) for branch settings.
 
 ## Commits
 Conventional commits: `type(scope): summary`. Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`. Scopes: `shell`, `engine`, `verifier`, `payments`, `web`, `core`, `vision`, `evidence`, `eval`, `scripts`.
@@ -13,9 +14,9 @@ Commit small and often. Never commit secrets: history is public later. Do not re
 
 ## Pull requests
 1. `npm run check` passes in `codigo/` (CI runs it too; it skips while no `package.json` exists).
-2. Fill the PR template: what, milestone, role folder, docs updated, dependencies, evidence, risks.
-3. One review from a code owner (`.github/CODEOWNERS`); your pair (A+B, C+D) reviews first. The author does not merge their own PR unless the team agrees in chat during crunch time; never skip CI.
-4. Squash merge; the PR title becomes the commit message (conventional form).
+2. Fill the PR template, including its base-branch checkbox and context section.
+3. Feature/fix/docs PRs target `dev`; one review from the pair or a code owner is required. The author does not merge their own PR unless the team agrees in chat during crunch time; never skip CI.
+4. Squash merge feature/fix/docs PRs. Release PRs target `main` from `dev` only after `npm run check` and `npm run smoke` pass on `dev` and Helmut (D) approves; use a merge commit. After release, fast-forward `dev` to the same commit if needed.
 5. Shared contract (`packages/core`): announce in chat, reviewed by the consumer owner, mirrored in `diseno/contracts.md` in the same PR.
 
 ## Tests

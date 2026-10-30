@@ -8,8 +8,8 @@ branch=$(git branch --show-current 2>/dev/null)
 [[ -z "$branch" ]] && branch="detached HEAD ($(git rev-parse --short HEAD 2>/dev/null || echo unknown))"
 echo "Current branch: ${branch}."
 case "$branch" in
-  main|master)
-    echo "You are on protected '${branch}'. Create feature/<role>-<short> before changing files." ;;
+  main|dev|master)
+    echo "You are on protected '${branch}'. Start feature/fix/docs work on a short branch from dev; see CONTRIBUTING.md for releases and hotfixes." ;;
 esac
 dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 [[ "$dirty" != "0" ]] && echo "Working tree has ${dirty} uncommitted change(s)."
