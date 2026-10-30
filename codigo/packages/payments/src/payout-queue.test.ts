@@ -192,8 +192,8 @@ describe("crash between write-ahead and hash", () => {
 });
 
 describe("automatic reconcile on poll (no operator, no restart)", () => {
-  it("UNKNOWN is left alone during the settling delay, then proven absent and sent once", async () => {
-    const { queue, adapter, clock } = setup();
+  it("absent after the settling delay: the poll never requeues; it alerts, and only the operator resends", async () => {
+    const { queue, adapter, clock, events } = setup();
     adapter.injectFault("timeout_before_send");
     const p = await enq(queue);
     await queue.drain();
@@ -202,16 +202,40 @@ describe("automatic reconcile on poll (no operator, no restart)", () => {
 
     clock.advanceSec(30);
     await queue.pollConfirmations();
-    expect(find).not.toHaveBeenCalled(); // absence cannot be proof yet: no lookup at all
+    expect(find).not.toHaveBeenCalled(); // inside the settling delay: no lookup at all
     expect((await queue.get(p.id)).state).toBe("UNKNOWN");
 
+    // a slow tx could still land (Blockfrost does not see the mempool): no requeue, no resend
     clock.advanceSec(100);
     await queue.pollConfirmations();
+    await queue.drain();
+    expect(find).toHaveBeenCalledTimes(1);
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+    expect(adapter.sendCalls).toBe(1);
+    expect(events.filter((e) => e.kind === "PAYOUT_STALE")).toHaveLength(1);
+
+    // the operator's reconcile is still the route back, with proof
+    expect((await queue.reconcile(p.id)).state).toBe("QUEUED");
     await queue.drain();
     const done = await queue.get(p.id);
     expect(done.state).toBe("SUBMITTED");
     expect(done.attempts).toBe(2);
     expect(adapter.chain).toHaveLength(1);
+  });
+
+  it("an UNKNOWN payout without a write-ahead time is never looked up automatically (fail closed)", async () => {
+    const { queue, adapter, clock, store } = setup();
+    adapter.injectFault("timeout_before_send");
+    const p = await enq(queue);
+    await queue.drain();
+    await store.update({ ...(await queue.get(p.id)), sendingSince: null });
+    const find = vi.spyOn(adapter, "find");
+    clock.advanceSec(3600);
+    await queue.pollConfirmations();
+    await queue.drain();
+    expect(find).not.toHaveBeenCalled();
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+    expect(adapter.sendCalls).toBe(1);
   });
 
   it("timeout after send: an inconclusive lookup never resends; a later poll finds the tx", async () => {

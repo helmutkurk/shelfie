@@ -28,10 +28,13 @@ import type { PayoutStore } from "./payout-store.js";
 //     after the settling delay -> QUEUED (the ONLY route back, with proof); otherwise it stays
 //     UNKNOWN and nothing is ever resent.
 //  5. Insufficient funds (or a cap) pauses the queue; payouts stay QUEUED, never dropped.
-//  6. pollConfirmations also re-reconciles UNKNOWN payouts once the settling delay is over (at most
-//     every reconcileIntervalSec each), and raises PAYOUT_STALE once for a SUBMITTED payout still
-//     unconfirmed after staleAfterSec. A stale payout is never resent automatically: the tx can
-//     still land until its validity interval ends (verify Friday: SDK default TTL).
+//  6. pollConfirmations also looks up UNKNOWN payouts once the settling delay is over (at most
+//     every reconcileIntervalSec each). This automatic path only ever FINDS a transfer
+//     (UNKNOWN -> SUBMITTED); it never requeues on absence, because Blockfrost does not see
+//     mempool transactions and a slow tx could still land (verify Friday: SDK default TTL).
+//     Absent -> PAYOUT_STALE once; the requeue stays with recover() at start-up or the operator's
+//     reconcile(id). PAYOUT_STALE is also raised once for a SUBMITTED payout still unconfirmed
+//     after staleAfterSec. No automatic resend in either case.
 
 export interface PayoutQueueDeps {
   adapter: PayoutAdapter;
@@ -205,12 +208,12 @@ export class DefaultPayoutQueue implements PayoutQueue {
     return this.serial(async () => {
       const now = this.deps.clock.nowMs();
       for (const p of await this.deps.store.list(["UNKNOWN"])) {
-        const since = Date.parse(p.sendingSince ?? new Date(0).toISOString());
-        if (now - since < this.settleDelayMs) continue; // not provable yet; skip the lookup
+        if (!p.sendingSince) continue; // no write-ahead time: fail closed, operator only
+        if (now - Date.parse(p.sendingSince) < this.settleDelayMs) continue; // skip the lookup
         const last = this.lastAutoReconcile.get(p.id);
         if (last !== undefined && now - last < this.reconcileIntervalMs) continue;
         this.lastAutoReconcile.set(p.id, now);
-        const next = await this.reconcileOne(p, { skipDelay: false });
+        const next = await this.reconcileOne(p, { skipDelay: false, allowRequeue: false });
         if (next.state !== "UNKNOWN") this.lastAutoReconcile.delete(p.id);
       }
       for (const p of await this.deps.store.list(["SUBMITTED"])) {
@@ -417,6 +420,7 @@ export class DefaultPayoutQueue implements PayoutQueue {
       const next = { ...p, state: transition("payout", p.state, "hash_obtained"), txHash };
       await this.deps.store.update(next);
       this.deps.logger.info("payout submitted", { payoutId: p.id, taskId: p.taskId, txHash });
+      this.staleAlerted.delete(p.id);
       this.emit({ kind: "PAYOUT_SUBMITTED", payout: next });
     } catch (err) {
       // The transfer is out but we could not record the hash. Stop sending; on restart `recover`
@@ -433,13 +437,20 @@ export class DefaultPayoutQueue implements PayoutQueue {
 
   /** Once per payout: SUBMITTED but not on chain after staleAfterSec. Alert only, no resend. */
   private alertIfStale(p: Payout, now: number): void {
-    if (this.staleAlerted.has(p.id) || !p.sendingSince) return;
-    if (now - Date.parse(p.sendingSince) < this.staleAfterMs) return;
+    if (!p.sendingSince || now - Date.parse(p.sendingSince) < this.staleAfterMs) return;
+    this.alertStale(p, "submitted but not confirmed; check the explorer");
+  }
+
+  /** Operator alert, once per payout (in memory). Never changes state, never resends. */
+  private alertStale(p: Payout, why: string): void {
+    if (this.staleAlerted.has(p.id)) return;
     this.staleAlerted.add(p.id);
-    this.deps.logger.error("payout submitted but not confirmed; check the explorer", {
+    this.deps.logger.error("payout needs an operator", {
       payoutId: p.id,
       taskId: p.taskId,
-      txHash: p.txHash,
+      state: p.state,
+      why,
+      ...(p.txHash ? { txHash: p.txHash } : {}),
     });
     this.emit({ kind: "PAYOUT_STALE", payout: p });
   }
@@ -460,7 +471,10 @@ export class DefaultPayoutQueue implements PayoutQueue {
    * found nothing, and the settling delay has passed (or the adapter attested that nothing was
    * sent, and the lookup still found nothing).
    */
-  private async reconcileOne(p: Payout, opts: { skipDelay: boolean }): Promise<Payout> {
+  private async reconcileOne(
+    p: Payout,
+    opts: { skipDelay: boolean; allowRequeue?: boolean },
+  ): Promise<Payout> {
     const since = p.sendingSince ?? new Date(0).toISOString();
     let found: { txHash: string } | null;
     try {
@@ -485,6 +499,7 @@ export class DefaultPayoutQueue implements PayoutQueue {
         taskId: p.taskId,
         txHash: found.txHash,
       });
+      this.staleAlerted.delete(p.id);
       this.emit({ kind: "PAYOUT_RECONCILED", payout: next, result: "found" });
       this.emit({ kind: "PAYOUT_SUBMITTED", payout: next });
       return next;
@@ -496,6 +511,11 @@ export class DefaultPayoutQueue implements PayoutQueue {
         taskId: p.taskId,
         waitedMs: waited,
       });
+      return p;
+    }
+    if (opts.allowRequeue === false) {
+      // automatic path: absence is not acted on; the operator (or a restart) decides
+      this.alertStale(p, "absent after settling delay; operator reconcile resends");
       return p;
     }
     const next = {
