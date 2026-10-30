@@ -4,6 +4,7 @@
   "buildCommand": "npm run build -w @shelfie/web",
   "outputDirectory": "apps/web/dist",
   "framework": null,
+  "redirects": [{ "source": "/homepage", "destination": "/homepage/index.html", "permanent": false }],
   "rewrites": [
     {
       "source": "/api/:path*",
