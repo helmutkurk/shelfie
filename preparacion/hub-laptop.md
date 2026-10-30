@@ -1,6 +1,8 @@
 # Hub laptop: requirements and setup
 
-Decision (Helmut, 2026-10-29): the hub is **Isabel's laptop**. Operator: Isabel (role A). Backup operator: Fernando (role B). Fallback hub: Helmut's laptop (about 14 GB RAM, so only if Isabel's fails the checks). OBS and screen recording run on a different laptop (Helmut's).
+Decision (Helmut, 2026-10-30 evening, replaces the 2026-10-29 decision below): **Helmut's laptop is the definitive hub** for the engine, verifier and the Cloudflare tunnel (systemd --user services with auto-update, real mode on api-dev, see `../docs/deploy.md`). The Sokosumi shell worker and the Masumi Payment Service (Postgres) stay on **Isabel's laptop** and talk to the engine at `https://api-dev.shelfieapp.fyi` (later `https://api.shelfieapp.fyi`) with the `SHELL_TOKEN` from Helmut's hub env (handed over in person, never chat/git). Reason: the engine stack already runs and is verified on Helmut's laptop; MPS + Postgres would not fit in its 14 GB next to OBS. Only one machine may run the tunnel and engine at a time.
+
+Earlier decision (Helmut, 2026-10-29): the hub is **Isabel's laptop**. Operator: Isabel (role A). Backup operator: Fernando (role B). Fallback hub: Helmut's laptop (about 14 GB RAM, so only if Isabel's fails the checks). OBS and screen recording run on a different laptop (Helmut's).
 
 The hub runs everything during the demo, as in `../diseno/architecture.md` section 4: engine `:4000` (serves `/api`, `/w`, `/dashboard`), verifier `:4021`, shell worker + agent API `:21950`, Masumi Payment Service (MPS) `:38127` with Postgres 15 in Docker, a Cloudflare quick tunnel exposing only `:4000`, and a browser with the dashboard on the projector. Threat model: `../diseno/security.md` (H1, H3, H4, section 4.5 and 4.6).
 
