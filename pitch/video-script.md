@@ -22,7 +22,7 @@ Requirements from the track: who it is for, the problem, the business case, and 
 
 Timecodes above sum to 2:28 including the title card. If the first cut runs over 2:30, cut shot 2 first, then shorten shot 5.
 
-Story rules: the request is real; never name the person, the drink, the brand or the country of origin, and tell it only with his consent (else "an acquaintance of Isabel's father"). Never call him a customer. Real store footage appears only in shots 1, 2 and 11 (story); every verification on screen uses our own printed tags.
+Story rules: the request is real; never name the person, the drink, the brand or the country of origin, and tell it only with his consent (else "an acquaintance of Isabel's father"). Never call him a customer. Real store footage: shots 1, 2 and 11 (story), and the verification run in shots 5-9 is filmed in the REWE that gave filming permission (decided by Lorenz, 2026-10-30; see [video-plan.md](video-plan.md) section 5).
 
 ## Word count
 
@@ -50,7 +50,7 @@ Do each recording twice. Keep raw tx hashes in a text file so the on-screen text
 - Ask the manager for permission before filming; say it is a university hackathon, shelves only. Prefer a small independent shop or our own shelf at home if refused.
 - Shots: wide of the drinks aisle (slow push-in), close-up of a price tag, a hand holding a phone from the chest down (no faces, no other customers, no staff badges, no cameras or security screens readable), the bottle on the shelf.
 - Film in the morning when the shop is empty. Hold each shot 6-8 seconds. Vertical not needed; shoot 16:9.
-- Story shots (1, 2, 11) may show real shop shelves; demo shots use only price tags we print ourselves (the hand sign needs no card; ADR-19), so nothing verified on screen is a third party's data. Blur or avoid any third-party brand beyond the shelf.
+- Story shots (1, 2, 11) and the verification run (shots 5-9) are filmed in the REWE that gave permission (the hand sign needs no card; ADR-19). Our printed tags are the fallback if the store run fails. Blur or avoid any third-party brand beyond the shelf.
 - No music with an unclear licence. Use a royalty-free track at low volume or none.
 
 ## Recording and editing checklist (Linux)

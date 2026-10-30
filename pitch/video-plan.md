@@ -73,7 +73,7 @@ Privacy in every frame: no faces, no customers or staff, no tokens, env files or
 
 ## 5. Open decisions (Lorenz)
 
-1. Store run in the real REWE (permission given) versus only our own printed tags, as the story rules in `video-script.md` say.
+1. Decided (Lorenz, 2026-10-30): the verification run is filmed in the real REWE, which gave filming permission; our printed tags are the fallback.
 2. Who cuts: Lorenz's agent with Lorenz reviewing (proposed); Helmut does README and Devfolio.
 3. All takes before 11:00 feature freeze (the runbook's 12:30 edit start is too late for a reviewed v1).
 4. ADR-20 (brands order in our own web app, proposed): if accepted before 09:00, shot 4 shows our order page instead of the Sokosumi hire form.
