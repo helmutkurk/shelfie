@@ -39,7 +39,7 @@ Length: hard limit 2:30 (repo rule, `preparacion/submission-checklist.md`; Devfo
 
 Rules: over length, cut shot 2 first, then shot 5. At most two panels at once. Split screen: portrait phone scaled to 1080 high on the left, screen cropped to the remaining width on the right (`hstack`). Burned-in English subtitles from the voice-over. Labels are honest: "Live recording · 31.10.2026", "earlier run", "re-enacted for camera"; re-enacted footage is never paired with a hash from another photo. Override and fakes are off in every take.
 
-Voice-over (318 words) runs about 2:16 at 140 wpm, close to the 142 s picture. If the read runs long, trim the VO in shots 2 and 5 rather than speeding it up.
+Timing is driven by the voice-over: each shot lasts max(picture minimum, its VO take + 0.7 s). A dry run with the 318-word VO at 140 wpm gave 148.4 s, inside the limit but without slack and above the 2:20 target. Trim the VO to about 290 words before the read (shots 1, 2, 5, 10), not by speeding it up. The VO is recorded after the store shoot, so the hand sign it names ("three fingers, right of the tag") is changed to the sign that actually appeared.
 
 ## 3. Capture and tooling
 
@@ -52,7 +52,7 @@ Voice-over (318 words) runs about 2:16 at 140 wpm, close to the 142 s picture. I
 | iOS phone | Control-centre screen recording, transfer by cable; normalise HEVC/VFR to 30 fps CFR before cutting |
 | Camera (B-roll, over-shoulder) | Second phone, 16:9, 1080p30, exposure locked on the tag, 6-8 s per shot |
 | Sync | Clap plus a visible clock (phone clock on screen) before every take |
-| Edit | ffmpeg (libx264, drawtext with DejaVuSans-Bold, hstack); Kdenlive only for fixes by hand |
+| Edit | `~/shelfie-video/cut.py` + `edl.json` (outside the repo): 30 fps proxies, cached segment renders (layouts card, full, phone, split; zoom, boxes, speed), final pass with overlays, honesty labels, burned-in subtitles from the VO text, loudness-normalised VO. `python3 cut.py render [--draft] [--only sNN]`, `frames` (review stills and contact sheet), `probe`. Re-run after a text change: about 25 s. Kdenlive only for fixes by hand |
 | Export | `shelfie-demo.mp4`: H.264 High, 1080p30, CRF 18-20, AAC 192 kbps, `-movflags +faststart`; duration checked with `ffprobe` (< 150 s) |
 | Machine | Lorenz's laptop only; never run OBS or editing on Helmut's laptop (the engine runs there) |
 
@@ -74,6 +74,6 @@ Privacy in every frame: no faces, no customers or staff, no tokens, env files or
 ## 5. Open decisions (Lorenz)
 
 1. Decided (Lorenz, 2026-10-30): the verification run is filmed in the real REWE, which gave filming permission; our printed tags are the fallback.
-2. Who cuts: Lorenz's agent with Lorenz reviewing (proposed); Helmut does README and Devfolio.
+2. Decided (Lorenz, 2026-10-30): Lorenz's agent cuts with `cut.py`; Lorenz reviews stills per shot and watches the export once with and once without sound; Helmut does README and Devfolio.
 3. All takes before 11:00 feature freeze (the runbook's 12:30 edit start is too late for a reviewed v1).
-4. ADR-20 (brands order in our own web app, proposed): if accepted before 09:00, shot 4 shows our order page instead of the Sokosumi hire form.
+4. ADR-20 is accepted (orders from `/dashboard`; real Sokosumi purchase waits on B-15). If a real order from `/dashboard` places a Sokosumi Task by 09:00, shot 4 shows the dashboard order; else the Sokosumi hire form as scripted. Never show the fake order path as real.
