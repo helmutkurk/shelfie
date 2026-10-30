@@ -1,0 +1,15 @@
+---
+paths:
+  - "**/*.md"
+  - "docs/**"
+  - "diseno/**"
+---
+# Documentation
+
+- English, concise, imperative, no emojis. Short sections and tables over prose.
+- `diseno/` is canonical. If code and design disagree, fix one of them in the same PR and say which in the PR description.
+- Mark unknowns as "decide Friday" or "verify Friday" and move the answer to `codigo/docs/verified.md` when known. Never guess a fact about Masumi, x402, Sokosumi or Cardano.
+- Mark planned or stubbed parts as such. Docs must not describe more than the code does.
+- Decisions go to an ADR (`docs/adr/`, skill `adr`). Do not bury a decision in a PR comment.
+- Relative links only. Keep one source per fact; link instead of copying.
+- Do not edit `investigacion/` sources or `pitch/slides/facts.tex` values without the owner; facts for the deck change in `facts.tex` only.

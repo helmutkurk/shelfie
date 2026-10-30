@@ -1,0 +1,18 @@
+# Tasks - role B (Fernando): payments, verifier wrapper, scripts
+
+Managed with `bash scripts/task.sh` (`list`, `next`, `start`, `done`, `block`, `add`); agents call it, humans do not need to edit this file. Hand edits still parse: one row per task, exactly 10 cells, no `|` inside a cell. Status: todo, doing, blocked, done. Rules: `AGENTS.md` "Task tracking". Times are Europe/Berlin targets from the runbooks.
+
+| id | status | title | owner | deps | ms | due | acceptance | evidence | updated |
+|---|---|---|---|---|---|---|---|---|---|
+| B-01 | todo | Verify Thursday setup: Blockfrost preprod project, dispenser code location, faucet bookmark, pnpm 10.30.2 availability, Docker Postgres 15 | Fernando | - | - | Fri 09:00 | Blockfrost key shows network Preprod (key in env only); `docker ps` shows pg15 Up and psql select 1 works | - | 2026-10-29 21:14 Claude (seed) |
+| B-02 | todo | Clone x402-express; create and fund wallets W-VBUY, W-PAY, W-SELL, W-MPS; `npm run demo` runs | Fernando | B-01 | M1 | Fri 11:00 | Public addresses listed in docs/evidence/wallets.md; no mnemonic in the repo | - | 2026-10-29 21:14 Claude (seed) |
+| B-03 | todo | M1: one paid x402 request on preprod with a receipt tx hash | Fernando | B-02 | M1 | Fri 11:30 | Buyer prints a receipt hash that opens on the preprod explorer as buyer to W-SELL for the route price | - | 2026-10-29 21:14 Claude (seed) |
+| B-04 | todo | ADR-04 check: are plain SDK transfers from W-PAY possible; if not apply the fallback and tell everyone | Fernando | B-03 | M2 | Fri 13:00 | Result with source and time in codigo/docs/verified.md; fallback announced if needed | - | 2026-10-29 21:14 Claude (seed) |
+| B-05 | todo | Verifier behind x402: POST /v1/verify seller route at 1 tADA in lovelace, idempotency cache, calls evaluate(task, image) | Fernando | B-03 | M2 | Fri 13:00 | Unpaid request gets 402; paid request returns a VerifyResponse (stub ok); the same submission twice charges once | - | 2026-10-29 21:14 Claude (seed) |
+| B-06 | todo | Engine VerifyClient pays the verifier with fetchWithPayment and a spend cap | Fernando | B-05 | M2 | Fri 14:00 | The verdict records a verify tx hash; a test shows the cap blocks overspend | - | 2026-10-29 21:14 Claude (seed) |
+| B-07 | todo | Payout queue in packages/payments: plain transfer from W-PAY to a teammate preprod address, idempotent | Fernando | B-04 | M2 | Fri 15:00 | Payout tx confirmed on the preprod explorer; re-sending the same payout key does not pay twice | - | 2026-10-29 21:14 Claude (seed) |
+| B-08 | todo | Scripts: wallets, funding and tunnel (HTTPS URL for phones); hub-up with A | Fernando | B-02 | - | Fri 13:00 | One command starts the tunnel and prints the phone URL; documented in codigo/scripts README | - | 2026-10-29 21:14 Claude (seed) |
+| B-09 | todo | Public repo check from a logged-out browser and secret scan | Fernando | - | - | Sat 13:30 | README renders, only .env.example is tracked, the scan commands in saturday-runbook print nothing | - | 2026-10-29 21:14 Claude (seed) |
+| B-10 | todo | Security: payment spend caps and fault-injection fakes | Fernando | - | M2 | Fri 14:00 | payment over cap refused; crash between sign and submit does not double-pay in test | - | 2026-10-29 21:22 Claude (for Helmut) |
+| B-11 | todo | Security: verifier x402 middleware first, dry route off, engine token | Fernando | - | M1 | Fri 13:00 | unpaid POST /v1/verify gets 402; dry route 404 in evidence mode | - | 2026-10-29 21:22 Claude (for Helmut) |
+| B-12 | todo | Security: evidence-preflight and purge-evidence scripts (GDPR deletion after event) | Fernando | - | M4 | Sat 12:00 | preflight fails with fakes/override on; purge removes photos and locations | - | 2026-10-29 21:22 Claude (for Helmut) |

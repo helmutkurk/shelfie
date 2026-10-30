@@ -1,0 +1,14 @@
+\begin{frame}[plain]
+  \vspace{1em}
+  \centering
+  \begin{tikzpicture}
+    \fill[cardanolight] (0,0) rectangle (9,2.6);
+    \foreach \i in {0,1,2,3,4,5,6,7} {\fill[cardano!70] (0.3+1.05*\i,0.3) rectangle ++(0.7,1.0);
+      \fill[cardano!40] (0.3+1.05*\i,1.5) rectangle ++(0.7,0.8);}
+    \fill[warm] (4.35,0.3) rectangle ++(0.7,1.0);
+    \fill[white,draw=ink] (4.1,-0.4) rectangle ++(1.2,0.4);
+    \node[ink] at (4.7,-0.2) {\ph{€?.??}};
+  \end{tikzpicture}\\[0.8em]
+  \hero{Is our product on this shelf?\\ At what price?}\\[0.6em]
+  {\large Right now. In this store.}
+\end{frame}

@@ -1,0 +1,18 @@
+# Tasks - role C (Lorenz): verifier evaluate, domain-shelf, vision, eval
+
+Managed with `bash scripts/task.sh` (`list`, `next`, `start`, `done`, `block`, `add`); agents call it, humans do not need to edit this file. Hand edits still parse: one row per task, exactly 10 cells, no `|` inside a cell. Status: todo, doing, blocked, done. Rules: `AGENTS.md` "Task tracking". Times are Europe/Berlin targets from the runbooks.
+
+| id | status | title | owner | deps | ms | due | acceptance | evidence | updated |
+|---|---|---|---|---|---|---|---|---|---|
+| C-01 | todo | Thursday prep: gates G1-G7 as yes/no rules, challenge-code format, price ranges; choose vision providers (Gemini Flash primary, OpenAI fallback) and create keys | Lorenz | - | - | Fri 09:00 | Each gate has a reject example; keys are in a password manager, not in the repo; one phone price-tag photo read manually in the provider playground | - | 2026-10-29 21:14 Claude (seed) |
+| C-02 | todo | Verifier skeleton against the contract; evaluate signature with A in packages/core | Lorenz | - | M2 | Fri 10:30 | evaluate(task, image) -> VerifyResponse compiles against packages/core | - | 2026-10-29 21:14 Claude (seed) |
+| C-03 | todo | Capture the evaluation set: 20 price photos plus 8 out-of-stock photos with ground-truth labels | Lorenz | - | M2 | Fri 13:00 | 28 labelled photos locally (git-ignored) and a committed labels file, incl. wrong-code and OOS cases (verifier-rules section 7) | - | 2026-10-29 21:14 Claude (seed) |
+| C-04 | todo | Gates G1 image, G2 code, G3 readable parse | Lorenz | C-02 | M2 | Fri 10:30 | Unit tests per gate with accept and reject fixtures | - | 2026-10-29 21:14 Claude (seed) |
+| C-05 | todo | Vision adapters in packages/vision: Gemini Flash primary, OpenAI fallback | Lorenz | C-01 | M2 | Fri 11:00 | Both adapters parse the same tag photo into the extraction schema; a forced primary error falls back to OpenAI (test with fakes) | - | 2026-10-29 21:14 Claude (seed) |
+| C-06 | todo | Verifier endpoint returns pass/fail JSON | Lorenz | C-04 | M2 | Fri 11:30 | evaluate returns a zod-valid VerifyResponse for a pass and a fail fixture | - | 2026-10-29 21:14 Claude (seed) |
+| C-07 | todo | Rules G1-G7 complete in packages/domain-shelf | Lorenz | C-06 | M2 | Fri 13:00 | All seven gates tested; reasons match diseno/verifier-rules.md | - | 2026-10-29 21:14 Claude (seed) |
+| C-08 | todo | Out-of-stock rules: gates O3-O5 plus G1, G2, G6, G7; prompt reads the shelf label and empty facing on the props shelf (ADR-17e) | Lorenz | C-07 | M2 | Fri 15:00 | A true OOS photo passes with outcome OUT_OF_STOCK; a stocked shelf claimed as OOS fails; checked on the real props shelf | - | 2026-10-29 21:14 Claude (seed) |
+| C-09 | todo | 20-photo evaluation incl. OOS cases (28 total) with real vision; first report | Lorenz | C-03,C-05,C-07 | M2 | Fri 15:00 | Report text in codigo/eval with accuracy per gate and false-pass count | - | 2026-10-29 21:14 Claude (seed) |
+| C-10 | todo | Tune thresholds from the evaluation | Lorenz | C-09 | - | Fri 17:00 | Re-run shows 0 false passes on the cheat photos | - | 2026-10-29 21:14 Claude (seed) |
+| C-11 | todo | Fri 17:00 vision go/no-go (risk R4): if tags are not read reliably switch to the labelled manual-override demo mode | Lorenz | C-10 | - | Fri 17:00 | Decision recorded in docs/ai-log.md | - | 2026-10-29 21:14 Claude (seed) |
+| C-12 | todo | Security: prompt-injection fixtures; test that the prompt excludes expected code/price; image library decision | Lorenz | - | M2 | Fri 15:00 | injection photo text cannot flip a verdict in tests | - | 2026-10-29 21:22 Claude (for Helmut) |
