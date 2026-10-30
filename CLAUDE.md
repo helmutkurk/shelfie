@@ -25,7 +25,7 @@ A PreToolUse hook (`context-gate.sh`) blocks edits and write-type Bash until you
 | SessionStart | `session-context.sh` | Prints branch, time left in the build window, open TODO/Handoff lines from `docs/ai-log.md` |
 | UserPromptSubmit | `prompt-guard.sh` | Blocks pasted keys/secret literals; warns on a 24-word mnemonic |
 | PreToolUse Edit/Write/MultiEdit/NotebookEdit/Bash | `context-gate.sh` | Blocks changes until this session ran `scripts/context-ack.sh` (ack expires when purpose docs change) |
-| PreToolUse Bash | `guard-bash.sh` | Blocks `.env` access (also `cat`, globs), push to main, force push, mainnet, `curl \| sh`, gh repo changes; asks on new deps and recursive greps |
+| PreToolUse Bash | `guard-bash.sh` | Blocks `.env` access (also `cat`, globs), direct push to dev/main, force push, mainnet, `curl \| sh`, gh repo changes; asks on new deps and recursive greps |
 | PreToolUse Read/Edit/Write/Grep/Glob | `protect-files.sh` | Blocks `.env*` (not `.env.example`), key files, `invoice/`, lockfile and `.git` edits |
 | PostToolUse Edit/Write | `format-file.sh` | Prettier on the edited file once `codigo/` has dependencies; no-op before |
 | Stop | `typecheck-on-stop.sh` | Typecheck when TS files changed; no-op before `codigo/package.json` |

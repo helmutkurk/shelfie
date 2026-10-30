@@ -10,6 +10,8 @@ scripts/launch-github.sh --go       # init, commit, create PUBLIC repo helmutkur
 scripts/launch-github.sh --protect  # after the first CI run: branch protection + secret scanning + push protection
 ```
 
+After the initial repo creation, follow section 3 to create `dev` from `main` and set `dev` as the default branch before regular work starts.
+
 Roles A-D: fill `ROLE_A..ROLE_D` in `scripts/team.conf`, run `scripts/assign-roles.sh`, commit `.github/CODEOWNERS` in a PR. The manual steps below are the same, step by step.
 
 Timestamps: commits carry their real times. Prep docs were written Thursday 29-10, before the event; this is allowed (docs and config only). Application code starts Fri 30-10 09:00. Never backdate commits or rewrite dates.
@@ -18,7 +20,7 @@ Timestamps: commits carry their real times. Prep docs were written Thursday 29-1
 
 Decided (Helmut, 2026-10-29): public repo from the start. On public repos, GitHub documents protected branches, required reviews and required status checks as available on the Free plan, and secret scanning plus push protection as free for public repositories (docs: https://docs.github.com/en/code-security/getting-started/github-security-features, https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches). **Verify in repo settings Friday** (Settings > Branches, Settings > Code security): the docs were read on 29-10 and not tested on this account. Helmut also has GitHub Pro via the Student Developer Pack; if the Free-plan behaviour differs, Pro covers it. Standard Actions runners are free on public repos.
 
-If protection cannot be enforced: convention without enforcement (branches, PR, one review, nobody force-pushes `main`; CODEOWNERS still requests reviews and CI shows red/green).
+If protection cannot be enforced: convention without enforcement (branches, PR, one review, nobody directly pushes or force-pushes `dev` or `main`; CODEOWNERS still requests reviews and CI shows red/green).
 
 ## 1. Prerequisites
 
@@ -79,6 +81,8 @@ gh repo create shelfie --public --source . --remote origin --push
 
 `shelfie` is a suggested name; change freely. Verify logged out (private window): `gh repo view --web` shows the "Public" badge, and `invoice/`, `downloads-blockchain-website/` and `.env` are not listed.
 
+Create `dev` from the initial `main` branch using GitHub's branch creation UI, then set `dev` as the default branch. The branch protections below assume both `dev` and `main` already exist.
+
 ## 4. Invite collaborators (write access)
 
 ```bash
@@ -93,14 +97,16 @@ Each teammate must accept the emailed invitation (or at https://github.com/OWNER
 
 Note: CODEOWNERS owners need explicit write access, else they are not assigned (code-owners doc above).
 
-## 5. Protect `main`, secret scanning, push protection
+## 5. Protect `dev` and `main`, secret scanning, push protection
 
-`scripts/launch-github.sh --protect` does this (below is the manual version). Classic branch protection (public repo, any plan; verify Friday):
+`scripts/launch-github.sh --protect` applies the same rules to both branches (below is the manual version). Classic branch protection (public repo, any plan; verify Friday):
+
+In Settings > General > Pull Requests, allow squash merges and merge commits: use squash for feature/fix/docs PRs into `dev` and a merge commit for release PRs into `main`.
 
 ```bash
 cat > /tmp/protection.json <<'JSON'
 {
-  "required_status_checks": { "strict": true, "contexts": ["check", "secret-scan", "context-gate"] },
+  "required_status_checks": { "strict": true, "contexts": ["check", "secret-scan", "security", "context-gate"] },
   "enforce_admins": false,
   "required_pull_request_reviews": {
     "required_approving_review_count": 1,
@@ -112,20 +118,22 @@ cat > /tmp/protection.json <<'JSON'
   "allow_deletions": false
 }
 JSON
-gh api "repos/$OWNER/$REPO/branches/main/protection" -X PUT --input /tmp/protection.json
+for BRANCH in main dev; do
+  gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" -X PUT --input /tmp/protection.json
+done
 ```
 
-The contexts are the job names in `.github/workflows/ci.yml` (`check`, `secret-scan`) and `.github/workflows/context-gate.yml` (`context-gate`). **`context-gate` is a required status check**: it fails a PR whose "Context and purpose" section is empty, or that changes purpose files without `ADR-<id>` or `minor: <reason>`. It must have run once before it can be required. CODEOWNERS requires Helmut on purpose files (`AGENTS.md`, `CLAUDE.md`, `ideas/decision.md`, `diseno/`, `.claude/`, `.github/`, `.githooks/`, `scripts/team.conf`); GitHub does not let an author approve their own PR, so for a PR authored by Helmut on those files use the admin bypass (`enforce_admins:false`). The check must have run once before it can be required reliably. Hackathon note: `enforce_admins:false` lets Helmut bypass in an emergency; with 1 approval, a 4-person team merges quickly.
+The contexts are the job names in `.github/workflows/ci.yml` (`check`, `secret-scan`), `.github/workflows/security.yml` (`security`) and `.github/workflows/context-gate.yml` (`context-gate`). CI and Security run on pushes and PRs targeting both `dev` and `main`. **`context-gate` is a required status check**: it fails a PR whose "Context and purpose" section is empty, or that changes purpose files without `ADR-<id>` or `minor: <reason>`. Each check must have run once before it can be required. CODEOWNERS requires Helmut on purpose files (`AGENTS.md`, `CLAUDE.md`, `ideas/decision.md`, `diseno/`, `.claude/`, `.github/`, `.githooks/`, `scripts/team.conf`); GitHub does not let an author approve their own PR, so for a PR authored by Helmut on those files use the admin bypass (`enforce_admins:false`). Hackathon note: `enforce_admins:false` lets Helmut bypass in an emergency; with 1 approval, a 4-person team merges quickly.
 
 Ruleset alternative (Team, or Pro if your Settings > Rules allows it):
 
 ```bash
 cat > /tmp/ruleset.json <<'JSON'
 {
-  "name": "main-protection",
+  "name": "dev-and-main-protection",
   "target": "branch",
   "enforcement": "active",
-  "conditions": { "ref_name": { "include": ["refs/heads/main"], "exclude": [] } },
+  "conditions": { "ref_name": { "include": ["refs/heads/main", "refs/heads/dev"], "exclude": [] } },
   "rules": [
     { "type": "deletion" },
     { "type": "non_fast_forward" },
@@ -137,7 +145,7 @@ cat > /tmp/ruleset.json <<'JSON'
         "required_review_thread_resolution": false } },
     { "type": "required_status_checks", "parameters": {
         "strict_required_status_checks_policy": true,
-        "required_status_checks": [ { "context": "check" }, { "context": "secret-scan" }, { "context": "context-gate" } ] } }
+        "required_status_checks": [ { "context": "check" }, { "context": "secret-scan" }, { "context": "security" }, { "context": "context-gate" } ] } }
   ]
 }
 JSON
@@ -181,10 +189,11 @@ Each person:
 ```bash
 gh auth login
 gh repo clone OWNER/REPO && cd REPO
+git switch dev
 cp .env.example .env     # fill locally, never commit
 ```
 
-Then set up their agent (Claude Code and/or Codex) following `docs/playbook/agent-setup.md`. Read `AGENTS.md` first (Claude imports it from `CLAUDE.md`). Branch per task: `git switch -c feat/<topic>`, open PR to `main`.
+Then set up their agent (Claude Code and/or Codex) following `docs/playbook/agent-setup.md`. Read `AGENTS.md` first (Claude imports it from `CLAUDE.md`). Create each feature/fix/docs branch from `dev` and PR it into `dev`; see [CONTRIBUTING.md](../CONTRIBUTING.md) for release and hotfix flows. Never push directly to `dev` or `main`.
 
 ## 8. Rotate a leaked key
 
@@ -196,8 +205,8 @@ Then set up their agent (Claude Code and/or Codex) following `docs/playbook/agen
 
 ## 9. Open items
 
-- [ ] Protection and secret scanning confirmed available (or convention fallback chosen): ______
+- [ ] Protection for `dev` and `main`, and secret scanning confirmed available (or convention fallback chosen): ______
 - [ ] Repo name and owner account: ______
 - [ ] Teammates' GitHub handles collected: 04lenz04
-- [ ] CI job names confirmed (`check`, `secret-scan`, `context-gate`)
+- [ ] CI job names confirmed (`check`, `secret-scan`, `security`, `context-gate`)
 - [ ] Every teammate ran `bash scripts/install-githooks.sh` and has gitleaks before the first push

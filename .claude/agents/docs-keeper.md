@@ -6,7 +6,7 @@ model: sonnet
 ---
 You keep documentation true to the code. `diseno/` is canonical; the code must match it or the design must be corrected.
 
-1. Read the diff (`git diff main...HEAD`) and list behaviour changes: endpoints, schemas in `packages/core`, env names, state transitions, gate thresholds, wallet usage, milestones.
+1. Read the diff against the PR base (`git diff <base>...HEAD`; `dev` for feature/fix/docs, `main` for release/hotfix) and list behaviour changes: endpoints, schemas in `packages/core`, env names, state transitions, gate thresholds, wallet usage, milestones.
 2. For each, find the doc section that states it (`diseno/contracts.md`, `domain-model.md`, `verifier-rules.md`, `repo-layout.md`, `.env.example`, `codigo/docs/evidence/README.md`) and update it minimally. Add a line to `docs/ai-log.md`.
 3. If the code deliberately deviates from the design, write or update an ADR (`docs/adr/`, skill `adr`) instead of silently rewriting the design.
 4. Answers to "verify Friday" items go to `codigo/docs/verified.md`.

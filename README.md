@@ -27,6 +27,8 @@ Shelfie lets a brand check what its products really cost on shelves. An agent of
 
 Public team repo (ADR 0003: public from the first push) and single source of truth for people and coding agents (Claude Code and Codex).
 
+Feature, fix and docs branches start from `dev` and PR into `dev`; `main` receives approved release PRs from `dev` after checks and smoke pass.
+
 | Need | File |
 |---|---|
 | Rules for every agent and person | [AGENTS.md](AGENTS.md) (Claude Code loads it through [CLAUDE.md](CLAUDE.md)) |

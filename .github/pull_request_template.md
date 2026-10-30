@@ -1,6 +1,11 @@
 ## What and why
 <!-- 2-3 lines. Link the issue or milestone. -->
 
+## Base branch
+- [ ] Feature / fix / docs: branch from `dev`, PR into `dev`
+- [ ] Release: `dev` -> `main`; `npm run check` on `dev`: ____; `npm run smoke` on `dev`: ____
+- [ ] Hotfix: branch from `main`, PR into `main`, then open a follow-up PR from `main` into `dev` within the same hour
+
 ## Context and purpose
 <!-- Required, checked by CI (job `context-gate`). Fill every line; no placeholders. -->
 - Files read: <list the files you and your agent actually read>
