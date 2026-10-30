@@ -23,7 +23,7 @@ Store coordinates come from `investigacion/catalogo/stores.json` (`CATALOG_DIR` 
 - The dry endpoint exists. Test it with real decodable fixtures and `VERIFY_CLIENT=real`; the marker-based smoke uses synthetic JPEG bytes and deliberately targets the in-engine fake verifier.
 - `hub-up.sh`: verifier/web start scripts exist. Verify real startup, cloudflared command/URL pattern, `HUB_LAN_IP`, and descendant cleanup after stop on the hub laptop.
 - `fund-check.ts`: `WALLET_ADDRESS_VBUY`, `WALLET_ADDRESS_PAY`, `WALLET_ADDRESS_MPS` are core `FundCheckEnvSchema` names documented in contracts §5.6; not run against Blockfrost yet (no key).
-- `payout-once.ts`: typechecked, refusal paths tried; not run against preprod yet (needs a funded W-PAY; B-04).
+- `payout-once.ts`: first real run 2026-10-30, tx `60d49a3a...` (B-04 done; `codigo/docs/verified.md`).
 - Not scripted yet (checklist items): `scripts/hub-check.sh`, `check-bundle.sh`, `evidence-preflight.sh`, `purge-evidence.sh`.
 - Root `npm run typecheck` includes `tsc -p scripts/tsconfig.json`; `npm run smoke` and `npm run hub-up -- --fake` are root scripts. Fake hub mode never reads `.env`. Socket startup and smoke must be rerun on the hub: this sandbox refuses TCP/Unix sockets (EPERM).
 

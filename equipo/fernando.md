@@ -4,7 +4,7 @@
 - Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
-B-04 (ADR-04): one real W-PAY plain transfer on preprod with `scripts/payout-once.ts`; B-07 payout queue (reconcile work on `dev`, awaiting the real transfer). Next: B-01 -> B-03 (M1 paid x402 request), B-10 (spend caps, incl. `VERIFY_RUN_CAP_LOVELACE`).
+B-01, B-02, B-04 done (ADR-04 answered: SDK payout tx `60d49a3a...`). Next: B-03 (M1 paid x402 request from W-VBUY), B-07 (payout queue on preprod: confirmed payout plus no double pay on the same key), B-10 (spend caps, incl. `VERIFY_RUN_CAP_LOVELACE`).
 
 ## Active branch
 - `dev`: payout-once and the payout reconcile (auto-reconcile of UNKNOWN, stale alert, space-in-path fix) merged and pushed (ADR-0006), security-reviewer passes done; awaiting peer review by Isabel's agent. B-04 and B-07 doing.
@@ -12,7 +12,7 @@ B-04 (ADR-04): one real W-PAY plain transfer on preprod with `scripts/payout-onc
 ## Components I added
 | Name | Path | What it does | How to run | Status | Depends on |
 |---|---|---|---|---|---|
-| Payout once | `codigo/scripts/payout-once.ts` | One real preprod transfer from W-PAY; checks confirmations and `find()` (ADR-04) | `cd codigo && node --env-file=<local env> --import tsx scripts/payout-once.ts --to addr_test1... [--send]` | wip, not run on preprod | funded W-PAY, Blockfrost preprod key |
+| Payout once | `codigo/scripts/payout-once.ts` | One real preprod transfer from W-PAY; checks confirmations and `find()` (ADR-04) | `cd codigo && node --env-file=<local env> --import tsx scripts/payout-once.ts --to addr_test1... [--send]` | works: tx `60d49a3a...` (B-04) | funded W-PAY, Blockfrost preprod key |
 | Smoke | `codigo/scripts/smoke.ts` | End-to-end checks against the engine on fakes | `cd codigo && npm run smoke` | works (fake mode, my laptop) | running engine on fakes |
 | Hub launcher | `codigo/scripts/hub-up.sh` | Starts engine, verifier, web, optional tunnel | `cd codigo && npm run hub-up -- --fake` | implemented; venue and tunnel pending | - |
 | Funding check | `codigo/scripts/fund-check.ts` | Preprod balances for public wallet addresses | `cd codigo && node --import tsx scripts/fund-check.ts` | dry path only | Blockfrost preprod key |
