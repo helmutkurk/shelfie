@@ -26,7 +26,7 @@
         {
           "id": "request",
           "range": [0.25, 0.5],
-          "headline": "Can you photograph the competitors in a few shops?",
+          "headline": "Can you check the competition in a few shops for me?",
           "visual": "rail, then all four wheels drop in"
         },
         {
