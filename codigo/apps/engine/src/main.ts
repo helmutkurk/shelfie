@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   collectSecretValues,
   createLogger,
@@ -19,7 +20,7 @@ import { wireAdapters } from "./wiring.js";
 // Binds 127.0.0.1 only; the tunnel forwards this port, nothing else is public.
 
 const HOST = "127.0.0.1";
-const DEFAULT_WEB_DIST = new URL("../../web/dist", import.meta.url).pathname;
+const DEFAULT_WEB_DIST = fileURLToPath(new URL("../../web/dist", import.meta.url));
 
 async function main(): Promise<void> {
   const env = loadEnv(EngineEnvSchema, process.env);

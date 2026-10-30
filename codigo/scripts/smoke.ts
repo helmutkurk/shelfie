@@ -8,6 +8,7 @@
 // Exit code 0 = every assertion passed, 1 = at least one failed. Tokens are never printed.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { GENESIS_HASH, entryHash } from "@shelfie/evidence";
 import { loadEnv, SmokeEnvSchema } from "@shelfie/core";
 import type { LedgerEvent } from "@shelfie/core";
@@ -17,7 +18,7 @@ const BASE = env.ENGINE_URL.replace(/\/$/, "");
 const ADMIN = env.ADMIN_TOKEN;
 const SHELL = env.SHELL_TOKEN;
 const CATALOG_DIR =
-  env.CATALOG_DIR ?? new URL("../../investigacion/catalogo/", import.meta.url).pathname;
+  env.CATALOG_DIR ?? fileURLToPath(new URL("../../investigacion/catalogo/", import.meta.url));
 const RUN = Date.now().toString(36);
 const CENTRE = { lat: 48.137, lon: 11.575 }; // Munich centre: passes the city check, not at a store
 

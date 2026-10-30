@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   AppError,
   FakeClock,
@@ -188,6 +188,100 @@ describe("crash between write-ahead and hash", () => {
   it("core refuses UNKNOWN -> QUEUED without proof (double-payment guard)", () => {
     expect(() => transition("payout", "UNKNOWN", "reconcile_proved_absent")).toThrow(AppError);
     expect(transition("payout", "UNKNOWN", "reconcile_proved_absent", { reconcileProvedAbsent: true })).toBe("QUEUED");
+  });
+});
+
+describe("automatic reconcile on poll (no operator, no restart)", () => {
+  it("absent after the settling delay: the poll never requeues; it alerts, and only the operator resends", async () => {
+    const { queue, adapter, clock, events } = setup();
+    adapter.injectFault("timeout_before_send");
+    const p = await enq(queue);
+    await queue.drain();
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+    const find = vi.spyOn(adapter, "find");
+
+    clock.advanceSec(30);
+    await queue.pollConfirmations();
+    expect(find).not.toHaveBeenCalled(); // inside the settling delay: no lookup at all
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+
+    // a slow tx could still land (Blockfrost does not see the mempool): no requeue, no resend
+    clock.advanceSec(100);
+    await queue.pollConfirmations();
+    await queue.drain();
+    expect(find).toHaveBeenCalledTimes(1);
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+    expect(adapter.sendCalls).toBe(1);
+    expect(events.filter((e) => e.kind === "PAYOUT_STALE")).toHaveLength(1);
+
+    // the operator's reconcile is still the route back, with proof
+    expect((await queue.reconcile(p.id)).state).toBe("QUEUED");
+    await queue.drain();
+    const done = await queue.get(p.id);
+    expect(done.state).toBe("SUBMITTED");
+    expect(done.attempts).toBe(2);
+    expect(adapter.chain).toHaveLength(1);
+  });
+
+  it("an UNKNOWN payout without a write-ahead time is never looked up automatically (fail closed)", async () => {
+    const { queue, adapter, clock, store } = setup();
+    adapter.injectFault("timeout_before_send");
+    const p = await enq(queue);
+    await queue.drain();
+    await store.update({ ...(await queue.get(p.id)), sendingSince: null });
+    const find = vi.spyOn(adapter, "find");
+    clock.advanceSec(3600);
+    await queue.pollConfirmations();
+    await queue.drain();
+    expect(find).not.toHaveBeenCalled();
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+    expect(adapter.sendCalls).toBe(1);
+  });
+
+  it("timeout after send: an inconclusive lookup never resends; a later poll finds the tx", async () => {
+    const { queue, adapter, clock } = setup();
+    adapter.injectFault("timeout_after_send");
+    adapter.findFails = true;
+    const p = await enq(queue);
+    await queue.drain();
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+    const find = vi.spyOn(adapter, "find");
+
+    clock.advanceSec(300);
+    await queue.pollConfirmations();
+    await queue.drain();
+    expect((await queue.get(p.id)).state).toBe("UNKNOWN");
+    expect(find).toHaveBeenCalledTimes(1);
+
+    // throttled: the next poll within reconcileIntervalSec does not hit the chain again
+    await queue.pollConfirmations();
+    expect(find).toHaveBeenCalledTimes(1);
+
+    adapter.findFails = false;
+    clock.advanceSec(31);
+    await queue.pollConfirmations();
+    await queue.drain();
+    const found = await queue.get(p.id);
+    // the same poll finds it (UNKNOWN -> SUBMITTED) and then confirms it
+    expect(found.state).toBe("CONFIRMED");
+    expect(found.txHash).toBe(adapter.chain[0]?.txHash);
+    expect(adapter.sendCalls).toBe(1);
+    expect(adapter.chain).toHaveLength(1);
+  });
+
+  it("a SUBMITTED payout unconfirmed past staleAfterSec raises PAYOUT_STALE once and is not resent", async () => {
+    const { queue, adapter, clock, events } = setup({}, { confirmations: 0 });
+    const p = await enq(queue);
+    await queue.drain();
+    await queue.pollConfirmations();
+    expect(events.some((e) => e.kind === "PAYOUT_STALE")).toBe(false);
+
+    clock.advanceSec(601);
+    await queue.pollConfirmations();
+    await queue.pollConfirmations();
+    expect(events.filter((e) => e.kind === "PAYOUT_STALE")).toHaveLength(1);
+    expect((await queue.get(p.id)).state).toBe("SUBMITTED");
+    expect(adapter.sendCalls).toBe(1);
   });
 });
 

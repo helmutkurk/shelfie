@@ -4,11 +4,10 @@
 - Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
-B-04 (ADR-04): one real W-PAY plain transfer on preprod with `scripts/payout-once.ts`, then B-07 (payout queue, reconcile work in review). Next: B-01 -> B-03 (M1 paid x402 request), B-10 (spend caps, incl. `VERIFY_RUN_CAP_LOVELACE`).
+B-04 (ADR-04): one real W-PAY plain transfer on preprod with `scripts/payout-once.ts`; B-07 payout queue (reconcile work on `dev`, awaiting the real transfer). Next: B-01 -> B-03 (M1 paid x402 request), B-10 (spend caps, incl. `VERIFY_RUN_CAP_LOVELACE`).
 
 ## Active branch
-- `dev`: payout-once merged and pushed (ADR-0006), security-reviewer pass done; awaiting peer review by Isabel's agent.
-- `fix/b-payout-reconcile`: not on `dev` yet (no PR was opened; under ADR-0006 merge into `dev` after `npm run check`). Auto-reconcile of UNKNOWN payouts, stale alert, space-in-path fix. B-07 doing.
+- `dev`: payout-once and the payout reconcile (auto-reconcile of UNKNOWN, stale alert, space-in-path fix) merged and pushed (ADR-0006), security-reviewer passes done; awaiting peer review by Isabel's agent. B-04 and B-07 doing.
 
 ## Components I added
 | Name | Path | What it does | How to run | Status | Depends on |
