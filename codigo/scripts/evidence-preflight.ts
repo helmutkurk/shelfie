@@ -3,11 +3,13 @@
 //   node --env-file=.env --import tsx scripts/evidence-preflight.ts [--since <iso>] [--no-engine]
 // Checks the env of the engine and the verifier (same env file), then the running engine's
 // /api/health, then the evidence ledger (no demo override or operator mark-paid in the run).
-// Prints names and pass/fail only, never values. Exit 0 = all pass, 1 = a check failed.
+// Prints names and pass/fail only, never values. Exit 0 = all pass, 1 = a check failed,
+// 2 = env and ledger pass but runtime checks were skipped (--no-engine).
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import {
   AppError,
+  ConfigResponseSchema,
   EngineEnvSchema,
   HealthResponseSchema,
   LedgerEventSchema,
@@ -59,6 +61,11 @@ async function main(): Promise<void> {
     check(!engine.ALLOW_DEMO_OVERRIDE, "ALLOW_DEMO_OVERRIDE off");
     check(!engine.ALLOW_TEST_UPLOAD, "ALLOW_TEST_UPLOAD off");
     check(engine.LOCATION_CHECK === "on", "LOCATION_CHECK=on");
+    // the engine refuses the demo override in production or with the evidence lock (engine.ts)
+    check(
+      engine.NODE_ENV === "production" || engine.EVIDENCE_RUN_LOCKED,
+      "NODE_ENV=production or EVIDENCE_RUN_LOCKED on (override impossible, no dev tokens)",
+    );
   }
   if (verifier) {
     check(verifier.VERIFIER_MODE !== "stub", "VERIFIER_MODE not stub (real vision)");
@@ -76,6 +83,13 @@ async function main(): Promise<void> {
       check(h.ok, "engine /api/health ok");
       check(!h.fakes.payments && !h.fakes.verifier, "engine /api/health reports no fakes");
       check(h.verifier === "up", "engine sees the verifier up");
+      // the running engine's own switches (its env may differ from this shell's)
+      const cfgRes = await fetch(`http://127.0.0.1:${String(engine.ENGINE_PORT)}/api/config`, {
+        signal: AbortSignal.timeout(5_000),
+        redirect: "error",
+      });
+      const cfg = ConfigResponseSchema.parse(await cfgRes.json());
+      check(!cfg.demoOverrideEnabled, "running engine: demo override disabled");
     } catch {
       check(false, "engine /api/health reachable (start the engine or pass --no-engine)");
     }
@@ -96,7 +110,8 @@ async function main(): Promise<void> {
       }
     } catch (err) {
       // a missing ledger is a fresh run; an unreadable one is a failure
-      readable = err instanceof Error && "code" in err && err.code === "ENOENT";
+      // a missing ledger is fine for a fresh run, but not when a run window is given
+      readable = err instanceof Error && "code" in err && err.code === "ENOENT" && since === null;
     }
     check(readable, "evidence ledger readable");
     check(
@@ -107,8 +122,16 @@ async function main(): Promise<void> {
 
   for (const r of results) out(`${r.ok ? "PASS" : "FAIL"}  ${r.name}`);
   const failed = results.filter((r) => !r.ok).length;
-  out(failed === 0 ? "evidence preflight: PASS" : `evidence preflight: FAIL (${String(failed)})`);
-  process.exit(failed === 0 ? 0 : 1);
+  if (failed > 0) {
+    out(`evidence preflight: FAIL (${String(failed)})`);
+    process.exit(1);
+  }
+  if (args["no-engine"]) {
+    out("evidence preflight: env and ledger PASS, runtime checks SKIPPED (--no-engine): not enough for an evidence run");
+    process.exit(2);
+  }
+  out("evidence preflight: PASS");
+  process.exit(0);
 }
 
 main().catch((err: unknown) => {
