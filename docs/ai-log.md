@@ -116,3 +116,14 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Purpose-impact: minor: reconcile env and browser contracts, fill section 2, clarify verifier decode errors and prompt locations
 - Agent lesson: validate the public package exports and actual runtime wiring with focused regressions before accepting a passing workspace-only check; report socket sandbox failures separately from successful local logic tests.
 - Final check result (Codex): `cd codigo && npm run check` on Node 24.22.2 exited 1: typecheck and lint passed; Vitest 277 passed / 79 failed (356 total), 79 socket errors, 7 failed / 21 passed files. Final focused suite: 244 passed; final env/API/explorer rerun: 15 passed. Shell HTTP setup is also blocked and was interrupted. D-28 stays blocked; no push approval requested.
+
+## 2026-10-30 12:09 (Europe/Berlin) - Codex for Helmut (D) - role and technology skills
+
+- Done: added seven concise role/technology SKILL.md files, docs/playbook/skills.md, role skill lines in START-HERE-TEAM.md, and pointers in AGENTS.md and agent-setup.md. Skills map to existing design/runbooks and mark unverified platform behavior as verify Friday.
+- Verification: a Python check passed skill names/descriptions and the 120-line limit; relative Markdown links resolved in all changed docs and the five existing process skills. No code tests, paid calls, or transactions were run.
+- TODO: none for D-29.
+- Handoff: branch name supplied by Helmut is feature/d-agent-skills; no Git commands were run. Next root command: bash scripts/task.sh next D. See docs/playbook/skills.md for the per-role load order.
+- Purpose-impact: minor: align the path-scoped web rule with ADR-17 camera-only capture. Orchestrator adds the same value as the commit trailer and PR Context and purpose.
+- Done (continued): aligned .claude/rules/web.md with ADR-17 so camera use without a secure context stays read-only and offers no file-picker submission.
+- Correction: initial task.sh add/start calls invoked git config user.name internally before TASK_ACTOR=Codex was set; later task tracking used TASK_ACTOR=Codex. No direct Git commands for status, diff, or branch inspection were issued.
+- Purpose-impact (full change set; use for commit trailer and PR Context and purpose): minor: add role/technology agent skills and align the web camera-only rule with ADR-17.

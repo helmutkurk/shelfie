@@ -2,6 +2,8 @@
 
 Goal: every agent on every laptop loads the same rules and the same guardrails.
 
+See the [role skills index](skills.md): Claude Code discovers skills under .claude/skills; Codex reads the role's SKILL.md by hand.
+
 ## 1. Prerequisites
 - Node 24, `git`, `gh` (logged in), `jq` (required by the hooks).
 - One agent: **Claude Code** (`claude`) or **Codex** (`codex`). Install per vendor docs; do not install extra plugins or MCP servers for this project.
