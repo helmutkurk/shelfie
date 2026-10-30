@@ -310,3 +310,67 @@ describe("X402VerifyClient state write failures (B-13)", () => {
     await running;
   });
 });
+
+describe("X402VerifyClient run spend cap (B-10, P5)", () => {
+  const runCap = { runCapLovelace: "3000000", maxPerPaymentLovelace: "1000000" };
+  const reqFor = (i: number): VerifyRequest => ({ ...req, submissionId: `sub_${String(i)}` });
+  const keyFor = (i: number): string => `verify:sub_${String(i)}`;
+  const capped = (paid: () => Promise<Response>, calls = { n: 0 }): X402VerifyClient =>
+    new X402VerifyClient({
+      verifierUrl: "http://127.0.0.1:4021",
+      logger,
+      wallets: [x402LikeWallet],
+      settle: () => ({ transaction: "ab".repeat(32), success: true }),
+      runCap,
+      fetchImpl: (input) => {
+        calls.n++;
+        const signed = input instanceof Request && input.headers.has("payment-signature");
+        return signed ? paid() : Promise.resolve(json(402, "{}"));
+      },
+    });
+  const okVerdict = (r: VerifyRequest) => () => Promise.resolve(json(200, JSON.stringify(fakeVerdict(r, { pass: true }))));
+
+  it("the payment after the cap is refused before anything is sent", async () => {
+    let i = 0;
+    const calls = { n: 0 };
+    const c = capped(() => okVerdict(reqFor(i))(), calls);
+    for (i = 1; i <= 3; i++) await c.verify(reqFor(i), keyFor(i));
+    const before = calls.n;
+    await expect(c.verify(reqFor(4), keyFor(4))).rejects.toMatchObject({ details: { reason: "run_cap_reached" } });
+    expect(calls.n).toBe(before);
+  });
+
+  it("a cached receipt costs nothing against the cap", async () => {
+    const c = capped(okVerdict(reqFor(1)));
+    await c.verify(reqFor(1), keyFor(1));
+    for (let k = 0; k < 5; k++) await c.verify(reqFor(1), keyFor(1));
+    await c.verify(reqFor(2), keyFor(2));
+    await c.verify(reqFor(3), keyFor(3));
+  });
+
+  it("an attempt that paid nothing gives its reservation back", async () => {
+    let fail = true;
+    let i = 0;
+    const c = new X402VerifyClient({
+      verifierUrl: "http://127.0.0.1:4021",
+      logger,
+      wallets: [x402LikeWallet],
+      settle: () => ({ transaction: "ab".repeat(32), success: true }),
+      runCap,
+      fetchImpl: (input) => {
+        if (fail) return Promise.reject(new TypeError("ECONNREFUSED")); // before any signature
+        const signed = input instanceof Request && input.headers.has("payment-signature");
+        return signed ? okVerdict(reqFor(i))() : Promise.resolve(json(402, "{}"));
+      },
+    });
+    for (let k = 0; k < 5; k++) await expect(c.verify(reqFor(9), keyFor(9))).rejects.toMatchObject({ details: { reason: "network_or_timeout" } });
+    fail = false;
+    for (i = 1; i <= 3; i++) await c.verify(reqFor(i), keyFor(i));
+  });
+
+  it("an unclear (frozen) payment keeps its reservation: it may have been paid", async () => {
+    const c = capped(() => Promise.reject(new TypeError("socket hang up")));
+    for (let i = 1; i <= 3; i++) await expect(c.verify(reqFor(i), keyFor(i))).rejects.toMatchObject({ details: { reason: "payment_uncertain" } });
+    await expect(c.verify(reqFor(4), keyFor(4))).rejects.toMatchObject({ details: { reason: "run_cap_reached" } });
+  });
+});

@@ -131,6 +131,8 @@ const engineBase = z.object({
   VBUY_MNEMONIC_1: optStr(),
   VBUY_MNEMONIC_2: optStr(),
   VERIFY_MAX_PRICE_LOVELACE: lovelaceVar("2000000"),
+  // Total x402 verify spend per engine run (security.md P5); each attempt reserves the per-payment cap.
+  VERIFY_RUN_CAP_LOVELACE: lovelaceVar("50000000"),
   FACILITATOR_URL: optUrl(),
 });
 
@@ -142,6 +144,9 @@ export const EngineEnvSchema = withDevTokens(
     }
     if (BigInt(v.PAYOUT_LOVELACE) > BigInt(MAX_PAYOUT_LOVELACE)) {
       add("PAYOUT_LOVELACE", "exceeds the hard payout cap (MAX_PAYOUT_LOVELACE)");
+    }
+    if (BigInt(v.VERIFY_RUN_CAP_LOVELACE) < BigInt(v.VERIFY_MAX_PRICE_LOVELACE)) {
+      add("VERIFY_RUN_CAP_LOVELACE", "must be at least VERIFY_MAX_PRICE_LOVELACE");
     }
     if (!v.FAKE_PAYMENTS) {
       if (v.BLOCKFROST_PROJECT_ID === undefined) {

@@ -128,6 +128,11 @@ export interface X402VerifyClientOptions extends VerifyClientOptions {
    * state lives in memory only and a restart could re-pay a signed check.
    */
   statePath?: string;
+  /**
+   * Total spend per run (VERIFY_RUN_CAP_LOVELACE, security.md P5). Each attempt reserves
+   * maxPerPaymentLovelace; the reservation is released only when nothing was paid.
+   */
+  runCap?: { runCapLovelace: string; maxPerPaymentLovelace: string };
 }
 
 type Receipt = StoredReceipt;
@@ -138,6 +143,8 @@ export class X402VerifyClient implements VerifyClient {
   private readonly uncertain: Set<string>;
   /** Keys with an attempt running (write-ahead): unclear after a crash. */
   private readonly pending = new Set<string>();
+  /** Spent plus reserved lovelace in this run (run cap). */
+  private reserved = 0n;
   private readonly tails: Promise<unknown>[];
   private readonly load: number[];
 
@@ -150,6 +157,22 @@ export class X402VerifyClient implements VerifyClient {
       : { receipts: new Map<string, Receipt>(), uncertain: new Set<string>() };
     this.receipts = state.receipts;
     this.uncertain = state.uncertain;
+  }
+
+  /** Reserve the per-payment cap against the run cap; refuse before signing when it would pass it. */
+  private reserve(): bigint {
+    const cap = this.opts.runCap;
+    if (!cap) return 0n;
+    const per = BigInt(cap.maxPerPaymentLovelace);
+    if (this.reserved + per > BigInt(cap.runCapLovelace)) {
+      this.opts.logger.error("verify run spend cap reached", { reserved: this.reserved.toString() });
+      throw new AppError("dependency_unavailable", "Verify spend cap for this run reached; nothing was paid.", undefined, {
+        reason: "run_cap_reached",
+        paymentSent: false,
+      });
+    }
+    this.reserved += per;
+    return per;
   }
 
   private persist(): void {
@@ -228,12 +251,14 @@ export class X402VerifyClient implements VerifyClient {
     this.load[idx] = (this.load[idx] ?? 0) + 1;
     const wallet = this.opts.wallets[idx] as X402Wallet;
     const guarded = async (): Promise<Receipt> => {
+      const reservation = this.reserve();
       this.pending.add(key);
       try {
         this.persist(); // write-ahead: a crash from here on loads this key as unclear
       } catch (err) {
         // nothing signed yet: refuse rather than pay without a durable mark
         this.pending.delete(key);
+        this.reserved -= reservation;
         this.opts.logger.error("verify client state write failed", { reason: errName(err) });
         throw new AppError("dependency_unavailable", "Buyer state cannot be written; nothing was paid.", undefined, {
           reason: "state_unwritable",
@@ -242,6 +267,10 @@ export class X402VerifyClient implements VerifyClient {
       }
       try {
         return await this.attempt(wallet, body, key);
+      } catch (err) {
+        // nothing paid (no receipt, key not frozen): give the reservation back
+        if (!this.uncertain.has(key) && !this.receipts.has(key)) this.reserved -= reservation;
+        throw err;
       } finally {
         this.pending.delete(key);
         this.persistAfterPayment();
@@ -388,6 +417,7 @@ type VerifyClientEnv = Pick<
   | "ENGINE_TOKEN"
   | "ADMIN_TOKEN"
   | "VERIFY_MAX_PRICE_LOVELACE"
+  | "VERIFY_RUN_CAP_LOVELACE"
   | "VBUY_WALLETS"
   | "VBUY_MNEMONIC_1"
   | "VBUY_MNEMONIC_2"
@@ -459,6 +489,7 @@ export function createVerifyClient(
   return new X402VerifyClient({
     ...base,
     ...(opts.statePath ? { statePath: opts.statePath } : {}),
+    runCap: { runCapLovelace: env.VERIFY_RUN_CAP_LOVELACE, maxPerPaymentLovelace: cap },
     wallets,
     settle: (headers) => {
       const r = httpClient.getPaymentSettleResponse((n) => headers.get(n));

@@ -33,6 +33,8 @@ describe("integration configuration boundaries", () => {
       { PAYOUT_DAILY_CAP_LOVELACE: "1.5" },
       { VERIFY_CLIENT: "typo" },
       { EVIDENCE_RUN_LOCKED: "typo" },
+      { VERIFY_RUN_CAP_LOVELACE: "1000000" }, // below the 2 tADA per-payment cap
+      { VERIFY_RUN_CAP_LOVELACE: "2.5" },
     ]) {
       expect(() => loadEnv(EngineEnvSchema, { ...engineSource, ...extra })).toThrow();
     }
