@@ -16,28 +16,29 @@ Structure common to both apps (so they feel like one product): navigation bar wi
 
 ## 2. Tokens
 
-Define everything as CSS variables on `:root`; components never use literal colours. Dark values apply under `@media (prefers-color-scheme: dark)` (no manual toggle in the MVP, *decide Friday*). Add `color-scheme: light dark` and a matching `<meta name="theme-color">` per scheme. Contrast ratios below were computed (WCAG): text at least 4.5:1, large text and UI at least 3:1.
+Define everything as CSS variables; components never use literal colours. Theme: Light, Dark or System, chosen in the app (`src/ui/theme.ts`, `ThemeSelect`). Light is `:root`, dark is `[data-theme="dark"]`; System follows `prefers-color-scheme` and reacts to OS changes. The only stored value is the preference under `shelfie.theme`. Palette follows the approved board in `docs/design-implementation-2026-10-30/` (forest, green, light green, sage, cream). Contrast ratios below were computed (WCAG): text at least 4.5:1, large text and UI at least 3:1.
 
 ### 2.1 Colour
 
-One accent (blue) used only for the primary button, links, selection and focus rings. Green, amber and red are semantic and appear only as status. Everything else is neutral grey. No gradients anywhere.
+Brand: forest `#0B2E1F`, green `#2E7D32`, light green `#6BAF5B`, sage `#CFE7C1`, cream `#F5EFE3`. Green is the one accent (primary button, links, selection, focus ring). Amber and red are semantic and appear only as status. Cream is the light page; a deep forest page is the dark theme. No gradients anywhere. The logo sits on a cream tile in both themes (`--logo-tile`).
 
-| Token | Light | Dark | Use / contrast |
+| Token | Light | Dark | Use / contrast (light / dark) |
 |---|---|---|---|
-| `--bg` | `#F5F5F7` | `#000000` | page behind grouped lists |
-| `--surface` | `#FFFFFF` | `#1C1C1E` | grouped list, card, sheet |
-| `--surface-2` | `#F0F0F3` | `#2C2C2E` | fields, segmented track, pressed row |
-| `--text` | `#1D1D1F` | `#F5F5F7` | 16.8:1 on surface; 19.3:1 dark |
-| `--text-2` | `#6E6E73` | `#A1A1A6` | secondary text; 5.1:1 on white, 4.7:1 on `--bg`; 6.6:1 dark |
-| `--separator` | `#D2D2D7` | `#38383A` | hairlines (1 px), no borders around cards |
-| `--accent` | `#0066CC` | `#2997FF` | links and text actions; 5.6:1 on white; 5.6:1 dark on surface |
-| `--accent-fill` | `#0066CC` | `#0071E3` | primary button background; white text 5.6:1 and 4.7:1 |
-| `--success-text` / `--success-bg` | `#1B7A31` / `#E6F4EA` | `#6EE787` / `#1B3A24` | pill; 4.8:1, 8.0:1 |
-| `--warning-text` / `--warning-bg` | `#8A5300` / `#FFF3D6` | `#FFD479` / `#3D2E0A` | pill; 5.7:1, 9.4:1 |
-| `--error-text` / `--error-bg` | `#B3261E` / `#FCE8E6` | `#FF9C96` / `#4A1F1C` | pill and inline errors; 5.6:1, 7.0:1 |
+| `--bg` | `#F5EFE3` | `#0B2E1F` | page behind grouped lists; text 12.9:1 / 12.9:1 |
+| `--surface` | `#FFFFFF` | `#143D2A` | grouped list, card, sheet; text 14.7:1 / 10.6:1 |
+| `--surface-2` | `#EDE6D4` | `#1A4A34` | fields, segmented track, pressed row; text 11.8:1 / 8.9:1 |
+| `--text` | `#0B2E1F` | `#F5EFE3` | primary text (see the surface ratios above) |
+| `--text-2` | `#4A5C52` | `#B9C6B6` | secondary text; 6.2:1 on `--bg` / 8.3:1 dark; 5.7:1 on `--surface-2` both |
+| `--separator` | `#DCD3BF` | `#2A5140` | hairlines (1 px), no borders around cards |
+| `--accent` | `#256A2B` | `#86C77A` | links and text actions; 5.8:1 on `--bg` / at least 5.0:1 on every dark surface; light green accent in dark |
+| `--accent-fill` | `#2E7D32` | `#2E7D32` | primary button background; white label 5.1:1 in both themes |
+| `--success-text` / `--success-bg` | `#1E6B2A` / `#E3F1DA` | `#9ADBA4` / `#1A4A2E` | pill; 5.6:1 / 6.3:1 |
+| `--warning-text` / `--warning-bg` | `#7A4A00` / `#FBEBC4` | `#F5C96B` / `#3D2E0A` | pill; 6.3:1 / 8.4:1 |
+| `--error-text` / `--error-bg` | `#B3261E` / `#FCE8E6` | `#FFA39D` / `#4A1F1C` | pill and inline errors; 5.6:1 / 7.3:1 |
+| `--accent-soft` / `--accent-soft-text` | `#CFE7C1` / `#0B2E1F` | `#24513A` / `#CFE7C1` | tinted chips; 11.1:1 / 6.9:1 |
 | `--camera-chrome` | `#000000` | `#000000` | camera sheet is always black, like the system camera |
 
-State is never colour alone: every pill has a word, and an icon where it helps. Use `rgba` overlays only for the sheet scrim (`rgba(0,0,0,.4)`).
+State is never colour alone: every pill has a word, and an icon where it helps. Use `rgba` overlays only for the sheet scrim (`rgba(11,46,31,.4)` light, `rgba(0,0,0,.5)` dark).
 
 ### 2.2 Type
 

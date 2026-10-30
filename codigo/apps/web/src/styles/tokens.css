@@ -1,28 +1,32 @@
-/* Design tokens from diseno/ui-design.md section 2. Components never use literal colours. */
+/* Design tokens from diseno/ui-design.md section 2 and docs/design-implementation-2026-10-30
+   (approved board: forest #0B2E1F, green #2E7D32, light green #6BAF5B, sage #CFE7C1, cream
+   #F5EFE3). Components never use literal colours. Light is :root; dark is [data-theme="dark"],
+   set by src/ui/theme.ts (light, dark or system). Contrast ratios are listed in ui-design.md. */
 :root {
-  color-scheme: light dark;
-  --bg: #f5f5f7;
+  color-scheme: light;
+  --bg: #f5efe3;
   --surface: #ffffff;
-  --surface-2: #f0f0f3;
-  --text: #1d1d1f;
-  --text-2: #6e6e73;
-  --separator: #d2d2d7;
-  --accent: #0066cc;
-  --accent-fill: #0066cc;
-  --success-text: #1b7a31;
-  --success-bg: #e6f4ea;
-  --warning-text: #8a5300;
-  --warning-bg: #fff3d6;
+  --surface-2: #ede6d4;
+  --text: #0b2e1f;
+  --text-2: #4a5c52;
+  --separator: #dcd3bf;
+  --accent: #256a2b;
+  --accent-fill: #2e7d32;
+  --success-text: #1e6b2a;
+  --success-bg: #e3f1da;
+  --warning-text: #7a4a00;
+  --warning-bg: #fbebc4;
   --error-text: #b3261e;
   --error-bg: #fce8e6;
   --camera-chrome: #000000;
-  --accent-soft: #e8f1fb;
-  --accent-soft-text: #004c99;
-  --frame-bg: #e4e4ea;
-  --card-line: rgba(0, 0, 0, 0.06);
-  --skeleton-a: #ececf0;
-  --skeleton-b: #f6f6f8;
-  --scrim: rgba(0, 0, 0, 0.4);
+  --accent-soft: #cfe7c1;
+  --accent-soft-text: #0b2e1f;
+  --frame-bg: #e6dcc8;
+  --card-line: rgba(11, 46, 31, 0.08);
+  --skeleton-a: #e8e0ce;
+  --skeleton-b: #f3eee2;
+  --scrim: rgba(11, 46, 31, 0.4);
+  --logo-tile: #f5efe3;
   --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.16);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.04);
   --shadow-frame: 0 24px 64px rgba(0, 0, 0, 0.14);
@@ -48,30 +52,54 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #000000;
-    --surface: #1c1c1e;
-    --surface-2: #2c2c2e;
-    --text: #f5f5f7;
-    --text-2: #a1a1a6;
-    --separator: #38383a;
-    --accent: #2997ff;
-    --accent-fill: #0071e3;
-    --success-text: #6ee787;
-    --success-bg: #1b3a24;
-    --warning-text: #ffd479;
-    --warning-bg: #3d2e0a;
-    --error-text: #ff9c96;
-    --error-bg: #4a1f1c;
-    --shadow-float: none;
-    --shadow-card: none;
-    --shadow-frame: 0 0 0 1px #2a2a2d;
-    --accent-soft: #0f2a44;
-    --accent-soft-text: #8ec5ff;
-    --frame-bg: #101012;
-    --card-line: rgba(255, 255, 255, 0.08);
-    --skeleton-a: #26262a;
-    --skeleton-b: #323237;
-  }
+/* Dark: a deep forest page, slightly lighter forest surfaces, cream text, light-green accent.
+   The accent button keeps the forest green fill so white labels stay at 4.5:1 or better. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b2e1f;
+  --surface: #143d2a;
+  --surface-2: #1a4a34;
+  --text: #f5efe3;
+  --text-2: #b9c6b6;
+  --separator: #2a5140;
+  --accent: #86c77a;
+  --accent-fill: #2e7d32;
+  --success-text: #9adba4;
+  --success-bg: #1a4a2e;
+  --warning-text: #f5c96b;
+  --warning-bg: #3d2e0a;
+  --error-text: #ffa39d;
+  --error-bg: #4a1f1c;
+  --shadow-float: none;
+  --shadow-card: none;
+  --shadow-frame: 0 0 0 1px #1f4d37;
+  --accent-soft: #24513a;
+  --accent-soft-text: #cfe7c1;
+  --frame-bg: #071d14;
+  --card-line: rgba(245, 239, 227, 0.08);
+  --skeleton-a: #1a4a34;
+  --skeleton-b: #22573f;
+  --scrim: rgba(0, 0, 0, 0.5);
+}
+
+/* Logo on a cream tile so the approved artwork reads the same in light and dark. */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-1);
+  border-radius: var(--r-control);
+  background: var(--logo-tile);
+  line-height: 0;
+}
+.logo img {
+  display: block;
+  width: auto;
+  height: 36px;
+}
+.logo-sm img {
+  height: 32px;
+}
+.logo-md img {
+  height: 56px;
 }
