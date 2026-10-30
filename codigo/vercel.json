@@ -7,12 +7,12 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "has": [{ "type": "host", "value": "app.shelfieapp.me" }],
-      "destination": "https://api.shelfieapp.me/api/:path*"
+      "has": [{ "type": "host", "value": "app.shelfieapp.fyi" }],
+      "destination": "https://api.shelfieapp.fyi/api/:path*"
     },
     {
       "source": "/api/:path*",
-      "destination": "https://api-dev.shelfieapp.me/api/:path*"
+      "destination": "https://api-dev.shelfieapp.fyi/api/:path*"
     },
     { "source": "/w/:path*", "destination": "/index.html" },
     { "source": "/dashboard/:path*", "destination": "/index.html" }

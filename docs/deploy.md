@@ -1,18 +1,18 @@
 # Deploy: auto-rebuild and public test access
 
-Goal (Helmut, 2026-10-30): every push or merge rebuilds automatically and anyone can open the app for testing. Domain: `shelfieapp.me` (Student Pack .me). Test deployments run on fakes (`FAKE_PAYMENTS=1`, red banner) until the real switches are authorised; never present them as evidence.
+Goal (Helmut, 2026-10-30): every push or merge rebuilds automatically and anyone can open the app for testing. Domain: `shelfieapp.fyi` (Student Pack .me). Test deployments run on fakes (`FAKE_PAYMENTS=1`, red banner) until the real switches are authorised; never present them as evidence.
 
 ## Architecture
 
 ```
  browser --> Vercel (personal scope, Git integration)
-              app.shelfieapp.me  = branch main   (production)
-              dev.shelfieapp.me  = branch dev    (and every push/PR preview)
+              app.shelfieapp.fyi  = branch main   (production)
+              dev.shelfieapp.fyi  = branch dev    (and every push/PR preview)
               static apps/web build + rewrite /api/* ------+
                                                            v
  browser --> Cloudflare (DNS/proxy) --> named tunnel (outbound only from the hub laptop)
-              api.shelfieapp.me      -> 127.0.0.1:4000  engine of main  (also serves /w, /dashboard)
-              api-dev.shelfieapp.me  -> 127.0.0.1:4100  engine of dev
+              api.shelfieapp.fyi      -> 127.0.0.1:4000  engine of main  (also serves /w, /dashboard)
+              api-dev.shelfieapp.fyi  -> 127.0.0.1:4100  engine of dev
  hub laptop (systemd --user):
    shelfie-tunnel.service            cloudflared, config ~/.config/shelfie/cloudflared.yml
    shelfie-engine@main|dev.service   port 4000 | 4100
@@ -20,43 +20,43 @@ Goal (Helmut, 2026-10-30): every push or merge rebuilds automatically and anyone
    shelfie-update@main|dev.timer     every 60 s: scripts/deploy/auto-update.sh <branch>
 ```
 
-Same-origin alternative that always works with SSE: open `https://api.shelfieapp.me/w` (the engine serves the built web). Pointing `app.` at the tunnel instead of Vercel is a DNS change only.
+Same-origin alternative that always works with SSE: open `https://api.shelfieapp.fyi/w` (the engine serves the built web). Pointing `app.` at the tunnel instead of Vercel is a DNS change only.
 
 ### Backend auto-update (no inbound access, no self-hosted runner)
 A public repo plus a self-hosted runner would let a fork PR run code on the laptop, so the laptop pulls instead. Each minute `auto-update.sh <branch>` fetches `origin/<branch>`. If the commit changed it: new release dir `~/shelfie-deploy/<branch>/releases/<sha>` (git worktree of a private clone), `npm ci`, `npm run check` (use `--skip-tests` only for speed in an emergency), web build, `version.json` next to the web build, then switch the `current` symlink and restart verifier and engine, followed by a health check. On any failure the previous release keeps running (rollback on a failed health check); the reason is in `journalctl --user -u 'shelfie-update@*'` and `~/.local/state/shelfie/<branch>.log`. Deployed commit: `~/.local/state/shelfie/<branch>.status` and `GET /version.json` on the engine (no change to `/api/health`, which is a contract). The script never reads env files; systemd loads `~/.config/shelfie/<branch>.env` via `EnvironmentFile=`.
 
 ### Vercel `/api` proxy (decision)
-`codigo/vercel.json` (project Root Directory = `codigo`) holds two literal rewrites chosen by `has: host`: host `app.shelfieapp.me` -> `https://api.shelfieapp.me`; every other host (dev.shelfieapp.me, `*.vercel.app` previews) -> `https://api-dev.shelfieapp.me`. Vercel rewrites cannot read env vars, so the domain is literal in the file; if it changes, edit the three hostnames there, the templates and the env files together. No new dependency, no middleware.
+`codigo/vercel.json` (project Root Directory = `codigo`) holds two literal rewrites chosen by `has: host`: host `app.shelfieapp.fyi` -> `https://api.shelfieapp.fyi`; every other host (dev.shelfieapp.fyi, `*.vercel.app` previews) -> `https://api-dev.shelfieapp.fyi`. Vercel rewrites cannot read env vars, so the domain is literal in the file; if it changes, edit the three hostnames there, the templates and the env files together. No new dependency, no middleware.
 Consequences and caveats:
-- The browser keeps its own `Origin` (`https://app.shelfieapp.me`); the engine sees `Host: api...`. POSTs pass only because `ALLOWED_ORIGINS` lists the exact frontend origin (no wildcard, tested in `security.sec.test.ts`). Per-deployment URLs (`shelfie-git-x.vercel.app`) cannot be listed, so PR previews can read but their POSTs are refused (403); use `dev.shelfieapp.me` for testing.
-- Verify Friday: that Vercel forwards `Host` as the destination host (else the engine answers 421), that `X-Admin-Token` and 2 MB JSON bodies pass, and that SSE (`/api/.../stream`) stays open through the rewrite (long-lived responses may be cut; EventSource reconnects, fallback is `api.shelfieapp.me/w`).
+- The browser keeps its own `Origin` (`https://app.shelfieapp.fyi`); the engine sees `Host: api...`. POSTs pass only because `ALLOWED_ORIGINS` lists the exact frontend origin (no wildcard, tested in `security.sec.test.ts`). Per-deployment URLs (`shelfie-git-x.vercel.app`) cannot be listed, so PR previews can read but their POSTs are refused (403); use `dev.shelfieapp.fyi` for testing.
+- Verify Friday: that Vercel forwards `Host` as the destination host (else the engine answers 421), that `X-Admin-Token` and 2 MB JSON bodies pass, and that SSE (`/api/.../stream`) stays open through the rewrite (long-lived responses may be cut; EventSource reconnects, fallback is `api.shelfieapp.fyi/w`).
 - CSP in `vercel.json` mirrors the engine's (`connect-src 'self'`) which is enough because `/api` is same-origin from the browser's view. Camera and geolocation need HTTPS, which Vercel provides.
 
 ## One-time setup (Helmut)
 
-1. **Domain**: Namecheap via GitHub Student Pack: claim `shelfieapp.me`.
+1. **Domain**: Namecheap via GitHub Student Pack: claim `shelfieapp.fyi`.
 2. **Cloudflare** (free plan): add the site, then in Namecheap set the two Cloudflare nameservers shown. Wait until the site shows Active.
 3. **Tunnel** (on the hub laptop, cloudflared installed):
    ```bash
    cloudflared tunnel login
    cloudflared tunnel create shelfie            # prints the UUID, writes ~/.cloudflared/<UUID>.json
-   cloudflared tunnel route dns shelfie api.shelfieapp.me
-   cloudflared tunnel route dns shelfie api-dev.shelfieapp.me
+   cloudflared tunnel route dns shelfie api.shelfieapp.fyi
+   cloudflared tunnel route dns shelfie api-dev.shelfieapp.fyi
    ```
    Do NOT route `app.` or `dev.` to the tunnel; they belong to Vercel.
-4. **Vercel**: sign in with the PERSONAL account (never the wine2stay team), import `helmutkurk/shelfie`. Settings: Root Directory `codigo`, Framework Other, Node 24.x, production branch `main`; build/output come from `vercel.json`. No env vars are needed (the bundle has only public values; set none of the secrets there). Domains: `app.shelfieapp.me` (Production), `dev.shelfieapp.me` (assign to Git branch `dev`). Add the CNAME records Vercel shows in Cloudflare with proxy OFF (grey cloud).
+4. **Vercel**: sign in with the PERSONAL account (never the wine2stay team), import `helmutkurk/shelfie`. Settings: Root Directory `codigo`, Framework Other, Node 24.x, production branch `main`; build/output come from `vercel.json`. No env vars are needed (the bundle has only public values; set none of the secrets there). Domains: `app.shelfieapp.fyi` (Production), `dev.shelfieapp.fyi` (assign to Git branch `dev`). Add the CNAME records Vercel shows in Cloudflare with proxy OFF (grey cloud).
 5. **Hub laptop**:
    ```bash
    mkdir -p ~/.config/shelfie ~/.local/share/shelfie/main ~/.local/share/shelfie/dev
    bash scripts/deploy/install.sh --tunnel           # copies units, prints what is missing
    cp ~/.config/shelfie/branch.env.example ~/.config/shelfie/main.env   # edit, chmod 600
-   cp ~/.config/shelfie/branch.env.example ~/.config/shelfie/dev.env    # dev: ports 4100/4121, api-dev, https://dev.shelfieapp.me, data dir dev
+   cp ~/.config/shelfie/branch.env.example ~/.config/shelfie/dev.env    # dev: ports 4100/4121, api-dev, https://dev.shelfieapp.fyi, data dir dev
    cp ~/.config/shelfie/cloudflared.example.yml ~/.config/shelfie/cloudflared.yml   # set TUNNEL_UUID, HOME_DIR
    bash scripts/deploy/install.sh --tunnel           # second run enables what is now configured
    loginctl enable-linger "$USER"
    ```
    Tokens: `openssl rand -hex 32` three times per env file (ADMIN, SHELL, ENGINE differ). Env files live only in `~/.config/shelfie/`.
-6. **Check**: `curl https://api.shelfieapp.me/api/health`, `curl https://api.shelfieapp.me/version.json`, open `https://app.shelfieapp.me/w` on a phone.
+6. **Check**: `curl https://api.shelfieapp.fyi/api/health`, `curl https://api.shelfieapp.fyi/version.json`, open `https://app.shelfieapp.fyi/w` on a phone.
 
 ### Operate
 - Logs: `journalctl --user -u 'shelfie-*' -f` (one service: `-u shelfie-engine@dev`). Status: `systemctl --user list-timers 'shelfie-*'`.
