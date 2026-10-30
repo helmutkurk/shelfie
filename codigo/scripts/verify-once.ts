@@ -10,7 +10,7 @@
 // only the PAYMENT is (M1 proves the x402 path). Env through core EngineEnvSchema (network guard).
 // Refuses FAKE_PAYMENTS, VERIFIER_PAYMENT=off, a verifier payee other than SELLER_ADDRESS and a
 // price above VERIFY_MAX_PRICE_LOVELACE. One attempt; never re-signs on an unclear outcome.
-// Exit codes: 0 ok, 1 refusal, 2 not paid or error before payment, 3 outcome unclear (do NOT rerun
+// Exit codes: 0 ok, 1 refusal, 2 failed without a settlement hash, 3 outcome unclear (do NOT rerun
 // --send; check W-VBUY on the explorer first).
 import { createHash } from "node:crypto";
 import { parseArgs } from "node:util";
@@ -81,14 +81,20 @@ async function main(): Promise<void> {
   const seller = env.SELLER_ADDRESS ?? refuse("SELLER_ADDRESS (W-SELL) is required.");
 
   // Free routes first: the verifier must be up and must ask for our W-SELL at an acceptable price.
+  // Loopback only: the verifier is never public, and the request carries ENGINE_TOKEN.
+  const verifierUrl = new URL(env.VERIFIER_URL);
+  if (!["127.0.0.1", "localhost", "[::1]"].includes(verifierUrl.hostname)) {
+    refuse("VERIFIER_URL must point at the local verifier (127.0.0.1).");
+  }
   const base = env.VERIFIER_URL.replace(/\/+$/, "");
   const health = VerifierHealthSchema.parse(await getJson(`${base}/health`));
   const price = VerifierPriceSchema.parse(await getJson(`${base}/v1/price`));
-  out(`verifier ${base} ok=${String(health.ok)} pack=${health.packId}`);
+  out(`verifier ${verifierUrl.origin} ok=${String(health.ok)} pack=${health.packId}`);
   out(
     `price ${lovelaceToAdaString(price.price.amount)} tADA on ${price.network}, payTo ${short(price.payTo)}`,
   );
   if (price.payTo !== seller) refuse("verifier payTo differs from SELLER_ADDRESS.");
+  if (price.network !== "cardano:preprod") refuse("verifier network is not cardano:preprod.");
   if (BigInt(price.price.amount) > BigInt(env.VERIFY_MAX_PRICE_LOVELACE)) {
     refuse("verifier price exceeds VERIFY_MAX_PRICE_LOVELACE.");
   }
@@ -143,14 +149,14 @@ async function main(): Promise<void> {
   } catch (err) {
     const r = err instanceof AppError ? err.details["reason"] : undefined;
     const reason = typeof r === "string" ? r : err instanceof AppError ? err.code : "unknown";
-    const msg = err instanceof AppError ? err.message : err instanceof Error ? err.name : "unknown";
-    out(`verify failed: ${msg} reason=${reason}`);
+    const name = err instanceof Error ? err.name : "unknown";
+    out(`verify failed: ${name} reason=${reason}`);
     // The buyer records every unclear payment in uncertainKeys (reason payment_uncertain and others).
     const unclear = client instanceof X402VerifyClient && client.uncertainKeys.includes(key);
     out(
       unclear
         ? "Payment outcome UNCLEAR: do NOT rerun --send; check W-VBUY on the explorer first."
-        : "Check the verifier log; no settlement hash was received.",
+        : "No settlement hash received. Before any rerun of --send, check W-VBUY on the explorer.",
     );
     process.exit(unclear ? 3 : 2);
   }
@@ -161,7 +167,7 @@ main().catch((err: unknown) => {
     err instanceof AppError
       ? `${err.message} reason=${String(err.details["reason"])}`
       : err instanceof Error
-        ? `${err.name}: ${err.message}`
+        ? err.name // SDK and parse messages are not echoed (they may carry config details)
         : "unknown";
   process.stderr.write(`verify-once error: ${msg}\n`);
   process.exit(2);

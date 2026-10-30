@@ -195,7 +195,12 @@ export class X402VerifyClient implements VerifyClient {
     let paymentSent = false;
     const base = this.opts.fetchImpl ?? fetch;
     const observing: typeof fetch = (input, init) => {
-      const headers = new Headers(init?.headers);
+      // @x402/fetch 2.26.0 calls fetch(request) with a Request and no init, so the payment
+      // header sits on the Request: check both, or a signed retry goes unnoticed (double pay).
+      const headers = new Headers(input instanceof Request ? input.headers : undefined);
+      new Headers(init?.headers).forEach((v, k) => {
+        headers.set(k, v);
+      });
       if (headers.has("payment-signature") || headers.has("x-payment")) paymentSent = true;
       return base(input, init);
     };
@@ -253,7 +258,18 @@ export class X402VerifyClient implements VerifyClient {
       }
       throw mapErrorResponse(res.status, json); // our handler failed: x402 cancelled settlement
     }
-    const verdict = parseVerdict(json);
+    let verdict: VerifyResponse;
+    try {
+      verdict = parseVerdict(json);
+    } catch (err) {
+      if (!paymentSent) throw err;
+      // 200 after a signed payment: settlement may have happened even though the body is bad.
+      this.uncertain.add(key);
+      throw new AppError("dependency_unavailable", "Unreadable verdict after payment, outcome unclear.", undefined, {
+        reason: "payment_uncertain",
+        key,
+      });
+    }
     let settle: { transaction: string; success: boolean };
     try {
       settle = this.opts.settle(res.headers);
