@@ -84,7 +84,7 @@ export class RealSokosumiClient implements SokosumiClient {
     input: SokosumiTaskInput,
     onCreated?: (taskId: string) => void,
   ): Promise<{ taskId: string }> {
-    let parsed: z.infer<typeof CreatedResponse>;
+    let raw: unknown;
     try {
       const response = await this.fetchFn(new URL("/v1/tasks", this.env.SOKOSUMI_API_URL), {
         method: "POST",
@@ -110,17 +110,24 @@ export class RealSokosumiClient implements SokosumiClient {
       if (response.status !== 201 && response.status !== 200) throw unavailable();
       const text = await response.text();
       if (text.length > 64_000) throw unavailable();
-      parsed = CreatedResponse.parse(JSON.parse(text));
+      raw = JSON.parse(text);
     } catch {
       // Neither upstream response nor thrown error is safe to expose (may contain credentials).
+      // A timeout or reset may still have created the Task: orders.ts marks it for reconciliation.
       throw unavailable();
     }
-    const taskId = parsed.data.id;
-    onCreated?.(taskId);
-    const credits = parsed.data.credits;
-    if (typeof credits === "number" && credits > input.maxCredits) {
-      // Sokosumi has no cap in the create call; flag it so the operator sees the price changed.
-      throw new AppError("sokosumi_unavailable", "Task created above the credit cap; check Sokosumi.", 502, {
+    // 2xx: the Task exists. Record any plausible id before validating the rest, so a Task is
+    // never orphaned by a stricter-than-expected answer.
+    const loose = (raw as { data?: { id?: unknown } } | null)?.data?.id;
+    if (typeof loose === "string" && /^[A-Za-z0-9_.:-]{1,100}$/.test(loose)) onCreated?.(loose);
+    const parsed = CreatedResponse.safeParse(raw);
+    if (!parsed.success) throw unavailable();
+    const taskId = parsed.data.data.id;
+    if (loose !== taskId) onCreated?.(taskId);
+    const credits = parsed.data.data.credits;
+    if (typeof credits !== "number" || credits > input.maxCredits) {
+      // Sokosumi has no cap in the create call; an unknown or higher price stops the order here.
+      throw new AppError("sokosumi_unavailable", "Task price unknown or above the credit cap; check Sokosumi.", 502, {
         reason: "task_above_credit_cap",
         taskId,
       });

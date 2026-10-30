@@ -174,6 +174,19 @@ describe("real Sokosumi transport (mocked; request shape from A-25)", () => {
     expect(seen).toEqual(["task-2"]);
   });
 
+  it("a created Task whose price is missing or whose answer is odd still records its id", async () => {
+    for (const data of [{ id: "task-3" }, { id: "task-4", credits: "100" }]) {
+      const seen: string[] = [];
+      const client = new RealSokosumiClient(realEnv(), () =>
+        Promise.resolve(Response.json({ data }, { status: 201 })),
+      );
+      await expect(client.createTask(task, (id) => seen.push(id))).rejects.toMatchObject({
+        code: "sokosumi_unavailable",
+      });
+      expect(seen).toEqual([data.id]);
+    }
+  });
+
   it("hides upstream bodies, errors and malformed responses; does not retry", async () => {
     for (const response of [
       new Response("synthetic-api-token", { status: 401 }),
