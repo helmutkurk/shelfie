@@ -26,6 +26,15 @@ Hub = Isabel's laptop, Windows 11 Home x64, 31.5 GB RAM, Node 24.22.1, Postgres 
 | Starter seam and task id (A-10) | All three starter callers (`worker.mjs` unpaid, `paid-task.mjs` paid, `agent-api.mjs` MIP-003) call `answer(input, journal, deadline)` with `journal` = `<dir>/<id>-session[.json]`; the unpaid worker passes no deadline, the paid paths pass `submitResultTime` in epoch ms. The Task description reaches `answer` as `input` unchanged, so a JSON description with catalog ids works without select fields. A thrown error leaves the journal at `model-pending`: the worker logs "Task blocked", does not retry and submits nothing | Isabel A + Claude | starter source at `d93783b`; worker log |
 | Bridge on a real Sokosumi Task (A-10, fakes) | Task `01a18cad-85f4-749f-a205-17f67d44b6ed` (TUM Workspace, unpaid, 0 credits) with description `{"productEan":"5449000000439","storeId":"rewe-81671-august-everding-strasse-20"}`: bridge created `job_6a9155a3d658` (externalRef = Task id, created once; a second create returned the same job), a synthetic photo passed the fake verifier, decision DELIVER, Task COMPLETED at 11:59:20 UTC with the Shelfie report. Engine ran in WSL on fakes; the Windows worker reached it at `127.0.0.1:4000` through WSL localhost forwarding. Fake run: NOT evidence | Isabel A + Claude | worker log; `sokosumi --preprod tasks get` |
 
+## Wallets and Fernando's laptop (Fernando B, 2026-10-30)
+
+| Item | Answer | Who | Evidence |
+|---|---|---|---|
+| `W-VBUY` balance | 9,797.66 tADA after sending 200 tADA to `W-MPS`; it can fund `W-PAY` directly, so the rate-limited faucet is not needed again. Addresses in `evidence/wallets.md` | Fernando B + Claude | Koios preprod `tx_info` (tx `c217c669...`) and `address_info` |
+| x402 template (B-02) | Not cloned separately: the monorepo already carries the pinned `@x402/*` 2.26.0 packages; the seller middleware is in `apps/verifier/src/payment.ts`, the buyer in `packages/payments`. The template's `npm run demo` is replaced by B-03 (one paid `POST /v1/verify`) | Fernando B + Claude | `codigo/node_modules/@x402`, source |
+| pnpm, Postgres (B-01) | Not needed on Fernando's laptop: MPS runs on the hub (Postgres 16 Windows service, `pnpm run dev`). pnpm and cloudflared are not installed here; Docker 29.9.2 is | Fernando B + Claude | `command -v` |
+| Node version | The default `node` here is v22.22.2; Node 24.22.2 is installed through mise. Run checks with Node 24 (`mise exec node@24 -- npm run check`: 360/360). On both Node 22 and 24, `node --test bridge/` (the `apps/shell` test script) runs 1 test; `node --test bridge/*.test.js` runs all 21 | Fernando B + Claude | `node --version`, test output |
+
 ## Local integration facts (Codex, 2026-10-30)
 
 These confirm code behaviour only; no paid request, real model call or preprod transaction was made.
