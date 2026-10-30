@@ -1,6 +1,6 @@
 # Homepage information architecture (`/homepage`)
 
-Status: proposal for builder and reviewer (UX/IA pass, 2026-10-30). Inputs: `codigo/apps/web/public/story/*`, `pitch/homepage-brief.md`, `codigo/vercel.json`, `diseno/ui-design.md`. Facts and numbers come only from `pitch/slides/facts.tex`, `codigo/docs/evidence/tx-hashes.md` and `codigo/docs/verified.md`; slots marked `[VERIFY]` wait for the number-checking agent.
+Status: proposal for builder and reviewer (UX/IA pass, 2026-10-30). Inputs: `codigo/apps/web/public/story/*`, `pitch/archive/homepage-brief.md`, `codigo/vercel.json`, `diseno/ui-design.md`. Facts and numbers come only from `pitch/slides/facts.tex`, `codigo/docs/evidence/tx-hashes.md` and `codigo/docs/verified.md`; slots marked `[VERIFY]` wait for the number-checking agent.
 
 ## 0. Principles
 
@@ -17,7 +17,7 @@ All files in `codigo/apps/web/public/homepage/` (copied as-is by Vite into `dist
 | Page | File | Holds | Why it lives here |
 |---|---|---|---|
 | Home | `index.html` | hero + cart story, problems, market (3 figures), cost bars + 10-store compare, how it works, two audiences, why trust (4 cards), receipts (5 rows), roadmap strip, developers strip, team, FAQ (6 questions), CTA | The sales path in one scroll, order identical to /story plus new blocks |
-| Pitch | `pitch.html` | Exactly the six full-screen pitch sections of `homepage-brief.md`, scroll-snap, nothing else | The brief demands 6 x 100vh, one key each, no logo before the hook; the home has a 400vh pinned intro and richer sections, so the two orders differ (trade-off T1) |
+| Pitch | `pitch.html` | Exactly the six full-screen pitch sections of `../archive/homepage-brief.md`, scroll-snap, nothing else | The brief demands 6 x 100vh, one key each, no logo before the hook; the home has a 400vh pinned intro and richer sections, so the two orders differ (trade-off T1) |
 | Problem and market | `market.html` | Anchors `#remote-market`, `#field-checks` (trade-promotion / price-tag compliance), `#gap` (verified figures with publisher and year, no added-up totals), `#cost` (full comparison table, assumptions, "illustrative" note) | Numbers need sources and caveats; too heavy for the home |
 | How it works | `how.html` | Anchors `#order`, `#claim`, `#photo`, `#verify`, `#settle`, `#failures` (what happens on fail, timeout, refund), `#brands`, `#checkers` | Step-by-step with edge cases; home keeps one row of 5 cards |
 | Technology | `technology.html` | One anchor per tech: `#cardano` (eUTxO), `#masumi`, `#x402`, `#sokosumi`, `#verifier-gates`, `#hand-sign`, `#location`, `#vision`, `#architecture` (inline SVG) | Each deep dive 80-150 words + "Why we chose it" + "Limits today" (honest) |

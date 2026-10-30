@@ -81,7 +81,7 @@ Keep **Shelfie**. It is short, visual, pun lands in English and German, and the 
 | ShelfProof | Clearer on "proof", but less memorable. Backup. |
 | Ground Truth | Strong concept name, generic and already used widely. Use only as a phrase in the vision beat. |
 
-Taglines (pick one, use it everywhere; full list by audience, German versions and the recommendation in [slogans.md](slogans.md)):
+Taglines (pick one, use it everywhere; full list by audience, German versions and the recommendation in [archive/slogans.md](archive/slogans.md)):
 
 1. **"Paid only when the photo is true."** (recommended, equals phrase 1)
 2. "Eyes on the shelf, paid on proof."

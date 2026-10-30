@@ -1,6 +1,6 @@
 # Homepage plan: investor and judge position paper
 
-Reviewer role: startup investor and Cardano-track judge ("Agentic Commerce on Cardano"), 2026-10-30 night. Inputs: `homepage-ia.md`, `homepage-content-tech.md`, `homepage-market-research.md`, `homepage-brief.md`, `../ideas/decision.md`, `../review/pitch-jury-2026-10-30.md`, `/story/index.html`. No other files changed. Copy at the end is a proposal; every number in it comes from `homepage-market-research.md` with its status.
+Reviewer role: startup investor and Cardano-track judge ("Agentic Commerce on Cardano"), 2026-10-30 night. Inputs: `homepage-ia.md`, `homepage-content-tech.md`, `homepage-market-research.md`, `../archive/homepage-brief.md`, `../ideas/decision.md`, `../review/pitch-jury-2026-10-30.md`, `/story/index.html`. No other files changed. Copy at the end is a proposal; every number in it comes from `homepage-market-research.md` with its status.
 
 ## 1. Positions
 

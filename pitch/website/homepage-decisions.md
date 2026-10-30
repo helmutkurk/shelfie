@@ -12,7 +12,7 @@ Orchestrator: Claude Opus 5.5 for Helmut (D), 2026-10-30 night. Inputs, in order
 
 | Topic | Decision | Why |
 |---|---|---|
-| Pitch page (T1) | Separate `pitch.html`, six snap screens per `homepage-brief.md`, built first | Both reviewers agree; the pinned cart room cannot snap one key per section |
+| Pitch page (T1) | Separate `pitch.html`, six snap screens per `../archive/homepage-brief.md`, built first | Both reviewers agree; the pinned cart room cannot snap one key per section |
 | Pages (T4) | 9 files: `index`, `pitch`, `market`, `technology`, `roadmap`, `developers`, `imprint`, `privacy`, `terms`. `how` and `trust` fold into `technology.html` (`#how`, `#trust`, `#receipts`); build log folds into `roadmap.html#build`; license is a footer link to `LICENSE` on GitHub | The founder asked for roadmap, developers, process and read-more depth (investor's 6-page cut drops two of them); 13 is too many for the night |
 | Assets (T3) | Fork into `public/homepage/` with relative links; `home.css` (fork of story.css + components), `doc.css` (subpages), `cart.js` (home only), `site.js` (all pages, never returns early); copy logo and team photos | `/story` stays byte-identical; offline copy works; avoids the reveal bug |
 | Theme (T2) | Light only, story tokens | Same look as /story |

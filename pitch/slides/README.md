@@ -1,6 +1,6 @@
 # Shelfie pitch deck (backup)
 
-The live pitch uses the homepage, not this deck (team, 2026-10-30 evening; [../homepage-brief.md](../homepage-brief.md)). Keep `shelfie.pdf` as the offline backup if the homepage or the network fails.
+The live pitch uses the story page `/story`, not this deck ([../director-script.md](../director-script.md)). Keep `shelfie.pdf` as the offline backup if the page or the network fails.
 
 Beamer (metropolis theme), 16:9, ~3 min live pitch, 14 frames.
 

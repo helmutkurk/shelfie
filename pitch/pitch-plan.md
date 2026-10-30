@@ -9,9 +9,9 @@ Synthesis of eight advisor passes (market, hook, judges, tools, skeptic, vision,
 | Hook | The real request replaces the fictional persona (Katharina, Isarquell). Isabel tells it in first person. |
 | Customer | "A brand entering a market without a field team: before launch it needs competitor prices and availability in specific stores." One verified photo per product per store. |
 | Market | One spoken line on stage, led by the $6B in-store merchandising spend and EUR 12 vs EUR 50; the three-number slide and the vision ladder are backups. No summed markets, no unsourced Germany figure. |
-| Arc of the demo | Cheat first (red, no money), then the true photo (green), then the x402 fee and payout tx. Fail, then pass, then pay. Jury review: `../review/pitch-jury-2026-10-30.md`. |
+| Arc of the demo | One live photo (green), then the payout tx; the cheat (red, no money) is shown as a screenshot from the morning test while the verifier works (about one minute per check). Script: [director-script.md](director-script.md). Jury review: `../review/pitch-jury-2026-10-30.md`. |
 | Voices | Two main voices (Isabel, Lorenz), Fernando one line on the tx, Helmut runs backup and time. |
-| Screen | Our homepage, scrolled only, never clicked (team, 2026-10-30 evening; replaces the Beamer deck). Six full-screen sections (hook, name, four steps, receipts on Cardano, today/next, close), vision, market and team below the close for Q&A. Built by the UI team from [homepage-brief.md](homepage-brief.md). The Beamer deck stays as offline backup. |
+| Screen | The story page `/story` (2026-10-31; replaces the homepage idea and the Beamer deck), one key press per beat or section. Order: story beats, how it works, receipts on Cardano, price, market, team, close. The Beamer deck stays as offline backup. |
 | Honesty | Say "live", "earlier run" or "mocked" for every step. State the limits before a judge does. |
 
 ## 2. The hook
@@ -76,8 +76,8 @@ Top Q&A to drill (answers in `qa-prep.md`): why blockchain / why not Stripe; GPS
 
 | Need | Primary | Fallback |
 |---|---|---|
-| Screen | Homepage (UI team, [homepage-brief.md](homepage-brief.md)), scrolled with Page Down | Offline copy of the homepage; then committed `slides/shelfie.pdf` on USB and phone |
-| Presenting | Homepage in Chrome tab 1, full screen (F11) | Backup deck: `pdfpc` / `evince -s` |
+| Screen | Story page `/story`, one key press per beat or section | Offline copy (`bash scripts/story-offline.sh`); then committed `slides/shelfie.pdf` on USB and phone |
+| Presenting | Story page in Chrome tab 1, full screen (F11) | Backup deck: `pdfpc` / `evince -s` |
 | Demo switching | One Chrome window: Sokosumi, verifier, explorer, report; `Ctrl+1..9`; homepage in tab 1; zoom 125%, notifications off | Screenshots in the backup deck |
 | Phone on the big screen | The web app (worker verdict card) and the dashboard job page (verdict rows; no per-check view is built), no cable. For the claim and hand-sign moment: `scrcpy` over USB (Android) | iPhone: QuickTime on a Mac; or the phone's screen recording played from the laptop |
 | Video capture / edit | OBS Studio + Kdenlive, 1080p30, one headset mic, one narrator | CapCut on a Windows laptop |
@@ -105,11 +105,10 @@ Rules: store footage is story only, never shown as a demo verification. Ask the 
 |---|---|---|
 | Fri 15:00 | Story lock: Isabel tells it aloud in 45 s, Lorenz writes it down; real numbers; consent request sent | Isabel, Lorenz |
 | Fri today, daylight | Store B-roll, 30 min, 2 shops | Helmut, Isabel |
-| Sat 09:30 | Homepage usable for rehearsal 3 ([homepage-brief.md](homepage-brief.md)) | UI team |
 | Fri 18:30 | Rehearsal 1: paper, timing only, 15 min | all |
 | Fri 21:00 | Rehearsal 2: with the demo on fakes, 15 min; no pitch work after 22:00 | all |
 | Sat 09:30 | Script frozen; rehearsal 3 full dress with the kill-the-demo drill | all |
-| Sat 11:00 | Homepage frozen (= feature freeze), offline copy saved | UI team |
+| Sat 11:00 | Story page frozen (= feature freeze), offline copy rebuilt | Lorenz |
 | Sat 11:00-13:00 | Final demo take on the printed shelf; last paid escrow cycle started by 13:00 | Lorenz (footage), Fernando |
 | Sat 13:00-14:15 | Edit, captions, export | Helmut |
 | Sat 12:30 | Rehearsal 4 on the real preprod flow | all |
