@@ -17,6 +17,9 @@ Start **every coding-agent session** from [investigacion/cardano/official-agent-
 
 ## A: Isabel (pair: Fernando)
 
+Skills: [engine-api](../.claude/skills/engine-api/SKILL.md), [masumi-sokosumi](../.claude/skills/masumi-sokosumi/SKILL.md), [security-baseline](../.claude/skills/security-baseline/SKILL.md), and [process skills](playbook/skills.md).
+
+
 First 30 minutes: apply the checklist with `bash scripts/context-ack.sh --session isabel-build --who isabel` and `bash scripts/task.sh next A` at the project root. Own `codigo/apps/shell`, `codigo/apps/engine`, `codigo/packages/core`.
 
 Already exists: JS bridge with fake-engine tests; ids-only intake retaining `REJECTED_INPUT`; engine REST/SSE, claim/challenge, capture geofence, journal and decisions; shared strict schemas, env loader, logger and state machines. The starter is still to attach.
@@ -26,6 +29,9 @@ Already exists: JS bridge with fake-engine tests; ids-only intake retaining `REJ
 3. **Fri 15:00 M2, then Fri 20:00 M4 / 22:00 go/no-go:** run the joined verifier/payout flow with B; prove intake rejection and WITHHOLD submit no hash (A-12, M5). Keep one Masumi worker awake overnight (A-13). Session cookie is deferred; do not imply worker identity is authenticated.
 
 ## B: Fernando (pair: Isabel)
+
+Skills: [x402-payments](../.claude/skills/x402-payments/SKILL.md), [cardano-preprod](../.claude/skills/cardano-preprod/SKILL.md), [security-baseline](../.claude/skills/security-baseline/SKILL.md), and [process skills](playbook/skills.md).
+
 
 First 30 minutes: apply the checklist with `bash scripts/context-ack.sh --session fernando-build --who fernando` and `bash scripts/task.sh next B`. Own `codigo/packages/payments`, verifier wrapper before `evaluate(...)`, and `codigo/scripts`.
 
@@ -37,6 +43,9 @@ Already exists: x402 buyer/seller seams and payee/spend policy, fake adapters, d
 
 ## C: Lorenz (pair: Helmut)
 
+Skills: [verifier-gates](../.claude/skills/verifier-gates/SKILL.md), [security-baseline](../.claude/skills/security-baseline/SKILL.md), and [process skills](playbook/skills.md).
+
+
 First 30 minutes: apply the checklist with `bash scripts/context-ack.sh --session lorenz-build --who lorenz` and `bash scripts/task.sh next C`. Own verifier `evaluate` and below, `codigo/packages/domain-shelf`, `codigo/packages/vision`, `codigo/eval`.
 
 Already exists: both gate sets, extraction schemas and prompt constants, sharp decode/cleaning, fake/provider vision chain, catalog loader, report renderer and eval/replay runner. Tests cover reasons and injection fixtures; live-provider performance is unknown.
@@ -46,6 +55,9 @@ Already exists: both gate sets, extraction schemas and prompt constants, sharp d
 3. **Fri 17:00 vision decision, Fri 20:00 M4 rehearsal, Sat 11:00 M6:** tune thresholds only from eval evidence (C-10/C-11), verify wrong-code/OOS/geofence paths with A+D, and help Helmut record the passing and cheating flows. Manual override, if chosen for stage use, stays visibly flagged and excluded from evidence.
 
 ## D: Helmut (pair: Lorenz)
+
+Skills: [web-ui](../.claude/skills/web-ui/SKILL.md), [security-baseline](../.claude/skills/security-baseline/SKILL.md), and [process skills](playbook/skills.md).
+
 
 First 30 minutes: apply the checklist with `bash scripts/context-ack.sh --session helmut-build --who helmut` and `bash scripts/task.sh next D`. Own `codigo/apps/web`, `codigo/packages/evidence`, `codigo/docs/evidence`, root README and pitch assets.
 
