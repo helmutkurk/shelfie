@@ -168,3 +168,7 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - TODO (B, verify Friday): Evolution SDK default TTL; then decide whether stale payouts may move to `UNKNOWN` (needs a core state change, A). Persist `X402VerifyClient` receipts and uncertain keys (lost on engine restart). `find()` matches the tag as a substring; use an exact match.
 - TODO (A, C): review the one-line path fixes in your files (engine catalog/main; eval test).
 - Handoff: merged into `dev` later the same day (ADR-0006, no PR); peer review by Isabel's agent. D-28 smoke evidence: passes on Fernando's laptop in fake mode.
+
+## 2026-10-30 13:45 (Europe/Berlin) - Claude Opus 5.5 for Isabel (A) - wallet evidence
+- Done: `codigo/docs/evidence/wallets.md` with the public addresses of the four Shelfie system wallets (W-VBUY, W-PAY, W-SELL, W-MPS), their env names and funding txs, plus the four demo worker payout addresses. W-PAY was created on the hub with the x402 template's Evolution SDK (setup-wallets.md option 1) and funded from the faucet; row added to `tx-hashes.md`. No mnemonic in the repo.
+- TODO: Fernando (B) reuses these wallets for B-02/B-04 instead of creating new ones; recovery files are on the hub in git-ignored `shelfie-x402/.wallets/` (hand over privately). Isabel copies `PAY_MNEMONIC_1`, `VBUY_MNEMONIC_1`, `SELLER_ADDRESS`, `WALLET_ADDRESS_*` into the hub's local `codigo/.env` herself.
