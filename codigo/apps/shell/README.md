@@ -1,6 +1,17 @@
 # apps/shell
 
-Status: the bridge exists and is tested against a fake engine. The Masumi starter is **not cloned yet**; that is role A's first task on Friday (steps below). The shell stays JavaScript and is the only exception to the TypeScript rule. Links point to the canonical design in `diseno/` at the repo root.
+Status: the bridge exists and is tested against a fake engine. The Masumi starter is pinned at `d93783b907a5b0b7008c67496c6e093faa70553f` and ran unpaid (M3) and paid (M4) Tasks on the hub with the starter's own prompt (2026-10-30, `codigo/docs/verified.md`); the bridge is **not wired in yet** (A-10). The shell stays JavaScript and is the only exception to the TypeScript rule. Links point to the canonical design in `diseno/` at the repo root.
+
+Set up the starter (Windows needs the patch; it is a no-op change on Linux and macOS):
+
+```sh
+cd codigo/apps/shell
+git clone https://github.com/masumi-network/tum-hackathon-quickstart.git starter
+git -C starter checkout d93783b907a5b0b7008c67496c6e093faa70553f
+git -C starter apply ../starter.patch
+```
+
+`starter.patch`: on Windows npm installs the CLI as `sokosumi.cmd`, which `execFileSync('sokosumi')` cannot start (`spawnSync sokosumi ENOENT`), so the worker crashed at boot. The patch adds `execSokosumi` in `sokosumi-runtime.mjs` (runs the CLI's JS entry with `node` on `win32`, unchanged elsewhere), uses it in `worker.mjs`, and accepts a `\skills\` path in the `sokosumi skills path` check.
 
 ## Purpose
 Thin Masumi/Sokosumi bridge: turns a Sokosumi task into an engine job, waits for the engine decision, delivers the report text (the starter hashes and submits it) or withholds it (no hash, so the buyer's no-result auto-refund applies), and reports settlement events. No business logic beyond the bridge.
