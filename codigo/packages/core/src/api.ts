@@ -234,6 +234,8 @@ export const TasksStreamQuerySchema = z.object({
 export const TaskListItemSchema = z.object({
   id: TaskIdSchema,
   jobId: JobIdSchema,
+  /** Catalog store id (public); lets the worker map place the task. */
+  storeId: z.string(),
   storeName: z.string(),
   storeAddress: z.string(),
   productName: z.string(),

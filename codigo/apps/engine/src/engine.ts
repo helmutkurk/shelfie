@@ -219,6 +219,7 @@ export class Engine {
     return {
       id: task.id,
       jobId: task.jobId,
+      storeId: task.spec.storeId,
       storeName: store?.name ?? "",
       storeAddress: store?.address ?? "",
       productName: product?.name ?? "",
@@ -1579,6 +1580,8 @@ export class Engine {
         name: s.name,
         chain: s.chain,
         address: s.address,
+        lat: s.lat,
+        lon: s.lon,
         ...(s.aliases?.length ? { aliases: s.aliases } : {}),
       });
       byCity.set(id, c);

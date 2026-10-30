@@ -16,6 +16,7 @@ Interfaces between components. JSON examples are illustrative; the zod schemas i
 - Auth: worker endpoints are open (a worker is identified by `workerId`, a random id kept in the phone's local storage, plus a payout address). Admin endpoints need header `X-Admin-Token: <ADMIN_TOKEN>`. Shell endpoints need `X-Shell-Token: <SHELL_TOKEN>`. Verifier admin endpoints need `X-Admin-Token`. The verifier `POST /v1/verify` is protected by x402 only (plus the optional `X-Engine-Token`, see 3.3).
 - Rate limit the public worker endpoints (for example 30 requests per minute per IP) to survive a curious judge.
 - CORS: engine serves the web app itself (same origin); no CORS needed. Verifier: none.
+- CSP (engine `http/security.ts` and `codigo/vercel.json`, the same value in both): `img-src 'self' data: blob: https://tile.openstreetmap.org`, for the map tiles only. Nothing else changes.
 
 ## 1. Engine API (owner: A; consumers: shell, web)
 
@@ -72,10 +73,10 @@ Already-escrowed Sokosumi task that fails intake: the shell receives the 422, do
 **GET /api/catalog** returns the choices the brand form shows, nothing else:
 ```json
 { "cities": [ { "id": "munich", "name": "Munich",
-    "stores": [ { "id": "s1", "name": "Store A", "chain": "Chain X", "address": "Street 1, 80331 Munich" } ],
+    "stores": [ { "id": "s1", "name": "Store A", "chain": "Chain X", "address": "Street 1, 80331 Munich", "lat": 48.1255, "lon": 11.6109 } ],
     "products": [ { "ean": "4000000000000", "name": "Example Pale Ale 0.33l" } ] } ] }
 ```
-Dropdown order: city, then store (filtered by city), then product (filtered by city or by store if the catalog lists availability per store). No coordinates and no price ranges are returned. The form sends ids only. The MVP has one city, so the city dropdown has one entry but exists, so adding Berlin later is data, not UI.
+Store `lat`/`lon` (WGS84 decimal degrees) are the public position of the catalog store, for the worker map (public business data, not worker location). No price ranges are returned. The form sends ids only. The MVP has one city, so the city dropdown has one entry but exists, so adding Berlin later is data, not UI.
 
 **GET /api/jobs/{jobId}** returns the job with tasks, counts (`passed`, `failed`, `open`), `decision`, and `settlement`.
 
@@ -106,9 +107,11 @@ or
 
 ### 1.2 Tasks and claims
 
-**GET /api/tasks?status=OPEN&lat=..&lon=..** returns tasks a worker can take (`id`, `jobId`, store name and address, product name, reward `payoutAmount`, `windowEndsAt`). Coordinates are coarse (rounded to about 1 km); the engine resolves the worker's city and returns only OPEN tasks in that city (without coordinates: 403 `location_required`). Does not leak codes or other workers' ids.
+**GET /api/tasks?status=OPEN&lat=..&lon=..** returns tasks a worker can take (`id`, `jobId`, `storeId` (catalog store id, to place the task on the map), store name and address, product name, reward `payoutAmount`, `windowEndsAt`). Coordinates are coarse (rounded to about 1 km); the engine resolves the worker's city and returns only OPEN tasks in that city (without coordinates: 403 `location_required`). Does not leak codes or other workers' ids.
 
-**GET /api/tasks/stream?lat=..&lon=..** (SSE, ADR-17 dispatch): events `task_opened` (full task object, sent to every worker in the city when a task becomes OPEN, including when a claim expires or is released), `task_closed` (`{taskId, reason: "claimed"|"done"|"expired"}`, sent when another worker wins the claim or the task ends) and a 15 s `ping`. The worker page falls back to polling `GET /api/tasks` every 3 s when the stream drops. Delivery is best effort; the claim endpoint is the source of truth.
+**GET /api/tasks/stream?lat=..&lon=..** (SSE, ADR-17 dispatch): events `task_opened` (full task object, sent to every worker in the city when a task becomes OPEN, including when a claim expires or is released), `task_closed` (`{taskId, reason: "claimed"|"done"|"expired"}`, sent when another worker wins the claim or the task ends) and a 15 s `ping`. The worker page falls back to polling `GET /api/tasks` every 3 s when the stream drops. Delivery is best effort; the claim endpoint is the source of truth. The `task_opened` payload is the same task object, so it carries `storeId` too.
+
+**Worker map (public).** The worker app shows the open tasks on an OpenStreetMap map. Markers use the catalog store position from `GET /api/catalog` (`lat`/`lon`, joined by `storeId`), never worker or claim coordinates. Tiles come from `https://tile.openstreetmap.org` (CSP `img-src`, section 0); the map shows "© OpenStreetMap contributors". No other map provider or script without a new decision.
 
 **Worker location check (soft).** Claiming requires the worker's browser location to fall in the same city as the store. The page calls `navigator.geolocation` at claim time and sends coarse coordinates (rounded to about 1 km; not stored beyond the city decision, only `cityMatch` and `locationSource` are kept). The engine checks them against the city bounding box of the task's store city (Munich in the catalog). This is a demo-grade soft check: browser geolocation is spoofable and the result is a deterrent, not proof of presence (consistent with ADR-12; the challenge code still proves freshness only). If the browser denies permission or the check is disabled (`LOCATION_CHECK=off`, for stage rehearsals indoors), the claim fails with `location_required` unless an admin sets the flag, and any bypass is shown in the ledger.
 

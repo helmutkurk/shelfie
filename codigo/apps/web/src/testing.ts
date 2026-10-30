@@ -30,6 +30,7 @@ export const taskFixture = (id = "tsk_01", product = "Example Pale Ale 0.33 l") 
   TaskListItemSchema.parse({
     id,
     jobId: "job_01",
+    storeId: "s1",
     storeName: "Store A",
     storeAddress: "Street 1, 80331 Munich",
     productName: product,
@@ -147,8 +148,22 @@ export const catalogFixture = () =>
         id: "munich",
         name: "Munich",
         stores: [
-          { id: "s1", name: "Store A", chain: "Chain X", address: "Street 1, 80331 Munich" },
-          { id: "s2", name: "Store B", chain: "Chain Y", address: "Street 2, 80333 Munich" },
+          {
+            id: "s1",
+            name: "Store A",
+            chain: "Chain X",
+            address: "Street 1, 80331 Munich",
+            lat: 48.1255,
+            lon: 11.6109,
+          },
+          {
+            id: "s2",
+            name: "Store B",
+            chain: "Chain Y",
+            address: "Street 2, 80333 Munich",
+            lat: 48.14,
+            lon: 11.57,
+          },
         ],
         products: [{ ean: "4000000000000", name: "Example Pale Ale 0.33 l" }],
       },

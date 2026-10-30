@@ -110,6 +110,10 @@ describe("hardening (E7, E8, E9)", () => {
     ]) {
       expect(res.headers.get(h), h).toBeTruthy();
     }
+    // Map tiles only (contracts section 0, team approval 2026-10-30); same value as vercel.json.
+    expect(res.headers.get("content-security-policy")).toBe(
+      "default-src 'self'; img-src 'self' data: blob: https://tile.openstreetmap.org; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+    );
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(res.headers.get("x-powered-by")).toBeNull();
     expect(res.headers.get("access-control-allow-origin")).toBeNull();
