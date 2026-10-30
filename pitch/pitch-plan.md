@@ -58,13 +58,14 @@ If ahead of time, offer a judge the phone for the true photo.
 
 ## 4. Market (what goes on the slide)
 
-Re-check every figure at its source URL before it goes on a slide; the advisors read search summaries, not the reports. Copy the source line under each number.
+Pain, TAM and neighbour market were checked at the source on 2026-10-30 (values in `slides/facts.tex`). Market-research figures are publisher estimates and differ by definition; always name the publisher and year.
 
 | Layer | Slide text | Source |
 |---|---|---|
-| Pain | "About $1.1T of retail sales lost to out-of-stocks per year" (label: "retailer loss, not our revenue") | IHL Group, via retail-insight-network.com (2026 est.) |
-| TAM | "About $15B spent on merchandising services; shelf-recognition software about $2B" (cite the larger, do not add them) | Beroe; Credence / Grand View |
-| Neighbour market | "Mystery shopping: about $2.3B, paid per visit, usable or not" | Fortune Business Insights; Straits Research |
+| Pain | "$1.1T of retail sales lost to out-of-stocks per year" (label: "loss, not revenue") | IHL Group via [Retail Insight Network](https://www.retail-insight-network.com/features/how-overstock-stockouts-and-returns-cost-retail-1-75tn/) (2026-08-06): inventory distortion about $1.7T in 2026, out-of-stocks 65.6% of it. Older IHL figure (2015): $634B |
+| TAM | "$6B spent on in-store merchandising per year" | [Beroe](https://www.beroeinc.com/category-intelligence/instore-merchandisers-market/), $6-6.2B, 2023 est., about 5% a year. A "$15-16B third-party merchandising services" figure exists only in a weak aggregator: do not use |
+| Neighbour market | "Mystery shopping: $2.35B, paid per visit, usable or not" | [Straits Research](https://straitsresearch.com/report/mystery-shopping-services-market), 2025; $3.75B by 2034 (5.3% CAGR) |
+| Software layer (Q&A only) | Shelf image recognition $1.4-3.1B (2024), estimates differ by publisher | Credence, Grand View; not checked at source |
 | Bottom-up | "10 stores: EUR 120 with Shelfie vs EUR 500+ for test purchases" (illustrative pricing) | `market-pricing.md` |
 | Vision (forecast) | "Agentic commerce forecasts: $0.1-5T by 2030" (the full range, not the top) | McKinsey, Bain, eMarketer |
 
