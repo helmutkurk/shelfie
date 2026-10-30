@@ -7,7 +7,7 @@ The narrative spine for the video, the live pitch and the Devfolio text. Every o
 **Katharina Brandl, field-sales manager at Isarquell**, a small Bavarian craft-lemonade brand (invented for the story; no real company). Four people in sales. She sold a new 0.33 l bottle to a regional supermarket chain last month. Today she needs to know: is it on the shelf in this Munich store, at which price, right now? (MVP: one job is one store and one photo; checking ten stores means ten jobs, bundled multi-store jobs are roadmap.) Her options:
 
 - Drive around herself (an afternoon for a handful of stores).
-- Book a field-marketing agency or a mystery-shopping panel: days of lead time, paid per visit whether or not the photo is usable. [SOURCE NEEDED: typical price per visit and lead time]
+- Book a field-marketing agency or a mystery-shopping panel: paid per visit whether or not the photo is usable. A quick merchandising audit visit costs about $30-45 (US vendor rate card) and a German Testkauf about EUR 50-260 per visit (agency price lists); see [market-pricing.md](market-pricing.md). Lead time: [SOURCE NEEDED].
 - Trust the chain's own sales data, which says nothing about the shelf.
 
 ## The spine
@@ -35,32 +35,25 @@ Rule: these three appear verbatim in the video, in the live pitch and in the Dev
 
 ## The one number (business case)
 
-> **Target: about EUR 5 per verified store check, charged only when it passes.** Agency or mystery-shopping visits: [SOURCE NEEDED] EUR per visit, booked days ahead, paid regardless of usable output.
+> **Target: EUR 12 per verified store check, charged only when it passes: about a third of the cheapest agency audit visit (about $30-45), a quarter of the cheapest German Testkauf (from about EUR 50).** Agency visits are booked in advance and paid regardless of usable output. For Katharina's 10 stores: EUR 120 with Shelfie vs about $300-450 for audit visits or EUR 500+ for mystery shops.
 
-Working figures (all hypotheses until sourced; do not show a number on screen that is not marked as an estimate):
+Full benchmarks, Shelfie cost build-up, sources and open items: [market-pricing.md](market-pricing.md). Summary (Shelfie numbers are hypotheses; do not show a number on screen that is not marked as an estimate):
 
-| Item | Value | Status |
-|---|---|---|
-| Shelfie price to the brand per verified check | EUR 5 (illustrative) | Our assumption; justify by cost build-up below |
-| Payout to the person per passed check | EUR 2.50-3.00 | Our assumption; check against local minimum-wage-equivalent time (a check takes ~5-10 min incl. walking) |
-| Verifier cost per check (vision model + x402 fee) | well under EUR 0.10 | Estimate from model pricing; measure during the build |
-| Network/escrow fee | Masumi network fee about 5% of price | Secondary source in `../investigacion/cardano/competitive-landscape.md`; verify |
-| Failed checks | not paid; task reopened | Design fact |
-| Agency / mystery-shopper per visit | [SOURCE NEEDED] | See below |
+| Item | Value |
+|---|---|
+| Shelfie price | EUR 12 per verified check pay-as-you-go; EUR 399/month for 50 checks; EUR 5-6 at volume later |
+| Payout to the person per passed check | EUR 3.50 |
+| Verifier cost / escrow fee | well under EUR 0.10 / about 5% |
+| Margin per pay-as-you-go check | about EUR 7.80 (65%) |
+| Market: US audit visit / German Testkauf | $30-45 / EUR 50-260 per visit |
 
-Where to find the comparison figures:
-
-- Public price lists or blog posts of German mystery-shopping and merchandising providers (search "Mystery Shopping Kosten pro Besuch", "Merchandising Außendienst Preis pro Besuch", "Regalpflege Kosten"). Take 2 sources, quote ranges, name them.
-- Gig-style competitor price points: Streetspotr / app-based crowd audit providers publish or quote per-task rewards and customer prices; their pricing pages or case studies are the closest benchmark. [SOURCE NEEDED, verify they exist and are active]
-- Freelance field-marketing day rates from German job boards or agency rate cards (per-visit price = day rate / visits per day).
-- Retail-execution market-size or "out-of-stock" loss figures from industry studies (e.g. ECR / retail-research reports) for the "why it matters" line. [SOURCE NEEDED]
-- Fallback if nothing is found by the deadline: show the cost build-up of Shelfie only, and say "agency pricing is typically per visit and booked in advance" without a number.
+Positioning caveat: agencies also fix the shelf, do resets and write long reports. Shelfie replaces only the "is it there and at what price" check. Say so before a judge does.
 
 Units, kept apart on purpose: the EUR figures above are **illustrative product pricing** for the pitch, not what the demo moves. The preprod test amounts are tADA with no market value: verifier fee 1 tADA per check, worker payout 3 tADA per passed task (`diseno/contracts.md`), and the escrowed job fee is a Masumi/Sokosumi quote (about 1 test USDM, verify Friday). Never put a tADA amount next to a EUR amount as if they were equivalent. The verifier cost "well under EUR 0.10" is an estimate of real model cost, not the 1 tADA x402 floor.
 
 Terminology: the **three payment gates** (photo gate pays the human, job gate settles the escrow, fallback refunds) are not the verifier's internal checks G1-G7 in `diseno/verifier-rules.md`; the photo gate is made of those checks.
 
-One-sentence version for the video: "A verified check costs about five euros and you pay only for checks that pass."
+One-sentence version for the video: "A verified check costs about twelve euros, a fraction of an agency visit, and you pay only for checks that pass."
 
 ## Positioning line
 
