@@ -61,7 +61,7 @@ Saturday morning:
 - [ ] Docker running; MPS and Postgres up; wallets funded (preprod); `hub-check.sh` passes.
 - [ ] Tunnel up once, URL printed and QR on the dashboard; one phone on mobile data and one on venue Wi-Fi tested.
 - [ ] Sleep/lock disabled; notifications off; browser profile clean; recording laptop separate.
-- [ ] Override and fakes off (`ENABLE_DRY=false`, `FAKE_PAYMENTS` unset); `evidence-preflight.sh` passes.
+- [ ] Override and fakes off (`ENABLE_DRY=false`, `FAKE_PAYMENTS` unset); `evidence-preflight.ts` passes.
 - [ ] Backup operator knows where the password-manager entry and the start commands are.
 
 ## 6. Ownership

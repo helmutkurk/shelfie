@@ -240,7 +240,7 @@ Controller: the hackathon team (Helmut as contact). Data subjects: workers who t
 | Payout address | send the payout | consent (consent screen) | event end + 7 days, then deleted from store; on-chain record remains (public ledger, stated) | address shortened in UI/logs |
 | Coarse location at claim | city check | consent | request only, nothing stored but `cityMatch` | not logged |
 | Precise location at capture | geofence check | consent | request only, nothing stored but `distanceM`, `accuracyM`, `withinGeofence` | not logged |
-| Photo | verification and dispute during the event | consent | on the hub until the end of the event (Sat 2026-10-31 evening), then deleted by Helmut (`scripts/purge-evidence.sh`, B); photos selected for the pitch are kept only if no person is visible and the author agreed | EXIF stripped, never in git, shelves only |
+| Photo | verification and dispute during the event | consent | on the hub until the end of the event (Sat 2026-10-31 evening), then deleted by Helmut (`scripts/purge-evidence.ts`, B); photos selected for the pitch are kept only if no person is visible and the author agreed | EXIF stripped, never in git, shelves only |
 | Session/display name | operate the app | consent | event end | opaque id |
 
 Consent text shown on the first run of `/w` (D; wording to be reviewed by Helmut; version id `consent-v1`): "Shelfie checks shelf prices for a hackathon demo. If you continue: (1) your phone location is read when you claim a task and when you take the photo, only to check you are in the store's city and near the store; exact coordinates are not saved. (2) Your photo is sent to our server and to an AI vision service (Google or OpenAI) to read the price tag; photograph shelves and price tags only, no people. (3) Your payout address is stored to send your test payment and is visible on the public Cardano preprod ledger. Photos are deleted after the event. Contact: Helmut." The UI must offer "decline" which leaves the app read-only. Right to erasure: Helmut deletes a worker's records on request during the event window; on-chain data cannot be erased (stated). Real third-party personal data stays out (AGENTS.md never-do list); only team and invited testers photograph shelves.
@@ -251,7 +251,7 @@ At boot of every process, before any other work: `NETWORK` must equal `preprod`;
 
 ## 5. Evidence runs and operational rules
 
-- Evidence run preconditions (checked by one command, `scripts/evidence-preflight.sh`, B): `FAKE_PAYMENTS=0`, `VERIFIER_MODE` not stub, `ENABLE_DRY=false`, `ALLOW_DEMO_OVERRIDE=false`, `ALLOW_TEST_UPLOAD=false`, network preprod, `/api/health` shows no fake flag, no flagged ledger entry in the run.
+- Evidence run preconditions (checked by one command, `scripts/evidence-preflight.ts`, B): `FAKE_PAYMENTS=0`, `VERIFIER_MODE` not stub, `ENABLE_DRY=false`, `ALLOW_DEMO_OVERRIDE=false`, `ALLOW_TEST_UPLOAD=false`, network preprod, `/api/health` shows no fake flag, no flagged ledger entry in the run.
 - Incident (leaked key, wrong payout): stop the queue (admin pause), rotate per `docs/github-setup.md` section 8, log "rotated at HH:MM" in `docs/ai-log.md`.
 - Review gates: `security-reviewer` before every push touching payments, env, scripts, CI, upload, auth; Helmut checks `security.yml` green before M4 (first escrow) and before the final smoke run.
 
