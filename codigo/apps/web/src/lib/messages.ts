@@ -64,6 +64,28 @@ export const S = {
   feedHint: "New tasks appear here. When someone else takes one, it leaves your list.",
   locationOff: "Allow location to see tasks in your city.",
   tooSlow: "Another worker was faster.",
+  // Task detail steps per challenge mode (ADR-19). Gesture copy never names a count or a side.
+  stepsHandwritten: [
+    "Find the product",
+    "Write the code on paper",
+    "Hold it next to the price tag",
+    "Take one photo with the in-app camera",
+  ],
+  stepsGesture: [
+    "Find the product",
+    "Take the task",
+    "Open the camera. Your hand sign is revealed there.",
+    "Take one photo of the price tag with the in-app camera",
+  ],
+  stepsNeutral: [
+    "Find the product",
+    "Take the task",
+    "Take one photo of the price tag with the in-app camera",
+  ],
+  handSignNote: "Your hand sign is revealed when the camera opens.",
+  walletNote: "Payouts are sent in test ADA (tADA) on the Cardano preprod test network.",
+  walletHistoryNote:
+    "Full payout history is not available yet. Only results from this session are shown.",
   noSecureContext: "Open the secure link to take the photo.",
   noSecureContextHelp:
     "This page is not on a secure connection, so the camera is off. You can read tasks here, but the photo cannot be taken or uploaded.",
