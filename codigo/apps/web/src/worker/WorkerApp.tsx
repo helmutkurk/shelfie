@@ -32,6 +32,7 @@ import { Claimed } from "./Claimed.js";
 import { Feed } from "./Feed.js";
 import type { LocationState } from "./Feed.js";
 import { Home } from "./Home.js";
+import { MapTab } from "./MapTab.js";
 import { Onboarding } from "./Onboarding.js";
 import { Profile as ProfileTab } from "./Profile.js";
 import { Result } from "./Result.js";
@@ -53,6 +54,18 @@ type Screen =
   | { name: "result"; task: TaskListItem; info: SubmittedInfo };
 
 const CLAIM_LOST = "Claim expired, take the task again.";
+
+/** Back link on task detail: names the screen the task was opened from. */
+function backLabelFor(from: Tab): string {
+  switch (from) {
+    case "home":
+      return "Home";
+    case "map":
+      return "Map";
+    default:
+      return "Tasks";
+  }
+}
 
 /** Worker app (`/w`): tabs (Home, Tasks, Wallet, Profile) over the claim, camera and verdict flow. */
 export function WorkerApp() {
@@ -185,6 +198,15 @@ export function WorkerApp() {
             />
           </>
         );
+      case "map":
+        return (
+          <MapTab
+            location={location}
+            locationState={locState}
+            onRequestLocation={requestLocation}
+            onOpen={(task) => setScreen({ name: "detail", task, from: "map" })}
+          />
+        );
       case "wallet":
         return (
           <Wallet
@@ -237,7 +259,7 @@ export function WorkerApp() {
           profile={profile}
           canClaim={consented}
           challengeMode={challengeMode}
-          backLabel={screen.from === "home" ? "Home" : "Tasks"}
+          backLabel={backLabelFor(screen.from)}
           onBack={() => toTab(screen.from)}
           onNeedProfile={() => setScreen({ name: "onboarding", from: screen.from })}
           onClaimed={(claim) => {

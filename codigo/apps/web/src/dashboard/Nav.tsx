@@ -1,8 +1,9 @@
-export type NavSection = "overview" | "orders" | "ledger" | "operator";
+export type NavSection = "overview" | "orders" | "locations" | "ledger" | "operator";
 
 const ITEMS: readonly { value: NavSection; label: string }[] = [
   { value: "overview", label: "Overview" },
   { value: "orders", label: "Orders" },
+  { value: "locations", label: "Locations" },
   { value: "ledger", label: "Ledger" },
   { value: "operator", label: "Operator" },
 ];

@@ -26,13 +26,13 @@ export const PAYOUT_ADDRESS = `addr_test1${"q".repeat(60)}`;
 export const TX_HASH = "ab".repeat(32);
 
 // ------------------------------------------------------------------ fixtures
-export const taskFixture = (id = "tsk_01", product = "Example Pale Ale 0.33 l") =>
+export const taskFixture = (id = "tsk_01", product = "Example Pale Ale 0.33 l", storeId = "s1") =>
   TaskListItemSchema.parse({
     id,
     jobId: "job_01",
-    storeId: "s1",
-    storeName: "Store A",
-    storeAddress: "Street 1, 80331 Munich",
+    storeId,
+    storeName: storeId === "s2" ? "Store B" : storeId === "s1" ? "Store A" : "Unlisted store",
+    storeAddress: storeId === "s2" ? "Street 2, 80333 Munich" : "Street 1, 80331 Munich",
     productName: product,
     payoutAmount: "3000000",
     windowEndsAt: "2026-10-30T10:12:00Z",

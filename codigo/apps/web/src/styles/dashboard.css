@@ -846,3 +846,35 @@
 .operator .field {
   margin: 1em 0;
 }
+
+/* ---- locations (read-only store map and table) */
+.dsh .dlocations {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+.dsh .dlocations .map-viewport {
+  height: 22em;
+}
+.dsh .dlocations .dcard-head {
+  margin-bottom: 0;
+}
+.dsh .dlocations-store {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dsh .dlocations tr.is-selected td {
+  background: var(--accent-soft);
+}
+.dsh .dlocations .footnote {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--text-2);
+}

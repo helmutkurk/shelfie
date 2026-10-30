@@ -1,5 +1,5 @@
-/** The four worker tabs. View state only: no URL changes (the app has no routes for them). */
-export type Tab = "home" | "tasks" | "wallet" | "profile";
+/** The five worker tabs. View state only: no URL changes (the app has no routes for them). */
+export type Tab = "home" | "tasks" | "map" | "wallet" | "profile";
 
 const TABS: readonly { id: Tab; label: string; path: string }[] = [
   {
@@ -11,6 +11,11 @@ const TABS: readonly { id: Tab; label: string; path: string }[] = [
     id: "tasks",
     label: "Tasks",
     path: "M7 4.5H5.5A1.5 1.5 0 0 0 4 6v10.5A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H13M7 3.5h6v2H7Z",
+  },
+  {
+    id: "map",
+    label: "Map",
+    path: "M7 4 3.5 5.5v10.5L7 14.5l6 2 3.5-1.5V4.5L13 6 7 4Zm0 0v10.5m6-8v10.5",
   },
   {
     id: "wallet",

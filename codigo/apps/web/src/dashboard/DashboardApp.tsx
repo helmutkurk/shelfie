@@ -19,6 +19,7 @@ import { OrderStatus } from "./OrderStatus.js";
 import { OperatorTools } from "./OperatorTools.js";
 import { describeError } from "../lib/messages.js";
 import { RequestForm } from "./RequestForm.js";
+import { LocationsPanel } from "./Locations.js";
 
 /** In-app view state (not in the URL). `new` and `job` belong to the Orders section. */
 type View =
@@ -26,6 +27,7 @@ type View =
   | { name: "orders" }
   | { name: "new" }
   | { name: "job"; id: string }
+  | { name: "locations" }
   | { name: "ledger" }
   | { name: "operator" };
 
@@ -187,6 +189,18 @@ export function DashboardApp() {
                   </div>
                 </div>
               </div>
+
+              {section === "locations" ? (
+                <div className="dpage">
+                  <header className="dpage-head">
+                    <div>
+                      <h1 className="dh1">Locations</h1>
+                      <p className="dsub">Stores in the public catalog. Read only.</p>
+                    </div>
+                  </header>
+                  <LocationsPanel catalog={catalog} jobs={jobs} />
+                </div>
+              ) : null}
 
               {section === "ledger" ? (
                 <div className="dpage">

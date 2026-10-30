@@ -1148,7 +1148,7 @@ code,
   bottom: 0;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--s-1);
   margin-top: auto;
   padding: var(--s-1) max(var(--s-2), env(safe-area-inset-right))
@@ -1191,6 +1191,236 @@ code,
   .app-worker .tabbar {
     border-radius: 0 0 36px 36px;
   }
+}
+
+/* ---- map: ui/map/StoreMap.tsx (worker map tab and dashboard Locations). Light tokens only.
+   No animation: panning and zoom jump, so prefers-reduced-motion needs no extra rule. */
+.map-tab .map-locate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.map-locate-button {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: var(--s-1) var(--s-3);
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-control);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.map-locate-button:disabled {
+  color: var(--text-2);
+  cursor: default;
+}
+.map-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+.map-frame-empty {
+  padding: var(--s-3);
+  border: 1px dashed var(--separator);
+  border-radius: var(--r-group);
+}
+.map-empty {
+  margin: 0;
+  color: var(--text-2);
+}
+.map-viewport {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-group);
+  background: var(--surface-2);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.map-viewport.is-dragging {
+  cursor: grabbing;
+}
+.map-viewport:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.map-tiles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.map-tile {
+  position: absolute;
+  display: block;
+  width: 256px;
+  height: 256px;
+  max-width: none;
+}
+.map-tile.is-failed {
+  visibility: hidden;
+}
+.map-marker {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+}
+.map-marker:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+.map-marker::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  margin-top: -3px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--text);
+}
+.map-marker-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--s-1);
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+}
+.map-marker-count:empty {
+  min-width: 14px;
+  height: 14px;
+  padding: 0;
+}
+.map-marker.is-selected .map-marker-count {
+  background: var(--accent-fill);
+}
+.map-marker.is-selected::after {
+  background: var(--accent-fill);
+}
+.map-accuracy {
+  position: absolute;
+  z-index: 1;
+  border: 1px solid var(--accent-fill);
+  border-radius: 50%;
+  background: var(--accent-soft);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.map-me {
+  position: absolute;
+  z-index: 3;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  pointer-events: none;
+}
+.map-controls {
+  position: absolute;
+  z-index: 4;
+  top: var(--s-2);
+  right: var(--s-2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--r-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.map-control {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.map-control + .map-control {
+  border-top: 1px solid var(--separator);
+}
+.map-control:disabled {
+  color: var(--text-2);
+  opacity: 0.5;
+  cursor: default;
+}
+.map-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-2);
+}
+.map-attribution {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+.map-attribution a {
+  color: inherit;
+}
+.map-notice {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--warning-text);
+}
+.map-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-group);
+  box-shadow: var(--shadow-card);
+}
+.map-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+.map-card-text {
+  min-width: 0;
+}
+.map-card-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+.map-card .task-list {
+  margin: 0;
+}
+.task-unmapped {
+  margin: var(--s-1) 0 0;
 }
 
 /* ---- action bar: primary action at thumb reach */
