@@ -15,6 +15,9 @@ export const ACTIVE_JOB_STATES: readonly JobState[] = [
   "DELIVERABLE",
 ];
 
+/** Counts on the overview cover only this many of the newest requests (GET /api/jobs has no totals). */
+export const JOB_WINDOW = 10;
+
 export type JobFilter = "all" | "active" | "done";
 
 export function matchesFilter(state: JobState, filter: JobFilter): boolean {

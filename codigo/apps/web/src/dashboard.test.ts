@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DashboardApp } from "./dashboard/DashboardApp.js";
 import { JobDetail } from "./dashboard/JobDetail.js";
@@ -58,6 +58,22 @@ describe("dashboard banners", () => {
     const { deps } = makeDeps({ routes: {} });
     renderWithDeps(h(DashboardApp), deps);
     expect(await screen.findByText("Engine not reachable.")).toBeTruthy();
+  });
+});
+
+describe("overview", () => {
+  it("labels counts with their coverage and marks the active section", async () => {
+    const { deps } = makeDeps({ routes: baseRoutes() });
+    renderWithDeps(h(DashboardApp), deps);
+    fireEvent.click(await screen.findByRole("button", { name: "Overview" }));
+    expect(screen.getByRole("button", { name: "Overview" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+    // The orders detail placeholder repeats these counts while hidden; scope to the overview.
+    const counts = screen.getByRole("region", { name: "Counts" });
+    expect(await within(counts).findByText("Counts cover all 1 loaded request.")).toBeTruthy();
+    expect(within(counts).getByText("Active requests")).toBeTruthy();
+    expect(screen.queryByText(/%/)).toBeNull();
   });
 });
 
@@ -160,7 +176,10 @@ describe("dashboard orders", () => {
     });
     renderWithDeps(h(DashboardApp), deps);
     await screen.findByRole("button", { name: /Example Pale Ale/ });
+    // Operator tools are their own section now; no token means no Demo job there either.
+    fireEvent.click(screen.getByRole("button", { name: "Operator" }));
     expect(screen.queryByRole("button", { name: "Demo job" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Orders" }));
     fireEvent.change(screen.getByLabelText("Brand access code"), {
       target: { value: "synthetic-brand-code" },
     });
