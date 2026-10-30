@@ -1,6 +1,6 @@
 # Start here, team
 
-Shelfie is ready for component work on fakes. Paid resources, real vision, phones and escrow still need validation. Use [codigo/README.md](../codigo/README.md) for commands and its complete verify-Friday status table. Canonical acceptance is [diseno/repo-layout.md §5](../diseno/repo-layout.md). Times below are Europe/Berlin targets, not proof that a milestone passed.
+Shelfie is ready for component work on fakes locally; the shared deployments are moving to real vision and real preprod payments (see below). Real vision on phones, a full real cycle through the deployed engine and Masumi escrow with a store photo still need validation. Use [codigo/README.md](../codigo/README.md) for commands and its complete verify-Friday status table. Canonical acceptance is [diseno/repo-layout.md §5](../diseno/repo-layout.md). Times below are Europe/Berlin targets, not proof that a milestone passed.
 
 ## First 30 minutes, every role
 
@@ -17,7 +17,13 @@ Before any phone test in a store or on stage: [field-test-supermarket.md](../pre
 
 Public test URLs and automatic rebuild on every push: [deploy.md](deploy.md) (Vercel + tunnel + pull-based deploy; Helmut operates the hub side).
 
-Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists. The deployment runs on fakes (FAKE_PAYMENTS=1, stub verifier): never use it as evidence. Details: [deploy.md](deploy.md).
+Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists.
+
+**Real mode on the shared deployments (Helmut, 2026-10-30 evening):** no more fake mode there. dev/api-dev (later app/api) run real Gemini vision (`gemini-3.5-flash-lite` primary plus a Gemini backup) and real preprod payments (`FAKE_PAYMENTS=0`, `VERIFIER_PAYMENT=on`, `VERIFY_CLIENT=real`, `VERIFIER_MODE=live`, `VERIFY_RUN_CAP_LOVELACE=200000000`), so the team finds bugs, failures and UI improvements. Fakes remain only for local development and CI (`npm run check`, local `npm run smoke`). Values live only in Helmut's `~/.config/shelfie/dev.env`, never in git or chat. Status: Gemini key being set by Helmut; payment secrets not yet in the hub env. Owner of the remaining hub env: Isabel (A-21 hand-over of wallet secrets and Blockfrost/facilitator values, A-22 funding), with Fernando (B-14). Until api-dev `/api/health` shows `fakes.payments:false`, treat the deployment as fake and never as evidence. Switch table: [codigo/README.md](../codigo/README.md); runbook: [field-test-supermarket.md](../preparacion/field-test-supermarket.md).
+
+**Timers are changing (owner C, Lorenz, C-17):** worker execution time and related timers (job window, claim TTL, gesture window) are being lengthened. Numbers such as 90 s, 300 s, 480 s and 900 s in the docs are the old defaults; re-read them from code after his PR.
+
+**Evidence:** [codigo/docs/evidence/tx-hashes.md](../codigo/docs/evidence/tx-hashes.md) holds the real preprod transactions: M1 (paid x402 verify, `cbc9cb5d...`, `1547a4a7...`), M2 (payouts, `60d49a3a...`, `1abef825...`), M4 and M5 (escrow lock, settlement, refund). Missing: a full real cycle through the deployed engine with a store photo (B-14, T-27).
 
 Start **every coding-agent session** from [investigacion/cardano/official-agent-prompt.md](../investigacion/cardano/official-agent-prompt.md). Before creating paid/on-chain resources, stop for the role owner's written authorisation: Payment Service databases, seeded wallets, registration and funding are included. On resume, inspect the saved resource/state inventory and reuse existing Vendor, Coworker and wallets. Never blindly retry an uncertain pending write. Personal Workspace first for M3/M4 tests; use the official prompt's TUM Workspace instructions for the demo.
 
