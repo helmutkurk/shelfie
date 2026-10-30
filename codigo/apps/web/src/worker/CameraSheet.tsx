@@ -221,6 +221,7 @@ function CameraBody(props: Parameters<typeof CameraSheet>[0] & { title: string }
             aria-label="Camera preview"
           />
         )}
+        {!shot ? <div className="frame-guide" aria-hidden="true" /> : null}
         {!shot ? (
           <p className="camera-hint">
             {oos
@@ -241,7 +242,7 @@ function CameraBody(props: Parameters<typeof CameraSheet>[0] & { title: string }
       ) : null}
       <div className="camera-controls">
         <div className="camera-meta">
-          <span translate="no" className="mono">
+          <span translate="no" className="mono camera-code">
             {props.claim.challenge.code}
           </span>
           <Countdown expiresAt={props.claim.claim.expiresAt} onExpire={props.onClaimLost} />
@@ -296,7 +297,11 @@ function LocationLine(props: { status: LocStatus; accuracyM: number | undefined 
       break;
   }
   return (
-    <p className={`location-line ${cls}`} role="status" data-testid="location-status">
+    <p
+      className={`location-line location-${props.status} ${cls}`}
+      role="status"
+      data-testid="location-status"
+    >
       <Icon name={props.status === "ok" ? "check" : props.status === "reading" ? "pin" : "alert"} />{" "}
       {text}
     </p>

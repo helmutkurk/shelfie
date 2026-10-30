@@ -200,7 +200,9 @@ export function WorkerApp() {
 
   return (
     <ExplorerProvider value={explorerBase}>
-      <div className="app app-worker">{body}</div>
+      <div className="worker-stage">
+        <div className="app app-worker">{body}</div>
+      </div>
       <Toast message={toast} onDone={() => setToast(null)} />
     </ExplorerProvider>
   );

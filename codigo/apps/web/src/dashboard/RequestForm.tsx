@@ -3,7 +3,7 @@ import { isAppError, IntakeRejectedDetailsSchema } from "@shelfie/core/browser";
 import type { CatalogResponse } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
 import { describeError } from "../lib/messages.js";
-import { Button, Field, Group, LargeTitle, Select } from "../ui/index.js";
+import { Button, Field, Select } from "../ui/index.js";
 
 /**
  * B1 / C1: new shelf check. City, store and product are native selects fed by GET /api/catalog;
@@ -67,9 +67,15 @@ export function RequestForm(props: {
     if (store && product) void send({ storeId: store.id, ean: product.ean });
   };
 
+  const hint =
+    !ready && !busy
+      ? props.adminToken === ""
+        ? "Enter the operator token below to send."
+        : "Choose city, store and product."
+      : undefined;
   return (
-    <section className="screen" aria-label="New shelf check">
-      <LargeTitle title="New shelf check" />
+    <section className="dcard dform" aria-label="New shelf check">
+      <h2 className="dh2">New shelf check</h2>
       <form
         className="request-form"
         onSubmit={(e) => {
@@ -77,69 +83,64 @@ export function RequestForm(props: {
           if (ready) void send({ storeId, ean });
         }}
       >
-        <Group footer="Only stores and products in our Munich catalog can be requested.">
-          <div className="group-pad">
-            <Select
-              label="City"
-              value={cityId}
-              placeholder="Select a city"
-              options={(props.catalog?.cities ?? []).map((c) => ({ value: c.id, label: c.name }))}
-              onChange={(v) => {
-                setCityId(v);
-                setStoreId("");
-                setEan("");
-              }}
-            />
-            <Select
-              label="Store"
-              value={storeId}
-              placeholder="Select a store"
-              disabled={!city}
-              help={city ? undefined : "Choose a city first"}
-              options={(city?.stores ?? []).map((s) => ({
-                value: s.id,
-                label: `${s.name}, ${s.address}`,
-              }))}
-              onChange={setStoreId}
-            />
-            <Select
-              label="Product"
-              value={ean}
-              placeholder="Select a product"
-              disabled={storeId === ""}
-              help={storeId === "" ? "Choose a store first" : undefined}
-              options={(city?.products ?? []).map((p) => ({ value: p.ean, label: p.name }))}
-              onChange={setEan}
-            />
-          </div>
-        </Group>
+        <Select
+          label="City"
+          value={cityId}
+          placeholder="Select a city"
+          options={(props.catalog?.cities ?? []).map((c) => ({ value: c.id, label: c.name }))}
+          onChange={(v) => {
+            setCityId(v);
+            setStoreId("");
+            setEan("");
+          }}
+        />
+        <Select
+          label="Store"
+          value={storeId}
+          placeholder="Select a store"
+          disabled={!city}
+          help={city ? undefined : "Choose a city first"}
+          options={(city?.stores ?? []).map((s) => ({
+            value: s.id,
+            label: `${s.name}, ${s.address}`,
+          }))}
+          onChange={setStoreId}
+        />
+        <Select
+          label="Product"
+          value={ean}
+          placeholder="Select a product"
+          disabled={storeId === ""}
+          help={storeId === "" ? "Choose a store first" : undefined}
+          options={(city?.products ?? []).map((p) => ({ value: p.ean, label: p.name }))}
+          onChange={setEan}
+        />
         <p className="footnote">
-          Time to complete: 15 min (fixed in the MVP). Price: shown by the Sokosumi quote.
+          Only stores and products in our Munich catalog can be requested. Time to complete: 15 min
+          (fixed in the MVP). Price: shown by the Sokosumi quote.
         </p>
         <Button type="submit" disabled={!ready || busy}>
           {busy ? "Sending…" : "Request check"}
         </Button>
+        {hint ? <p className="footnote">{hint}</p> : null}
       </form>
 
-      <Group
-        label="Operator"
-        footer="Creating a job needs the operator token. It stays in this tab's memory only."
-      >
-        <div className="group-pad">
-          <Field
-            label="Operator token"
-            type="password"
-            value={props.adminToken}
-            onChange={props.onAdminToken}
-            autoComplete="off"
-          />
-          <Button variant="plain" disabled={props.adminToken === "" || busy} onClick={demoJob}>
-            Demo job
-          </Button>
-        </div>
-      </Group>
+      <section className="operator" aria-label="Operator">
+        <h3 className="dh3">Operator</h3>
+        <Field
+          label="Operator token"
+          type="password"
+          value={props.adminToken}
+          onChange={props.onAdminToken}
+          autoComplete="off"
+          help="Needed to create a job. Stays in this tab's memory only."
+        />
+        <Button variant="plain" disabled={props.adminToken === "" || busy} onClick={demoJob}>
+          Demo job
+        </Button>
+      </section>
       {error ? (
-        <p className="error-text" role="alert">
+        <p className="form-error" role="alert">
           {error}
         </p>
       ) : null}
