@@ -26,9 +26,9 @@ An acquaintance of Isabel's father wants to bring a beverage to Germany. He aske
 
 Demo order on stage: the cheat first (red, no money), then the true photo (green, payout tx). Run of show: [live-pitch.md](live-pitch.md).
 
-## Hook line (first 25 seconds)
+## Hook line (first 28 seconds)
 
-The real request, told by Isabel ([pitch-plan.md](pitch-plan.md) section 2), ending on: "An AI can write him a report. It cannot see the shelf. So we built an agent that hires someone who can, and pays only if the photo is true."
+The real request, told by Isabel (word for word in [live-pitch.md](live-pitch.md)), ending on: "An AI can write him a report, but it can't see the shelf. We built an agent that hires someone who can, and pays only if the photo is true."
 
 ## The 3 phrases judges must remember
 

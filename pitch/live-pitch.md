@@ -27,13 +27,13 @@ Two main voices (Isabel, Lorenz); handoffs eat time. Letters are the build roles
 
 | Time | Speaker | Says / does | Demo step |
 |---|---|---|---|
-| 0:00-0:25 | Isabel | The real request, word for word from [pitch-plan.md](pitch-plan.md) section 2, ending: "An AI can write him a report. It cannot see the shelf. So we built an agent that hires someone who can, and pays only if the photo is true." No "hello, we are team Shelfie" before it. | Slide 1: their real shelf photo |
-| 0:25-0:40 | Lorenz | "Shelfie. Paid only when the photo is true. The brand pays into escrow, a person takes the photo, a verifier agent checks it, and only a true photo pays." | Slide 2: one flow diagram |
+| 0:00-0:28 | Isabel | "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph competitors in a few shops: price, and whether they're there. But he is abroad. He can't check our photos. An AI can write him a report, but it can't see the shelf. We built an agent that hires someone who can, and pays only if the photo is true." No "hello, we are team Shelfie" before it. | Slide 1: their real shelf photo |
+| 0:28-0:40 | Lorenz | "Shelfie. Paid only when the photo is true. The brand pays into escrow, a person takes the photo, a verifier agent checks it, and only a true photo pays." | Slide 2: one flow diagram |
 | 0:40-1:00 | Fernando | "This is the question he asked us, as a job on Sokosumi: one comparable drink, one Munich store. The fee is locked in Masumi escrow on preprod; here is the lock transaction from a run we started earlier, escrow takes about an hour." | Demo 1: Sokosumi job, lock tx on explorer |
 | 1:00-1:20 | Isabel, Lorenz | Isabel aims the live camera at an old photo of the tag and shoots. Lorenz: "Same tag, old photo, no code. Red. No money moves." | Demo 2: cheat attempt, red |
 | 1:20-1:55 | Isabel, Lorenz | Isabel: "This is what I did by hand for him." She claims the task, shows the one-time code for a second, holds the code card next to the tag and shoots. Lorenz: "The code proves the photo is new and made for this task, not where it was taken. The verifier is a separate agent, paid per check over x402. It reads product, price and the code. Green." | Demo 3: code photo, verifier green |
 | 1:55-2:10 | Fernando | "And she is paid now, on preprod. Here is the transaction." Zoom on the hash. | Demo 4: payout tx on explorer |
-| 2:10-2:35 | Lorenz | "The photo passed, so the report is delivered and the escrow settles; with no passing photo the brand is refunded" (settled and refunded jobs from earlier runs in tabs). Market sentence from [pitch-plan.md](pitch-plan.md) section 4: "Out-of-stocks cost retail about a trillion dollars a year, and brands still check shelves with a 50-euro test purchase or a 30-dollar audit visit; Shelfie does the check for about twelve euros and gets paid only when the photo is true." | Slide 3: market, one number |
+| 2:10-2:35 | Lorenz | "The photo passed, so the report is delivered and the escrow settles; otherwise the brand is refunded." (Settled and refunded jobs from earlier runs in tabs.) Switch to the market slide: "Out-of-stocks cost retail a trillion dollars a year, and one test purchase costs fifty euros. Shelfie: about twelve, paid only when the photo is true." | Slide 3: market |
 | 2:35-2:50 | Lorenz | "Today it is one shelf in Munich, on preprod. The same engine works for any fact an agent cannot find online. Store QR codes for location are next." | Slide 4: beyond |
 | 2:50-3:00 | Isabel | "Next time he doesn't call us. He posts a job. Agents hire people to look, and the blockchain pays the bill." | Slide 5: close |
 
@@ -80,7 +80,9 @@ Rule: never present a recording or a pre-existing transaction as if it was live.
 
 ## Timing marks (Helmut, phone timer)
 
-0:25, 0:40, 1:00, 1:20, 1:55, 2:10, 2:35, 2:50, 3:00. If behind at 1:55, drop the "beyond" beat; if ahead at 1:20, offer the judge the phone.
+0:28, 0:40, 1:00, 1:20, 1:55, 2:10, 2:35, 2:50, 3:00. If behind at 1:55, drop the "beyond" beat; if ahead at 1:20, offer the judge the phone.
+
+Budget (145 words per minute): about 2:05 of speech plus demo actions, about 2:45 in total. The 15 s left are for the verifier's response time, which is not measured yet (measure it in the live eval, C-09).
 
 ## Multiple tracks
 

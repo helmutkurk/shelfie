@@ -20,11 +20,11 @@ Facts to confirm with Isabel before the pitch (her words, not ours): when the re
 
 Consent: ask the acquaintance (via Isabel's father) whether the story may be told in public. Never name the person, the drink, the brand or the country of origin. A message screenshot only as a reconstruction, fully redacted, labelled "reconstructed". No reply by Saturday morning: "an acquaintance of my father", no screenshot.
 
-**English (spoken by Isabel, about 25 s):**
-> "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me: could you photograph the competitors in a few shops, what they cost and whether they are there? A real request. We said yes, then saw the problem: he is abroad, he cannot check our photos, and we would walk for hours. An AI can write him a report. It cannot see the shelf. So we built an agent that hires someone who can, and pays only if the photo is true."
+**English (spoken by Isabel, 68 words, about 28 s):**
+> "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph competitors in a few shops: price, and whether they're there. But he is abroad. He can't check our photos. An AI can write him a report, but it can't see the shelf. We built an agent that hires someone who can, and pays only if the photo is true."
 
 **German (if the pitch is in German):**
-> "Ein Bekannter meines Vaters will ein Getränk nach Deutschland bringen. Er hat Helmut und mich gefragt: Könnt ihr die Konkurrenz in ein paar Läden fotografieren, was sie kostet und ob sie da ist? Eine echte Anfrage. Wir haben zugesagt und dann das Problem gesehen: Er ist im Ausland, kann unsere Fotos nicht prüfen, und wir würden stundenlang laufen. Eine KI kann ihm einen Bericht schreiben. Sie sieht das Regal nicht. Also haben wir einen Agenten gebaut, der jemanden beauftragt und nur zahlt, wenn das Foto stimmt."
+> "Ein Bekannter meines Vaters will ein Getränk nach Deutschland bringen. Er hat Helmut und mich gebeten, die Konkurrenz in ein paar Läden zu fotografieren: den Preis, und ob sie überhaupt da ist. Aber er ist im Ausland. Er kann unsere Fotos nicht prüfen. Eine KI kann ihm einen Bericht schreiben, aber sie sieht das Regal nicht. Also haben wir einen Agenten gebaut, der jemanden beauftragt und nur zahlt, wenn das Foto stimmt."
 
 Behind her: one or two of their real shelf photos (brands blurred, no people), ideally one blurry or wrong-shelf photo ("he would have paid for this one too").
 
@@ -41,20 +41,7 @@ Wording rules:
 
 ## 3. Run of show (3:00)
 
-| Time | Who | Beat | Screen |
-|---|---|---|---|
-| 0:00-0:25 | Isabel | Real story (above), ends on the tagline | Slide 1: real shelf photo |
-| 0:25-0:40 | Lorenz | "Shelfie: agents hire people to look, and the blockchain pays the bill. The brand pays into escrow, a person takes the photo, a verifier agent checks it, and only a true photo pays." | Slide 2: one flow diagram |
-| 0:40-1:00 | Fernando | Sokosumi job, escrow lock tx on preprod explorer (pre-opened, "started earlier, escrow takes about an hour") | Browser tab |
-| 1:00-1:20 | Isabel + Lorenz | Cheat: live camera at an old photo. Lorenz: "Same tag, old photo, no code. Red. No money moves." | Phone, verifier tab |
-| 1:20-1:55 | Isabel + Lorenz | Isabel claims the task, the one-time code appears, she holds the code card next to the tag and shoots. Lorenz: "The verifier is a separate agent, paid per check over x402. It reads product, price and the code. Green." | Phone, verifier tab |
-| 1:55-2:10 | Fernando | "And she is paid now, on preprod. Here is the transaction." | Explorer, zoom on hash |
-| 2:10-2:35 | Lorenz | Result + business: report delivered, escrow settles (or refund, earlier run). Market slide, one sentence (section 4). | Slide 3: market |
-| 2:35-3:00 | Lorenz, Isabel last line | Vision sentence, then Isabel's callback and the tagline | Slide 4: beyond + close |
-
-2-minute version: drop the escrow-lock beat to one sentence on the result slide and drop the vision sentence.
-
-If ahead of time, offer a judge the phone for the true photo.
+The timed script with every spoken line is in [live-pitch.md](live-pitch.md) (one source). Budget at 145 words per minute: about 2:05 of speech, plus camera, verifier and explorer, about 2:45; the 15 s left are for the verifier. If the verifier is slow, drop the "beyond" beat first.
 
 ## 4. Market (what goes on the slide)
 
@@ -69,7 +56,7 @@ Pain, TAM and neighbour market were checked at the source on 2026-10-30 (values 
 | Bottom-up | "10 stores: EUR 120 with Shelfie vs EUR 500+ for test purchases" (illustrative pricing) | `market-pricing.md` |
 | Vision (forecast) | "Agentic commerce forecasts: $0.1-5T by 2030" (the full range, not the top) | McKinsey, Bain, eMarketer |
 
-Spoken (one sentence): "Out-of-stocks cost retail about a trillion dollars a year, and brands still check shelves with a 50-euro test purchase or a 30-dollar audit visit; Shelfie does the check for about twelve euros and gets paid only when the photo is true."
+Spoken (on stage): "Out-of-stocks cost retail a trillion dollars a year, and one test purchase costs fifty euros. Shelfie: about twelve, paid only when the photo is true."
 
 Vision (15 s): "Today it is one shelf in Munich. The same engine works for any fact an agent cannot find online: is the delivery there, is the shop open, is the ramp accessible. Agents will need eyes in the physical world; we make those eyes verifiable and paid."
 
