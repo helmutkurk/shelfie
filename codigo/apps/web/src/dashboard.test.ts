@@ -201,11 +201,20 @@ describe("operator gate", () => {
     expect(screen.queryByRole("button", { name: "Place order" })).toBeNull();
     expect(screen.queryByRole("button", { name: "New order" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Operator" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Create test job" }));
+    const create = await screen.findByRole("button", { name: "Create test job" });
+    // Defaults to the first entries when the demo shelf is not in the catalog; the operator picks.
+    expect(screen.getByLabelText<HTMLSelectElement>("Store").value).toBe("s1");
+    fireEvent.change(screen.getByLabelText("Chain"), { target: { value: "Chain Y" } });
+    expect(screen.getByLabelText<HTMLSelectElement>("Store").value).toBe("s2");
+    fireEvent.click(create);
     await waitFor(() =>
       expect(calls.some((c) => c.method === "POST" && c.path === "/api/jobs")).toBe(true),
     );
     const demo = calls.find((c) => c.method === "POST");
+    expect(demo?.body).toMatchObject({
+      source: "demo",
+      input: { productEan: "4000000000000", stores: [{ id: "s2" }] },
+    });
     expect(demo?.headers["X-Admin-Token"]).toBe("synthetic-operator-token");
     expect(demo?.headers["X-Brand-Token"]).toBeUndefined();
   });
