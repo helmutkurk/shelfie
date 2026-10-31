@@ -1001,15 +1001,6 @@ html:not(.cart-ready) .beat {
 .bar-fill.w-24 {
   width: 24%;
 }
-.bar-fill.w-30 {
-  width: 30%;
-}
-.bar-fill.w-4 {
-  width: 4%;
-}
-.stats-sub {
-  margin: 40px 0 20px;
-}
 .js .bar-fill {
   width: 0;
 }
