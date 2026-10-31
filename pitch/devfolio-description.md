@@ -12,7 +12,9 @@ Paid only when the photo is true.
 
 ## One-line pitch
 
-An agent on Sokosumi hires people to check shelf prices in real stores, a verifier agent decides whether each photo is fresh and readable, and Cardano pays the person only if it passes, with an automatic refund to the brand if not.
+Brands order a shelf check in the Shelfie app; Shelfie books it as a paid task on Sokosumi so the fee sits in Masumi escrow, shows it to people near the store, a verifier agent checks each photo, and Cardano pays the worker only if it passes, with an automatic refund to the brand if not.
+
+Short version: Brands order shelf checks in our app, people nearby take the photo, a verifier agent checks it, and Cardano escrow pays only when the photo is true.
 
 ## The problem it solves
 
@@ -31,7 +33,7 @@ For example, picture Lena, a small drinks maker in Lisbon launching an energy dr
 
 ### What Shelfie makes easier and safer
 
-**For brands:** post a job such as "check this product in this Munich store" on Sokosumi. The fee is locked in Masumi escrow on Cardano. If a photo passes verification, the result is delivered and the escrow settles. If no photo passes in time, **the brand gets its money back automatically**. Brands never pay for a photo that isn't true.
+**For brands:** order a check in the Shelfie app ("this product, this Munich store"). Shelfie books it as a task on Sokosumi, so the fee is locked in Masumi escrow on Cardano. If a photo passes verification, the result is delivered and the escrow settles. If no photo passes in time, **the brand gets its money back automatically**. Brands never pay for a photo that isn't true.
 
 **For people nearby:** anyone close to the store can claim the task from a phone, take one photo with the live camera, and get **paid on-chain right after it passes**. There is no invoicing and no waiting for an agency to pay out.
 
@@ -50,7 +52,7 @@ How we got here: an acquaintance of a teammate's father wants to bring a drink t
 
 ## Solution
 
-Shelfie is a lead agent that turns "check product X in this store" into one small task, offers it to nearby people, verifies every photo with a separate verifier agent, pays only photos that pass, and refunds the brand if no photo passes in time. A job is one store, one product and one photo in the MVP; multi-store jobs are roadmap. An intake filter rejects jobs for stores or products outside a seeded Munich catalog. The brand hires Shelfie as a coworker on Sokosumi; the fee sits in Masumi escrow.
+Shelfie is a lead agent that turns "check product X in this store" into one small task, offers it to nearby people, verifies every photo with a separate verifier agent, pays only photos that pass, and refunds the brand if no photo passes in time. A job is one store, one product and one photo in the MVP; multi-store jobs are roadmap. An intake filter rejects jobs for stores or products outside a seeded Munich catalog. The brand orders in the Shelfie web app; Shelfie places the Sokosumi Task on its behalf, which locks the fee in Masumi escrow (ADR-20).
 
 The three things to remember:
 
@@ -60,7 +62,7 @@ The three things to remember:
 
 ## How it works
 
-1. **Hire.** The brand starts a Shelfie job on Sokosumi (product and one store from the seeded Munich catalog, deadline). The fee is locked in Masumi escrow on Cardano preprod. Lock tx: [LOCK_TX_HASH] ([EXPLORER_LINK]).
+1. **Order.** The brand orders in the Shelfie web app (`/b`: product and one store from the seeded Munich catalog). The engine creates the Sokosumi Task on the brand's behalf, and its fee is locked in Masumi escrow on Cardano preprod. Lock tx: [LOCK_TX_HASH] ([EXPLORER_LINK]).
 2. **Plan.** The engine first checks the job against the catalog (known Munich store and product), then creates one task with a time window. The one-time hand sign is drawn when a person claims it and revealed only when they open the camera.
 3. **Capture.** A person near the store opens a mobile web page, claims the task (the task is shown to all workers in the city and the first to claim it gets it; a soft browser-location check confirms the city), opens the camera at the shelf, sees the hand sign and has 90 seconds to photograph the price tag with that hand beside it. Capture is with the live in-app camera only, no gallery, and the browser location at the shutter is checked against the store (150 m default); both checks are deterrents, not proof. If the product is not on the shelf, the worker photographs the empty shelf spot with its shelf label instead, and the brand receives an out-of-stock report.
 4. **Verify.** The lead agent (its engine) pays a separate verifier agent per check over x402 on preprod (1 tADA per check, pass or fail). The vision model only reads; plain code decides. The gates: the image is usable, the hand sign matches (finger count and side), the photo does not show a display screen, price and product are readable and parse, the product matches the requested name/EAN, the price is in a plausible range, the photo arrived within 90 s of the sign being shown (engine clock), and it is not a duplicate of an earlier photo. Location is checked by the engine before the verifier is called, so a photo from outside the geofence costs no fee. Each check is its own preprod transaction. x402 tx (first paid check, verdict from a stub reader): [cbc9cb5d...](https://preprod.cardanoscan.io/transaction/cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d).
@@ -71,7 +73,7 @@ Cheat attempt: an old photo (aimed at with the live camera, since the app has no
 
 ## Cardano tools used
 
-- **Masumi / Sokosumi:** the agent is a Coworker on Sokosumi; payment is in escrow until delivery, with refund on non-delivery. Registry: Masumi agent "Shelfie", registration `cmvv55cpy00301w904q3bezzk` (preprod).
+- **Masumi / Sokosumi:** the agent is a Coworker on Sokosumi; Tasks are created by the engine for the brand (ADR-20); payment is in escrow until delivery, with refund on non-delivery. Registry: Masumi agent "Shelfie", registration `cmvv55cpy00301w904q3bezzk` (preprod).
 - **x402 on Cardano preprod:** per-request payment from the lead agent to the verifier agent. Packages: `@x402/*` 2.26.0 (as pinned in the x402-express template), hosted preprod facilitator.
 - **Cardano preprod:** all transactions; explorer: preprod.cardanoscan.io. Payout done with `@evolution-sdk/evolution` 0.5.14 from the lead agent's payout wallet, through a serial payout queue with idempotency (no double pay on retry or restart).
 - **Blockfrost (preprod):** chain queries [VERIFY_IF_USED].
