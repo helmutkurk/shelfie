@@ -102,3 +102,13 @@ Local code/tests only; no deployed request, photo, payment or transaction eviden
 | Shared engine ledger | Match this job/task and claim rather than global verify-tx totals; require location rejection, no submission/verification/payout events, unchanged attempts and no payout rows. Public APIs expose no internal verify-call counter | `scripts/live-check.ts`; ledger-scoping tests |
 | Local validation | Seven Node tests pass; workspace and scripts typecheck and root lint pass with Node 24.22.2. Deployed checks and M6 remain unverified | `node --import tsx scripts/live-check.sec.test.ts`; typecheck/lint phases of `npm run check`; [usage and limitations](../scripts/README.md#live-usage-d-17) |
 | Remote settings | Health exposes preprod, engine fake flags and verifier reachability, but does not prove server `NODE_ENV` or verifier live/stub mode | `HealthResponseSchema`, engine `health`; run `evidence-preflight.ts` on hub before recording |
+
+## External WhatsApp evaluation set (Codex for Helmut, 2026-10-31, D-42)
+
+| Item | Answer | Source / proof |
+|---|---|---|
+| Photo handling | 14 absolute external JPEG paths, in attachment order; all pass the actual local G1 decode/size/variance checks. No photo copied into the repo | `eval/labels.whatsapp-2026-10-31.json`, `SharpImageService.inspect` + `gateImageOk` offline inspection |
+| Human labels | Three intended Fuze OOS frames with uncertain facing boundary; one screenshot; one obscured target price; one-finger signs remain negative challenges. Only original Red Bull 250 ml matches a catalog EAN; other exact packs marked not-in-catalog | Attached images, catalog, per-label notes; product/gesture truth is human review, not model accuracy evidence |
+| Runner | --verifier-url or EVAL_VERIFIER_URL selects only /v1/verify-dry in live mode, with ADMIN_TOKEN from env; no redirect/retry/payment fallback. Basenames with spaces and absolute photo paths supported; hash-based per-run IDs avoid long-name cache collisions | `eval/src/http.ts`, `http.sec.test.ts`, `run.ts`; command in `eval/README.md` |
+| Verification | Node 24.22.2 eval typecheck and lint pass; 12 eval tests plus 77 gate/evaluator/injection regression tests pass (89 total). Scoped security-reviewer pass: no blocking findings | Offline Vitest, tsc and ESLint; no live verifier call, payment or model-accuracy claim |
+| Still unknown | REWE provenance conflicts with EDEKA Süd printed in some frames; original issued signs/timing absent except screenshot instruction; O5 boundary uncertain in Fuze frames | Lorenz reviews notes; orchestrator runs local live-vision dry evaluation, never uses it as transaction evidence |

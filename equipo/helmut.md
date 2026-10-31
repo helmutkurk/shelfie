@@ -6,7 +6,9 @@
 
 ## Current focus
 
-Photo-free real-engine M6 checks implemented in `codigo/scripts/live-check.ts` (Codex, 2026-10-31, D-17). Seven local tests, typecheck and lint pass. Live run and two-phone evidence are pending; D-17 is blocked rather than marked complete. No engine/web/payment behavior changed; no dependencies added.
+D-42: labelled 14 external WhatsApp shelf photos and added optional authenticated dry HTTP evaluation (Codex, 2026-10-31). Eval typecheck/lint and 89 offline tests pass (12 eval + 77 verifier regressions); all 14 images pass local G1 inspection. Live model run is for the orchestrator. Notes preserve unknown signs/prices/facing boundaries and conflicting store provenance.
+
+Previous M6 check work is preserved below. The subsequent hub run is recorded in the 2026-10-31 ai-log update; two-phone M6 evidence remains separate.
 
 ## Previous focus (2026-10-30)
 
@@ -17,7 +19,7 @@ Public deployment is live (dev.shelfieapp.fyi, app.shelfieapp.fyi, api and api-d
 
 ## Active branch
 
-`dev`, with this session's uncommitted changes. `git switch -c feature/live-checks` failed because `.git` is mounted read-only in this sandbox; branch creation and the requested commit are pending. Nothing pushed. On the unrestricted hub, create the branch from this `dev` worktree and commit with `feat(scripts): add photo-free live engine checks (D-17)`; note that D edited B-owned scripts in the commit body.
+`dev`, D-42 changes uncommitted for the orchestrator. No git command that writes metadata, commit, push or network call was run in this block. Peer-review `pending` was not run because it performs `git fetch`, which the user expressly prohibited.
 
 ## Components I added or integrated
 
@@ -31,9 +33,11 @@ Public deployment is live (dev.shelfieapp.fyi, app.shelfieapp.fyi, api and api-d
 
 ## What runs / next command
 
-Current block: Node 24 workspace/scripts typecheck, root lint, seven new script tests, redacted gitleaks scans and diff whitespace check pass. Full `npm run check` reached existing engine/payment/vision/verifier tests, repeatedly timed out on HTTP-based tests and was interrupted (exit 130); it is not a passing full check. No deployed run was attempted (sandbox cannot open sockets). Usage and manual M6 gaps: `codigo/scripts/README.md`.
+D-42: Node 24.22.2 `npm run typecheck -w @shelfie/eval`, `npx --no-install eslint eval/src` and `npx --no-install vitest run eval/src apps/verifier/src/gates.test.ts apps/verifier/src/evaluate.test.ts apps/verifier/src/injection.sec.test.ts` pass (89 tests). Network is mocked; no full workspace check or live eval was run. Scoped security review found no blocking issues.
 
-Exact next command at repo root on the unrestricted hub: `git switch -c feature/live-checks`. Then `cd codigo && npm run check`; with operator token and `WORKER_ADDRS` exported, run `ENGINE_URL=https://api-dev.shelfieapp.fyi npx tsx scripts/live-check.ts`. Authenticate `gh` before peer review (`pending` currently fails authentication). Capture real phone/browser evidence separately before closing D-17.
+Exact next command from `codigo/`, after the orchestrator exports the matching `ADMIN_TOKEN` and starts its local live-vision verifier with `ENABLE_DRY=true`: `npm run eval -w @shelfie/eval -- --mode live --no-synthetic --labels labels.whatsapp-2026-10-31.json --verifier-url http://127.0.0.1:4199`. Photos remain outside git. Lorenz: review Fuze OOS facing ambiguity and #4 occlusion notes; confirm REWE/EDEKA provenance. Commit is orchestrator-owned; note D edited C-owned eval files (D-42).
+
+Previous M6 block: photo-free checks and manual phone gaps are documented in `codigo/scripts/README.md` and `docs/ai-log.md`; its later hub run is recorded there.
 
 Previous-block validation and handoff (2026-10-30):
 
@@ -61,4 +65,4 @@ Node 24.22.2 via mise (global stays 26.8.2), Sokosumi CLI 1.0.4, logged in to pr
 
 ## Last updated
 
-2026-10-31 by Codex for Helmut (D).
+2026-10-31 by Codex for Helmut (D), D-42.
