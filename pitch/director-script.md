@@ -4,6 +4,8 @@ The stage script, scene by scene. Each scene says **who speaks, the exact words,
 
 Why this version (2026-10-31): in the real supermarket test the verifier took **about one minute** per photo (not 12-15 s). Part of that is waiting for the verifier's fee to be confirmed on Cardano before it answers (`codigo/docs/verified.md`, M1 row). So: **one live photo only**, and the team explains the system while the verifier works. The cheat is shown as a screenshot from the morning test, not live (a second live check would cost another minute).
 
+Open proposal (2026-10-31, Fernando, pending Lorenz and Isabel): a fictional, told-only opening ("Lena") with the agency context and no Shelfie price on stage. It replaces scenes 1, 2, 3, 4, 7 and 8 if adopted; see [Proposal: fictional opening](#proposal-fictional-opening-lena) at the end. Until then the scenes below stand.
+
 ## Cast
 
 | Who | Role on stage | Holds |
@@ -147,3 +149,87 @@ About 385 spoken words without stretch lines. W1-W3 (about 145 words) run during
 2. **Walk-through with the screen** (15 min): Fernando does every key press and tab switch; the phone only pretends.
 3. **Full run with a real job** (15 min each, twice): real claim, real photo, real verifier; note the verifier time each run.
 4. **Failure drill** (5 min): Helmut calls "red" or "stuck" at 2:35; the team switches to the recording.
+
+---
+
+## Proposal: fictional opening (Lena)
+
+Status: proposal, 2026-10-31 (Fernando). Lorenz (pitch owner) and Isabel decide; if adopted, the scenes below replace the matching scenes above and `pitch-plan.md` section 2 follows.
+
+Why:
+- No consent question: the real request is not told on stage.
+- The pitch opens with a person and a concrete question, then the agency context makes it a market, not one anecdote (Taikai pitch structure: intro, problem with impact, product, demo, wrap-up).
+- The argument is "pay only for what is true", not "cheaper": no Shelfie price on stage, because EUR 12 is illustrative (`slides/facts.tex`). The EUR 50+ agency visit and the $6B stay; both are sourced in `facts.tex`.
+
+Rules for the story:
+- Told only. No picture of Lena, no fictional brand, logo or can on screen: the live demo photographs a real, well-known drink, so Lena's own brand never appears. The real drink is "the market leader", her competitor, and is not named in the spoken lines.
+- The wording signals fiction ("Picture...", "let's call her"). Never present Lena as a customer, pilot or interview.
+- No "days of waiting" or "minutes" claims: neither is measured or sourced.
+
+Timing: scenes 1 and 2 grow from 0:40 to 0:45; scene 7 loses the price sentence, so the total stays at about 3:00.
+
+### Scene 1: Lena and the agency (0:00-0:35)
+
+**Screen:** story page, a text-only beat (proposed: "What does it cost? Is it on the shelf?"). The current "It started with a real request" beat and its photo go; `/story` change is an open item for Lorenz.
+
+**ISABEL** (0:00-0:20, to the jury, no "Hello, we are..."):
+> "Picture a small drinks maker in Lisbon. Let's call her Lena. She has a new energy drink and wants to launch it in Munich. One question decides her price: what does the market leader cost here, and is it really on the shelf? She's two thousand kilometres away."
+
+**FERNANDO:** one key (proposed beat: "EUR 50+ per visit. Paid anyway.").
+
+**LORENZ** (0:20-0:35):
+> "Today, Lena has one option: hire an agency. A single store visit starts at fifty euros, and she pays whether the photo is usable or not. Brands spend six billion dollars a year on in-store work like this."
+
+### Scene 2: The idea (0:35-0:45)
+
+**ISABEL:**
+> "And her AI can't walk into a supermarket."
+
+**FERNANDO:** one key: "An agent that hires a person to look."
+
+**LORENZ:**
+> "So we built Shelfie. An agent hires someone nearby, a second agent checks the photo, and Lena pays only for a photo that is true. Shelfie: paid only when the photo is true."
+
+### Scene 3: The job (0:45-0:58)
+
+**FERNANDO:** one key (How it works), then `Ctrl+2` (Sokosumi).
+> "Lena's question as a job on Sokosumi: one product, one store in Munich. The fee is locked in escrow on Cardano. This lock was created before the pitch."
+
+(The reason, escrow takes about half an hour, stays for Q&A: no development problems on stage.)
+
+**FERNANDO:** `Ctrl+3` (dashboard job page).
+
+### Scene 4: The photo (0:58-1:12)
+
+**ISABEL** (phone in one hand, tag in the other):
+> "I'm the person in the store. This is Lena's competitor. I take the job."
+
+Rest of scene 4 unchanged (claim, hand sign, shot, "Sent."). Scene 5 unchanged, except stretch line S4:
+- **S4, ISABEL:** "For Lena, this is exactly the step she couldn't do from Lisbon."
+
+### Scene 7: What Lena pays for, and honest limits (about 2:25-2:48)
+
+**FERNANDO:** `Ctrl+1`, one key (proposed beat: "Paid only when true" instead of "What one shelf check costs today").
+
+**LORENZ:**
+> "Lena never pays for a blurry photo or the wrong shelf. If no photo passes, the escrow goes back to her. To be honest: this is the test network, and the sign proves the photo is new, not the shop. Store QR codes are next."
+
+If green came before 2:00, Lorenz may add first: "Out-of-stocks cost retail about a trillion dollars a year." (sourced `\MarketPain`; replaces the unsourced "hundred-and-fifty-billion" line in the time rules).
+
+If asked for the price: answer from `qa-prep.md` Q15a, not on stage.
+
+### Scene 8: Close (about 2:48-3:00)
+
+**FERNANDO:** `End` ("Ready when you are"); the team names and roles are on this screen.
+
+**ISABEL:**
+> "Lena doesn't need a trip to Munich. She posts a job. And nobody pays for a photo that isn't true."
+
+### Follow-ups if adopted
+
+| What | Owner |
+|---|---|
+| `/story`: drop the "real request" beat and photo, add the text-only question beat and the "EUR 50+ per visit. Paid anyway." beat; replace the price beat with "Paid only when true"; names on the close | Lorenz |
+| `pitch-plan.md` section 2 (hook), `live-pitch.md` roles line, `storyline.md`, `video-script.md`: same story | Lorenz |
+| `slides/facts.tex`: `\RequestWho`, `\RequestLine` and `\PricePerStore` no longer used on stage (backup deck only) | Lorenz |
+| Confirm the demo drink is in the seeded catalog (ADR-17) | Isabel |

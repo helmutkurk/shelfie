@@ -58,8 +58,14 @@ Answers are short on purpose: lead with the honest limit, then the mitigation. M
 15. **What are the unit economics?** [D]
     Illustrative: EUR 12 per verified check to the brand (pay-as-you-go; EUR 399/month for 50 checks, EUR 5-6 at volume), EUR 3.50 to the worker, verifier and model cost well under EUR 0.10, escrow fee about 5% (EUR 0.60), leaving a margin of roughly EUR 7.80 (65%) before support, disputes and the verifier fees spent on rejected photos. All hypotheses, and distinct from the preprod test amounts (1 tADA per check, 3 tADA per payout). Market comparison: a quick merchandising audit visit costs about $30-45 (T-ROC Global 2026 guide, vendor figures), a German Testkauf about EUR 50-260 (agency price lists). Agencies also fix shelves and write reports; we replace only the presence-and-price check. Details and sources: `market-pricing.md`.
 
+15a. **How much does a Shelfie check cost?** [B] *(Proposal 2026-10-31, pending Lorenz: short answer when the pitch shows no Shelfie price, see `director-script.md` "Proposal: fictional opening")*
+    Pricing isn't final. One check costs the worker's payout plus a verifier fee of cents, and the brand pays only for checks that pass; if none passes, the escrow is refunded. On the test network it is 1 tADA per check and 3 tADA per payout. If pressed for a number: our working hypothesis is about EUR 12 per passed check, against EUR 50+ for an agency test purchase (Q15).
+
 16. **Who actually pays, and why would they switch from an agency?** [D]
     Small and mid-size consumer brands without a retail-execution team, who today either do not check or buy small agency packages. They switch for speed (same day), proof (photo bound to a one-time hand sign, with audit trail) and pay-per-passed-check. We have not validated demand with interviews; the hackathon is a proof of mechanism. Next step: 5 brand interviews.
+
+16a. **Is Lena a real customer?** [D] *(Proposal 2026-10-31, only if the fictional opening is adopted)*
+    No, Lena is fictional, and we say so. The situation is based on a real request: someone asked Isabel to check competitors' prices and shelf presence in a few shops (say this only with Isabel's agreement; otherwise "one real request inspired it"). We have not run brand interviews yet; the hackathon proves the mechanism (Q16).
 
 17. **Does it scale? Where are the bottlenecks?** [A]
     The software scales; the workforce does not automatically. Supply is local and uneven (more workers in cities), tasks may sit unclaimed, and payouts need batching on chain to keep fees low. Verifier cost scales linearly with checks. The bottleneck is recruiting and retaining workers, which is why we would partner with existing crowd networks first.
