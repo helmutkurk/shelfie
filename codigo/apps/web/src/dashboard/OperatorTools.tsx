@@ -4,6 +4,9 @@ import { useDeps } from "../deps.js";
 import { describeError } from "../lib/messages.js";
 import { Button, Select } from "../ui/index.js";
 
+const TEST_STORE_ID = "demo-hoc-friedenstrasse-24";
+const TEST_PRODUCT_EAN = "9002490100070"; // Red Bull Energy Drink 250 ml
+
 export function OperatorTools(props: {
   catalog: CatalogResponse | undefined;
   packId: string;
@@ -19,8 +22,9 @@ export function OperatorTools(props: {
   const [submissionId, setSubmissionId] = useState("");
   const demo = async () => {
     const city = props.catalog?.cities.find((c) => c.id === "munich");
-    const store = city?.stores[0];
-    const product = city?.products[0];
+    // The demo shelf at House of Communication with the Red Bull we keep there; first entry as fallback.
+    const store = city?.stores.find((s) => s.id === TEST_STORE_ID) ?? city?.stores[0];
+    const product = city?.products.find((p) => p.ean === TEST_PRODUCT_EAN) ?? city?.products[0];
     if (!store || !product) return;
     setBusy(true);
     setError(null);
