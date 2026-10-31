@@ -1,21 +1,33 @@
 import { describe, expect, it } from "vitest";
 import type { Request, Response } from "express";
-import { EngineEnvSchema, collectSecretValues, createLogger, loadEnv } from "@shelfie/core";
-import { requireBrand } from "./http/security.js";
-import { orderRig } from "./orders-testkit.js";
+import {
+  EngineEnvSchema,
+  FakeClock,
+  brandAccounts,
+  collectSecretValues,
+  createLogger,
+  loadEnv,
+} from "@shelfie/core";
+import { FailLock, requireBrand } from "./http/security.js";
+import { BRAND_A, BRAND_B, TWO_BRANDS_ENV, orderRig } from "./orders-testkit.js";
 import { EAN } from "./testkit.js";
 
 const brand = "b".repeat(40);
+const DEMO = "demo";
 const body = { productEan: EAN, storeIds: ["s1"] };
+const freshLock = () => new FailLock(new FakeClock());
 function auth(
   headers: Record<string, string> = {},
   query: Record<string, string> = {},
   configured: string | undefined = brand,
 ) {
   let error: unknown;
-  requireBrand(configured)(
+  requireBrand(
+    configured === undefined ? [] : [{ id: DEMO, token: configured }],
+    freshLock(),
+  )(
     { headers, query } as unknown as Request,
-    {} as Response,
+    { locals: {} } as unknown as Response,
     (err?: unknown) => {
       error = err;
     },
@@ -35,7 +47,7 @@ describe("order trust boundary", () => {
       code: "brand_token_invalid",
     });
     expect(auth({ "x-brand-token": brand })).toBeUndefined();
-    const guard = requireBrand(undefined);
+    const guard = requireBrand([], freshLock());
     let err: unknown;
     guard(
       { headers: { "x-brand-token": brand } } as unknown as Request,
@@ -45,6 +57,23 @@ describe("order trust boundary", () => {
       },
     );
     expect(err).toMatchObject({ status: 401 });
+  });
+  it("locks an IP out after repeated wrong brand codes, even for the right code (429)", () => {
+    const lock = freshLock();
+    const guard = requireBrand([{ id: DEMO, token: brand }], lock);
+    const call = (code: string) => {
+      let err: unknown;
+      guard(
+        { headers: { "x-brand-token": code }, ip: "10.0.0.9" } as unknown as Request,
+        { locals: {} } as unknown as Response,
+        (e?: unknown) => {
+          err = e;
+        },
+      );
+      return err;
+    };
+    for (let i = 0; i < 20; i += 1) expect(call("wrong")).toMatchObject({ status: 401 });
+    expect(call(brand)).toMatchObject({ status: 429, code: "rate_limited" });
   });
   it("refuses out-of-catalog stores/products before any Sokosumi call, with per-store reasons", async () => {
     let calls = 0;
@@ -57,14 +86,20 @@ describe("order trust boundary", () => {
         },
       },
     );
-    await expect(r.orders.create({ ...body, storeIds: ["s1", "unknown"] })).rejects.toMatchObject({
+    await expect(
+      r.orders.create({ ...body, storeIds: ["s1", "unknown"] }, undefined, DEMO),
+    ).rejects.toMatchObject({
       status: 422,
       details: { stores: [{ storeId: "unknown", reasons: [{ code: "unknown_store" }] }] },
     });
-    await expect(r.orders.create({ ...body, productEan: "9999999999999" })).rejects.toMatchObject({
+    await expect(
+      r.orders.create({ ...body, productEan: "9999999999999" }, undefined, DEMO),
+    ).rejects.toMatchObject({
       code: "intake_rejected",
     });
-    await expect(r.orders.create({ ...body, storeIds: ["b1"] })).rejects.toMatchObject({
+    await expect(
+      r.orders.create({ ...body, storeIds: ["b1"] }, undefined, DEMO),
+    ).rejects.toMatchObject({
       code: "intake_rejected",
     });
     expect(calls).toBe(0);
@@ -81,19 +116,25 @@ describe("order trust boundary", () => {
         },
       },
     );
-    await expect(r.orders.create({ ...body, storeIds: ["s1", "s2"] })).rejects.toMatchObject({
+    await expect(
+      r.orders.create({ ...body, storeIds: ["s1", "s2"] }, undefined, DEMO),
+    ).rejects.toMatchObject({
       status: 429,
       code: "order_cap_reached",
     });
-    await r.orders.create(body);
-    await expect(r.orders.create(body)).rejects.toMatchObject({
+    await r.orders.create(body, undefined, DEMO);
+    await expect(r.orders.create(body, undefined, DEMO)).rejects.toMatchObject({
       status: 429,
       code: "daily_cap_reached",
     });
-    await expect(r.orders.create({ ...body, storeIds: ["s1", "s1"] })).rejects.toMatchObject({
+    await expect(
+      r.orders.create({ ...body, storeIds: ["s1", "s1"] }, undefined, DEMO),
+    ).rejects.toMatchObject({
       status: 422,
     });
-    await expect(r.orders.create({ ...body, token: brand })).rejects.toMatchObject({ status: 422 });
+    await expect(r.orders.create({ ...body, token: brand }, undefined, DEMO)).rejects.toMatchObject(
+      { status: 422 },
+    );
     expect(calls).toBe(1);
   });
   it("never forwards notes/tokens into Task input or stores/logs and scrubs env secrets", async () => {
@@ -108,7 +149,7 @@ describe("order trust boundary", () => {
         },
       },
     );
-    await r.orders.create({ ...body, note });
+    await r.orders.create({ ...body, note }, undefined, DEMO);
     const output = JSON.stringify([inputs, r.store.orders.all(), r.logs]);
     expect(output).not.toContain(note);
     expect(output).not.toContain(brand);
@@ -127,15 +168,19 @@ describe("order trust boundary", () => {
       string
     >[]) {
       const r = orderRig(vars);
-      await expect(r.orders.create(body)).rejects.toMatchObject({ code: "forbidden" });
+      await expect(r.orders.create(body, undefined, DEMO)).rejects.toMatchObject({
+        code: "forbidden",
+      });
       expect(r.store.orders.all()).toHaveLength(0);
     }
     const r = orderRig();
     // Verify the guard without needing a wallet or reading secrets.
     r.env.FAKE_PAYMENTS = false;
-    await expect(r.orders.create(body)).rejects.toMatchObject({ code: "forbidden" });
+    await expect(r.orders.create(body, undefined, DEMO)).rejects.toMatchObject({
+      code: "forbidden",
+    });
     r.env.FAKE_PAYMENTS = true;
-    const order = await r.orders.create(body);
+    const order = await r.orders.create(body, undefined, DEMO);
     const entries = r.engine.ledger
       .all()
       .filter((entry) => entry.refs["jobId"] === order.jobs[0]?.jobId);
@@ -164,5 +209,82 @@ describe("order trust boundary", () => {
     ]) {
       expect(() => loadEnv(EngineEnvSchema, { FAKE_PAYMENTS: "1", ...vars })).toThrow();
     }
+  });
+});
+
+describe("brand isolation (ADR-21)", () => {
+  const twoBrands = { BRAND_TOKEN: "", BRAND_ACCOUNTS: TWO_BRANDS_ENV };
+
+  it("a brand cannot list or get another brand's order; the answer equals a missing order", async () => {
+    const r = orderRig(twoBrands);
+    const mine = await r.orders.create(body, undefined, BRAND_A.id);
+    expect(r.orders.list(BRAND_A.id).orders.map((o) => o.orderId)).toEqual([mine.orderId]);
+    expect(r.orders.list(BRAND_B.id).orders).toEqual([]);
+    const errorOf = (fn: () => unknown): unknown => {
+      try {
+        fn();
+      } catch (e) {
+        return e;
+      }
+      return undefined;
+    };
+    const foreign = errorOf(() => r.orders.get(mine.orderId, BRAND_B.id));
+    const missing = errorOf(() => r.orders.get("ord_doesnotexist", BRAND_B.id));
+    expect(foreign).toMatchObject({ code: "not_found", status: 404 });
+    expect(foreign).toMatchObject({
+      code: "not_found",
+      status: 404,
+      message: (missing as Error).message,
+    });
+    expect(r.orders.get(mine.orderId, BRAND_A.id).orderId).toBe(mine.orderId);
+  });
+
+  it("an idempotency key used by another brand is refused with the same 409 as a changed order", async () => {
+    const r = orderRig(twoBrands);
+    const mine = await r.orders.create(body, "brand-key-01", BRAND_A.id);
+    await expect(r.orders.create(body, "brand-key-01", BRAND_B.id)).rejects.toMatchObject({
+      status: 409,
+      code: "invalid_request",
+    });
+    await expect(
+      r.orders.create({ ...body, storeIds: ["s2"] }, "brand-key-01", BRAND_B.id),
+    ).rejects.toMatchObject({ status: 409, code: "invalid_request" });
+    expect(r.store.orders.all()).toHaveLength(1);
+    expect((await r.orders.create(body, "brand-key-01", BRAND_A.id)).orderId).toBe(mine.orderId);
+  });
+
+  it("records without brandId belong to the demo brand only", async () => {
+    const r = orderRig({ BRAND_TOKEN: "d".repeat(40) });
+    const order = await r.orders.create(body, undefined, "demo");
+    const { brandId: _ignored, ...legacy } = r.store.orders.get(order.orderId)!;
+    r.store.orders.put(legacy);
+    expect(r.orders.get(order.orderId, "demo").orderId).toBe(order.orderId);
+    expect(() => r.orders.get(order.orderId, BRAND_A.id)).toThrow(/not found/i);
+    const other = orderRig(twoBrands);
+    other.store.orders.put(legacy);
+    expect(() => other.orders.get(order.orderId, BRAND_A.id)).toThrow(/not found/i);
+    expect(other.orders.list(BRAND_A.id).orders).toEqual([]);
+  });
+
+  it("profile counts only this brand's reservations today and never carries a code", async () => {
+    const r = orderRig(twoBrands);
+    const brands = brandAccounts(r.env);
+    const a = brands.find((b) => b.id === BRAND_A.id)!;
+    const b = brands.find((x) => x.id === BRAND_B.id)!;
+    expect(r.orders.profile(b)).toMatchObject({ creditsReservedToday: 0, fake: true });
+    await r.orders.create({ ...body, storeIds: ["s1", "s2"] }, undefined, BRAND_A.id);
+    const profile = r.orders.profile(a);
+    expect(profile).toEqual({
+      brandId: BRAND_A.id,
+      name: BRAND_A.name,
+      walletAddress: `addr_test1${"q".repeat(60)}`,
+      creditsReservedToday: 200,
+      dailyCreditCap: r.env.ORDER_DAILY_CREDIT_CAP,
+      maxCreditsPerTask: r.env.SOKOSUMI_MAX_CREDITS_PER_TASK,
+      maxStores: r.env.ORDER_MAX_STORES,
+      fake: true,
+    });
+    expect(r.orders.profile(b).creditsReservedToday).toBe(0);
+    expect(JSON.stringify(profile)).not.toContain(BRAND_A.token);
   });
 });

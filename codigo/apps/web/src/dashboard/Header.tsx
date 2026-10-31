@@ -1,10 +1,12 @@
+import type { ReactNode } from "react";
 import type { HealthResponse } from "@shelfie/core/browser";
 import type { StreamStatus } from "../lib/sse.js";
-/** Top strip: engine status and network. Banners sit below it. */
+/** Top strip: engine status and network, with optional actions (the brand app's account). */
 export function Header(props: {
   health: HealthResponse | undefined;
   healthError: unknown;
   stream: StreamStatus;
+  actions?: ReactNode;
 }) {
   const { health } = props;
   const state: "ok" | "warn" | "down" = health
@@ -33,6 +35,7 @@ export function Header(props: {
         </span>
         <span className="dnet">Cardano preprod</span>
       </div>
+      {props.actions ? <div className="dhead-actions">{props.actions}</div> : null}
     </header>
   );
 }

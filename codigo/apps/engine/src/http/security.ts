@@ -226,18 +226,41 @@ export const requireShellOrAdmin = (tokens: Tokens, lock: FailLock): RequestHand
     "Shell",
   );
 
-/** Orders accept only the header; a missing server configuration fails closed. */
-export function requireBrand(token: string | undefined): RequestHandler {
-  return (req, _res, next) => {
+/** A brand's id and its access code (ADR-21). */
+export interface BrandCredential {
+  id: string;
+  token: string;
+}
+
+/**
+ * Orders accept only the header. The code is compared with every brand's code (no early exit),
+ * and the matching brand id is stored in `res.locals.brandId`. An empty list fails closed.
+ * Failures count in their own lockout, so wrong brand codes never lock out the operator.
+ */
+export function requireBrand(brands: readonly BrandCredential[], lock: FailLock): RequestHandler {
+  return (req, res, next) => {
+    const ip = req.ip ?? "unknown";
+    if (lock.locked(ip)) {
+      next(new AppError("rate_limited", "Too many failed attempts. Try again later."));
+      return;
+    }
     const supplied = headerValue(req, "x-brand-token");
     if (!supplied) {
+      lock.fail(ip);
       next(new AppError("brand_token_missing", "Brand access code required."));
       return;
     }
-    if (!token || !safeEqual(supplied, token)) {
+    let matched: string | undefined;
+    for (const brand of brands) {
+      if (safeEqual(supplied, brand.token) && matched === undefined) matched = brand.id;
+    }
+    if (matched === undefined) {
+      lock.fail(ip);
       next(new AppError("brand_token_invalid", "Brand access code was not accepted."));
       return;
     }
+    lock.ok(ip);
+    res.locals["brandId"] = matched;
     next();
   };
 }

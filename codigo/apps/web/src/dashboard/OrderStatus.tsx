@@ -2,7 +2,7 @@ import type { CatalogResponse, OrderView } from "@shelfie/core/browser";
 import { Pill } from "../ui/index.js";
 import { jobStatus, taskStatus } from "./model.js";
 
-function statusLabel(status: OrderView["jobs"][number]["status"]) {
+export function statusLabel(status: OrderView["jobs"][number]["status"]) {
   switch (status) {
     case "SUBMITTING":
       return { label: "Placing order", tone: "neutral" as const };

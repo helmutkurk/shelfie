@@ -13,7 +13,7 @@ function coverage(jobs: JobView[] | undefined): string {
   return `Counts cover all ${jobs.length} loaded ${jobs.length === 1 ? "request" : "requests"}.`;
 }
 
-function Tile(props: { label: string; value: number }) {
+export function Tile(props: { label: string; value: number }) {
   return (
     <div className="tile">
       <span className="tile-label">{props.label}</span>
@@ -49,8 +49,6 @@ export function Overview(props: {
   health: HealthResponse | undefined;
   ledger: readonly LedgerEvent[];
   onOpenJob: (id: string) => void;
-  /** Absent in ?stage, where the order form is not shown. */
-  onNew?: (() => void) | undefined;
 }) {
   const now = useNow();
   const recentJobs = (props.jobs ?? []).slice(0, RECENT);
@@ -63,15 +61,6 @@ export function Overview(props: {
           <h1 className="dh1">Overview</h1>
           <p className="dsub">Requests, wallets and ledger events loaded on this page.</p>
         </div>
-        {props.onNew && (
-          <button
-            type="button"
-            className="button button-primary dpage-action"
-            onClick={props.onNew}
-          >
-            New order
-          </button>
-        )}
       </header>
 
       <section className="dcard" aria-label="Counts">

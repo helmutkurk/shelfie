@@ -8,12 +8,14 @@ import {
   TX_HASH,
   catalogFixture,
   configFixture,
+  errorResponse,
   h,
   healthFixture,
   jobFixture,
   ledgerFixture,
   makeDeps,
   renderWithDeps,
+  unlockDashboard,
 } from "./testing.js";
 import type { FetchRoutes } from "./testing.js";
 
@@ -21,6 +23,7 @@ beforeEach(() => FakeEventSource.reset());
 afterEach(cleanup);
 
 const baseRoutes = (over: FetchRoutes = {}): FetchRoutes => ({
+  "GET /api/admin/ping": { ok: true },
   "GET /api/config": configFixture(),
   "GET /api/health": healthFixture(),
   "GET /api/catalog": catalogFixture(),
@@ -37,6 +40,7 @@ describe("dashboard banners", () => {
       routes: baseRoutes({ "GET /api/health": healthFixture({ payments: true, verifier: true }) }),
     });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     expect(await screen.findByText("Fake payments.")).toBeTruthy();
     expect(screen.getByText("Verifier stub.")).toBeTruthy();
   });
@@ -44,6 +48,7 @@ describe("dashboard banners", () => {
   it("shows no fake banner on a real run", async () => {
     const { deps } = makeDeps({ routes: baseRoutes() });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     await screen.findByRole("button", { name: /Example Pale Ale 0.33 l/ });
     expect(screen.queryByText("Fake payments.")).toBeNull();
   });
@@ -51,12 +56,14 @@ describe("dashboard banners", () => {
   it("shows the operator override badge when the engine enables it", async () => {
     const { deps } = makeDeps({ routes: baseRoutes({ "GET /api/config": configFixture(true) }) });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     expect(await screen.findByText("Operator override enabled.")).toBeTruthy();
   });
 
   it("says when the engine is not reachable", async () => {
-    const { deps } = makeDeps({ routes: {} });
+    const { deps } = makeDeps({ routes: { "GET /api/admin/ping": { ok: true } } });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     expect(await screen.findByText("Engine not reachable.")).toBeTruthy();
   });
 });
@@ -65,6 +72,7 @@ describe("overview", () => {
   it("labels counts with their coverage and marks the active section", async () => {
     const { deps } = makeDeps({ routes: baseRoutes() });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     fireEvent.click(await screen.findByRole("button", { name: "Overview" }));
     expect(screen.getByRole("button", { name: "Overview" }).getAttribute("aria-current")).toBe(
       "page",
@@ -81,6 +89,7 @@ describe("job list and detail", () => {
   it("lists jobs with product, store and live counts, then opens the detail", async () => {
     const { deps } = makeDeps({ routes: baseRoutes() });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     expect(await screen.findByRole("button", { name: /Example Pale Ale 0.33 l/ })).toBeTruthy();
     expect(screen.getByText(/Passed 0 of 1, open 1, failed 1/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Example Pale Ale 0.33 l/ }));
@@ -137,6 +146,7 @@ describe("ledger view", () => {
       routes: baseRoutes({ "GET /api/ledger": { entries: [ledgerFixture(1, "JOB_CREATED")] } }),
     });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     fireEvent.click(await screen.findByRole("button", { name: "Ledger" }));
     expect(await screen.findByRole("table")).toBeTruthy();
     expect(await screen.findByText("JOB_CREATED")).toBeTruthy();
@@ -145,54 +155,58 @@ describe("ledger view", () => {
   });
 });
 
-describe("dashboard orders", () => {
-  it("places a customer order and opens its store timeline; operator controls require a token", async () => {
-    let orders: unknown[] = [];
-    const order = {
-      orderId: "ord_01",
-      productEan: "4000000000000",
-      createdAt: "2026-10-30T10:00:00Z",
-      fake: true,
-      jobs: [{ storeId: "s1", sokosumiTaskId: "fake-task", jobId: "job_01", status: "COLLECTING" }],
-    };
+describe("operator gate", () => {
+  it("refuses a wrong operator token and loads no operator data", async () => {
     const { deps, calls } = makeDeps({
       routes: baseRoutes({
-        "GET /api/config": {
-          ...configFixture(),
-          orders: {
-            fake: true,
-            enabled: true,
-            realReady: false,
-            maxStores: 5,
-            maxCreditsPerTask: 100,
-          },
-        },
-        "GET /api/orders": () => Response.json({ orders }),
-        "POST /api/orders": () => {
-          orders = [order];
-          return Response.json(order, { status: 201 });
-        },
+        "GET /api/admin/ping": () => errorResponse("unauthorized", "Unauthorized", 401),
       }),
     });
     renderWithDeps(h(DashboardApp), deps);
-    await screen.findByRole("button", { name: /Example Pale Ale/ });
-    // Operator tools are their own section now; no token means no Demo job there either.
-    fireEvent.click(screen.getByRole("button", { name: "Operator" }));
-    expect(screen.queryByRole("button", { name: "Demo job" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Orders" }));
-    fireEvent.change(screen.getByLabelText("Brand access code"), {
-      target: { value: "synthetic-brand-code" },
+    fireEvent.change(await screen.findByLabelText("Operator token"), {
+      target: { value: "wrong-token" },
     });
-    fireEvent.change(screen.getByLabelText("Product"), { target: { value: "4000000000000" } });
-    const stores = screen.getByLabelText<HTMLSelectElement>("Stores");
-    stores.options[0]!.selected = true;
-    fireEvent.change(stores);
-    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
-    fireEvent.click(await screen.findByRole("button", { name: /Timeline and report/ }));
-    expect(await screen.findByText("Waiting for a worker.")).toBeTruthy();
-    const purchase = calls.find((call) => call.method === "POST");
-    expect(purchase?.path).toBe("/api/orders");
-    expect(purchase?.headers["X-Brand-Token"]).toBe("synthetic-brand-code");
-    expect(purchase?.headers["X-Admin-Token"]).toBeUndefined();
+    fireEvent.click(screen.getByRole("button", { name: "Unlock" }));
+    expect(await screen.findByText("The operator token was not accepted.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Overview" })).toBeNull();
+    expect(calls.some((c) => c.path === "/api/jobs" || c.path === "/api/ledger")).toBe(false);
+    expect(calls.find((c) => c.path === "/api/admin/ping")?.headers["X-Admin-Token"]).toBe(
+      "wrong-token",
+    );
+  });
+
+  it("after unlock: no brand order form, and operator tools send the gate token", async () => {
+    const { deps, calls } = makeDeps({
+      routes: baseRoutes({
+        "POST /api/jobs": () =>
+          Response.json(
+            {
+              job: {
+                id: "job_01",
+                state: "RECEIVED",
+                n: 1,
+                k: 1,
+                windowEndsAt: "2026-10-30T10:15:00Z",
+              },
+              tasks: [],
+            },
+            { status: 201 },
+          ),
+      }),
+    });
+    renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard("synthetic-operator-token");
+    await screen.findByRole("button", { name: /Example Pale Ale/ });
+    expect(screen.queryByLabelText("Brand access code")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Place order" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New order" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Operator" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Demo job" }));
+    await waitFor(() =>
+      expect(calls.some((c) => c.method === "POST" && c.path === "/api/jobs")).toBe(true),
+    );
+    const demo = calls.find((c) => c.method === "POST");
+    expect(demo?.headers["X-Admin-Token"]).toBe("synthetic-operator-token");
+    expect(demo?.headers["X-Brand-Token"]).toBeUndefined();
   });
 });

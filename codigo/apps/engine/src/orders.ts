@@ -1,12 +1,22 @@
 import { createHash } from "node:crypto";
 import {
   AppError,
+  BrandIdSchema,
+  BrandProfileSchema,
   CreateOrderRequestSchema,
+  DEMO_BRAND_ID,
   OrderIdSchema,
   OrderIdempotencyKeySchema,
   parseOrThrow,
 } from "@shelfie/core";
-import type { Clock, EngineEnv, IdGenerator, OrderRecord, OrderView } from "@shelfie/core";
+import type {
+  BrandProfile,
+  Clock,
+  EngineEnv,
+  IdGenerator,
+  OrderRecord,
+  OrderView,
+} from "@shelfie/core";
 import type { Engine } from "./engine.js";
 import type { SokosumiClient } from "./sokosumi.js";
 import type { Store } from "./store.js";
@@ -20,12 +30,16 @@ interface OrderDeps {
   client: SokosumiClient;
 }
 
+/** Owner of an order; records written before per-brand codes belong to the demo brand. */
+const ownerOf = (order: OrderRecord): string => order.brandId ?? DEMO_BRAND_ID;
+
 export class Orders {
   private readonly active = new Set<string>();
   constructor(private readonly d: OrderDeps) {}
 
-  async create(body: unknown, key?: string): Promise<OrderView> {
+  async create(body: unknown, key: string | undefined, brandId: string): Promise<OrderView> {
     const req = parseOrThrow(CreateOrderRequestSchema, body);
+    const brand = parseOrThrow(BrandIdSchema, brandId);
     if (
       this.d.env.SOKOSUMI_CLIENT === "fake" &&
       (!this.d.env.FAKE_PAYMENTS ||
@@ -50,7 +64,8 @@ export class Orders {
       parseOrThrow(OrderIdempotencyKeySchema, key);
       const prior = this.d.store.orders.all().find((o) => o.idempotencyKey === key);
       if (prior) {
-        if (prior.requestHash !== requestHash)
+        // A key used by another brand is treated like a key used for a different order.
+        if (ownerOf(prior) !== brand || prior.requestHash !== requestHash)
           throw new AppError(
             "invalid_request",
             "Idempotency key already used for a different order.",
@@ -60,7 +75,7 @@ export class Orders {
           prior.jobs.some((j) => j.status === "SOKOSUMI_UNAVAILABLE" || j.status === "SUBMITTING")
         )
           throw this.unavailable(prior.id);
-        return this.get(prior.id);
+        return this.get(prior.id, brand);
       }
     }
     if (req.storeIds.length > this.d.env.ORDER_MAX_STORES)
@@ -109,6 +124,7 @@ export class Orders {
         jobId: null,
         status: "SUBMITTING",
       })),
+      brandId: brand,
     };
     // Synchronous durable reservation before the first await; concurrent requests see this spend.
     this.d.store.orders.put(order);
@@ -154,7 +170,7 @@ export class Orders {
       }
     }
     this.active.delete(id);
-    return this.get(id);
+    return this.get(id, brand);
   }
 
   private unavailable(id: string): AppError {
@@ -171,8 +187,14 @@ export class Orders {
     if (!order) throw new AppError("not_found", "Order not found.");
     return order;
   }
-  get(id: string): OrderView {
+  /** Another brand's order is indistinguishable from a missing one (ADR-21). */
+  private owned(id: string, brandId: string): OrderRecord {
     const order = this.must(id);
+    if (ownerOf(order) !== brandId) throw new AppError("not_found", "Order not found.");
+    return order;
+  }
+  get(id: string, brandId: string): OrderView {
+    const order = this.owned(id, brandId);
     return {
       orderId: order.id,
       productEan: order.productEan,
@@ -197,13 +219,36 @@ export class Orders {
       }),
     };
   }
-  list(): { orders: OrderView[] } {
+  list(brandId: string): { orders: OrderView[] } {
     return {
       orders: this.d.store.orders
         .all()
+        .filter((o) => ownerOf(o) === brandId)
         .slice()
         .reverse()
-        .map((o) => this.get(o.id)),
+        .map((o) => this.get(o.id, brandId)),
     };
+  }
+
+  /**
+   * GET /api/brand/me (ADR-21). Credits reserved today are this brand's orders on the current UTC
+   * day; the caps are global (one daily cap for the engine), shown here for the brand's view.
+   */
+  profile(brand: { id: string; name: string; walletAddress: string | null }): BrandProfile {
+    const day = this.d.clock.nowIso().slice(0, 10);
+    const reservedToday = this.d.store.orders
+      .all()
+      .filter((o) => ownerOf(o) === brand.id && o.createdAt.slice(0, 10) === day)
+      .reduce((sum, o) => sum + BigInt(o.reservedCredits), 0n);
+    return BrandProfileSchema.parse({
+      brandId: brand.id,
+      name: brand.name,
+      walletAddress: brand.walletAddress,
+      creditsReservedToday: Number(reservedToday),
+      dailyCreditCap: this.d.env.ORDER_DAILY_CREDIT_CAP,
+      maxCreditsPerTask: this.d.env.SOKOSUMI_MAX_CREDITS_PER_TASK,
+      maxStores: this.d.env.ORDER_MAX_STORES,
+      fake: this.d.env.SOKOSUMI_CLIENT === "fake",
+    });
   }
 }

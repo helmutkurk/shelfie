@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import type { ReactElement } from "react";
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import {
   CatalogResponseSchema,
   ClaimResponseSchema,
@@ -356,3 +356,10 @@ export function renderWithDeps(ui: ReactElement, deps: Deps) {
 }
 
 export const h = createElement;
+
+/** Passes the /dashboard operator gate: types the token and waits for the sections to load. */
+export async function unlockDashboard(token = "operator-token"): Promise<void> {
+  fireEvent.change(await screen.findByLabelText("Operator token"), { target: { value: token } });
+  fireEvent.click(screen.getByRole("button", { name: "Unlock" }));
+  await screen.findByRole("button", { name: "Overview" });
+}

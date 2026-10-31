@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { shortAddress } from "../lib/format.js";
 import { Icon } from "../ui/index.js";
 
-/** Shortened payout address with a copy button (copies the full address). */
-export function AddressCopy(props: { address: string }) {
+/** Shortened address with a copy button (copies the full address). `label` names it for screen readers. */
+export function AddressCopy(props: { address: string; label?: string | undefined }) {
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
@@ -24,7 +24,7 @@ export function AddressCopy(props: { address: string }) {
         type="button"
         className="chip"
         onClick={copy}
-        aria-label={`Copy payout address ${short}`}
+        aria-label={`Copy ${props.label ?? "payout address"} ${short}`}
       >
         <Icon name={copied ? "check" : "copy"} size={16} />
         <span>{copied ? "Copied" : "Copy"}</span>

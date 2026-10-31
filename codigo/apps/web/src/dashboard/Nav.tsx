@@ -1,6 +1,12 @@
 export type NavSection = "overview" | "orders" | "locations" | "ledger" | "operator";
 
-const ITEMS: readonly { value: NavSection; label: string }[] = [
+export interface NavItem<T extends string> {
+  value: T;
+  label: string;
+}
+
+/** Operator dashboard sections (`/dashboard`, after the operator token gate). */
+export const DASHBOARD_ITEMS: readonly NavItem<NavSection>[] = [
   { value: "overview", label: "Overview" },
   { value: "orders", label: "Orders" },
   { value: "locations", label: "Locations" },
@@ -8,18 +14,20 @@ const ITEMS: readonly { value: NavSection; label: string }[] = [
   { value: "operator", label: "Operator" },
 ];
 
-/** Section navigation: a sidebar on wide screens, a top bar on narrow screens and in stage mode. */
-export function DashboardNav(props: {
-  current: NavSection;
-  stage: boolean;
-  onSelect: (section: NavSection) => void;
+/**
+ * Section navigation: a sidebar on wide screens, a top bar on narrow screens. The caller passes
+ * its own items (the operator dashboard and the brand app use different sections).
+ */
+export function DashboardNav<T extends string>(props: {
+  items: readonly NavItem<T>[];
+  current: T;
+  label?: string;
+  onSelect: (section: T) => void;
 }) {
-  // Stage mode is for the room: no operator tools there (same as before the redesign).
-  const items = props.stage ? ITEMS.filter((i) => i.value !== "operator") : ITEMS;
   return (
-    <nav className="dnav" aria-label="Dashboard sections">
+    <nav className="dnav" aria-label={props.label ?? "Dashboard sections"}>
       <ul className="dnav-list">
-        {items.map((item) => {
+        {props.items.map((item) => {
           const current = props.current === item.value;
           return (
             <li key={item.value}>

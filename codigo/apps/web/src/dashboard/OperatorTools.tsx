@@ -2,15 +2,15 @@ import { useState } from "react";
 import type { CatalogResponse, LedgerEvent } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
 import { describeError } from "../lib/messages.js";
-import { Button, Field, Select } from "../ui/index.js";
+import { Button, Select } from "../ui/index.js";
 
 export function OperatorTools(props: {
   catalog: CatalogResponse | undefined;
   packId: string;
   enabledOverride: boolean;
   ledger: readonly LedgerEvent[];
+  /** The operator token from the dashboard gate (memory only); it is checked before this renders. */
   adminToken: string;
-  onAdminToken: (token: string) => void;
   onCreated: (jobId: string) => void;
 }) {
   const { api, newId } = useDeps();
@@ -62,41 +62,25 @@ export function OperatorTools(props: {
   return (
     <details className="dcard operator">
       <summary>Operator</summary>
-      <Field
-        label="Operator token"
-        type="password"
-        value={props.adminToken}
-        onChange={props.onAdminToken}
-        autoComplete="off"
-        help="Stays in this tab's memory only."
-      />
-      {props.adminToken ? (
+      <Button variant="plain" disabled={busy || !props.catalog} onClick={() => void demo()}>
+        Demo job
+      </Button>
+      {props.enabledOverride ? (
         <>
-          <Button variant="plain" disabled={busy || !props.catalog} onClick={() => void demo()}>
-            Demo job
+          <Select
+            label="Rejected submission"
+            value={submissionId}
+            placeholder="Select a submission"
+            options={submissions.map((id) => ({ value: id, label: id }))}
+            onChange={setSubmissionId}
+          />
+          <Button variant="plain" disabled={busy || !submissionId} onClick={() => void override()}>
+            Override to pass
           </Button>
-          {props.enabledOverride ? (
-            <>
-              <Select
-                label="Rejected submission"
-                value={submissionId}
-                placeholder="Select a submission"
-                options={submissions.map((id) => ({ value: id, label: id }))}
-                onChange={setSubmissionId}
-              />
-              <Button
-                variant="plain"
-                disabled={busy || !submissionId}
-                onClick={() => void override()}
-              >
-                Override to pass
-              </Button>
-            </>
-          ) : (
-            <p className="footnote">Override is disabled on this engine.</p>
-          )}
         </>
-      ) : null}
+      ) : (
+        <p className="footnote">Override is disabled on this engine.</p>
+      )}
       {error ? (
         <p role="alert" className="form-error">
           {error}

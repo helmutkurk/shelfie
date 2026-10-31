@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  BrandIdSchema,
+  BrandWalletAddressSchema,
   CaptureLocationSchema,
   ClaimLocationSchema,
   ImageMimeTypeSchema,
@@ -100,8 +102,23 @@ export const OrderRecordSchema = z.strictObject({
   requestHash: z.string().regex(/^[a-f0-9]{64}$/),
   reservedCredits: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   jobs: z.array(OrderJobSchema),
+  // ADR-21: owner of the order. Records written before per-brand access codes lack it (= demo).
+  brandId: BrandIdSchema.optional(),
 });
 export type OrderRecord = z.infer<typeof OrderRecordSchema>;
+
+/** GET /api/brand/me (ADR-21). Never carries the access code. */
+export const BrandProfileSchema = z.strictObject({
+  brandId: BrandIdSchema,
+  name: z.string().min(1).max(60),
+  walletAddress: BrandWalletAddressSchema.nullable(),
+  creditsReservedToday: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  dailyCreditCap: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  maxCreditsPerTask: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  maxStores: z.number().int().positive(),
+  fake: z.boolean(),
+});
+export type BrandProfile = z.infer<typeof BrandProfileSchema>;
 
 // ---------------------------------------------------------------- 1.1 Jobs
 /** POST /api/jobs. Strict: free-text fields (product.name, store.address ...) are a 422. */

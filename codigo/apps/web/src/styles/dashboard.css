@@ -392,6 +392,18 @@
 .dsh .new-check {
   margin-top: 0.25em;
 }
+/* Operator Orders: list and detail only (no order form column). Same narrow rules as above. */
+@container dmain (min-width: 44em) {
+  .dgrid.dgrid-two {
+    grid-template-columns: minmax(18em, 24em) minmax(0, 1fr);
+    grid-template-areas: "list detail";
+  }
+}
+@container dmain (min-width: 58em) {
+  .dgrid.dgrid-two {
+    grid-template-columns: minmax(20em, 26em) minmax(0, 1fr);
+  }
+}
 
 /* ---- form */
 .dform .field {
@@ -877,4 +889,52 @@
   margin: 0;
   font-size: 0.85em;
   color: var(--text-2);
+}
+
+/* ---- brand app (/b): header actions, empty overview, profile facts */
+.dhead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1em;
+}
+.dhead-actions .text-button {
+  min-height: 2.75em;
+  font-weight: 600;
+}
+.brand-empty {
+  min-height: 60vh;
+  place-items: center;
+  align-content: center;
+}
+.brand-plus {
+  display: grid;
+  place-items: center;
+  width: 7em;
+  height: 7em;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-size: 3.5em;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+.brand-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.6em 1.25em;
+  margin: 1em 0;
+}
+.brand-facts dt {
+  font-weight: 600;
+  color: var(--text-2);
+}
+.brand-facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

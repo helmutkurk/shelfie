@@ -12,6 +12,7 @@ import {
   jobFixture,
   makeDeps,
   renderWithDeps,
+  unlockDashboard,
 } from "./testing.js";
 import type { FetchRoutes } from "./testing.js";
 
@@ -19,6 +20,7 @@ beforeEach(() => FakeEventSource.reset());
 afterEach(cleanup);
 
 const routes = (over: FetchRoutes = {}): FetchRoutes => ({
+  "GET /api/admin/ping": { ok: true },
   "GET /api/config": configFixture(),
   "GET /api/health": healthFixture(),
   "GET /api/catalog": catalogFixture(),
@@ -33,6 +35,7 @@ describe("dashboard Locations", () => {
   it("lists every catalog store on the map and in the table, with open requests", async () => {
     const { deps } = makeDeps({ routes: routes() });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     fireEvent.click(await screen.findByRole("button", { name: "Locations" }));
 
     const section = await screen.findByRole("region", { name: "Locations" });
@@ -54,6 +57,7 @@ describe("dashboard Locations", () => {
   it("is read only: no add, edit or delete controls", async () => {
     const { deps } = makeDeps({ routes: routes() });
     renderWithDeps(h(DashboardApp), deps);
+    await unlockDashboard();
     fireEvent.click(await screen.findByRole("button", { name: "Locations" }));
     const section = await screen.findByRole("region", { name: "Locations" });
     expect(

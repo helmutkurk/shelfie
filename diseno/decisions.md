@@ -160,6 +160,18 @@ Short records. Status "accepted" means: build on it unless a "verify Friday" ite
 - **Consequences:** Shelfie needs Sokosumi credits for every store checked; the order API is a new trust boundary (token, caps, security tests). The pitch says plainly that in the demo Shelfie places the order on behalf of the brand. The dashboard uses the existing shared design tokens; D-37 remains separate. Owners: engine A, Sokosumi A, web D, order client and caps B (ADR-0006 allows cross edits; coordinate in chat).
 - **Amends:** ADR-17 (the catalog dropdowns become customer-facing), webapps.md sections 3 and 5 (orders from `/dashboard`, no separate `/brand` app).
 
+## ADR-21 Brand app at `/b`, one access code per brand, `/dashboard` operator-only (Fernando, 2026-10-31)
+- **Status:** accepted (team decision, 2026-10-31). Proof of concept for the demo: one brand configured.
+- **Context:** after ADR-20 the brand ordered from `/dashboard`, which also holds the operator views; anyone with the URL saw every job, and all brands shared one `BRAND_TOKEN`, so the engine could not tell whose order was whose.
+- **Decision:**
+  1. New brand app at `/b`, built from the dashboard components: sign-in with the brand access code (tab memory only), two tabs (Overview, Orders) and a Profile panel. Overview shows only the brand's own orders; with no orders it shows only a centered "+" to start a shelf request.
+  2. Engine env `BRAND_ACCOUNTS` (`id|name|addr_test1...|token`, `;`-separated, token 32+ chars, unique): each order stores its `brandId`; `GET/POST /api/orders` and `GET /api/orders/{id}` are scoped to the calling brand (foreign order = 404); `GET /api/brand/me` returns the profile (name, preprod wallet address, credit caps), never the code. The legacy `BRAND_TOKEN` maps to the reserved brand `demo`.
+  3. Profile is informational: in the demo Shelfie still places the Sokosumi Task and pays the Masumi escrow (ADR-20 point 3). The brand's wallet address is shown, not used for payment.
+  4. `/dashboard` is operator-only: a gate asks for the operator token (checked with `GET /api/admin/ping`) and the brand order form leaves it. Public read endpoints (`/api/jobs`, ledger) stay public because the worker app and the ledger need them; the gate hides the operator view, it does not make job data secret.
+- **Alternatives:** brand types its wallet address to sign in (no secret: anyone who copies the public address could spend Shelfie's credits); sign-in by wallet signature (CIP-30 `signData`, the real version, 5-6 h and an unverified verifier library: roadmap); keep one shared code (no per-brand isolation).
+- **Consequences:** the operator registers each brand in the engine env; daily credit cap stays global, reserved credits shown per brand. Contracts: Orders section and admin routes in `diseno/contracts.md`; routes in `diseno/webapps.md`.
+- **Amends:** ADR-20 amendment "`/brand` dropped" (brands now order from `/b`, not `/dashboard`).
+
 ## Open (not yet decided)
 - Early delivery (`earlyDeliver`) default: false (dashboard shows the full table); revisit if the Masumi submit deadline is tight.
 - Whether to enter the API3 track as a secondary candidacy: not decided here; this design does not depend on it.

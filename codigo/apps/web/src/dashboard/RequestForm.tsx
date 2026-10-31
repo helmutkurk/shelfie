@@ -5,16 +5,22 @@ import { useDeps } from "../deps.js";
 import { describeError } from "../lib/messages.js";
 import { Button, Field, Select } from "../ui/index.js";
 
-/** Brand access code is outside the catalog-only form; all secrets stay in tab memory. */
+/**
+ * Catalog-only order form. The brand access code is outside it: with `onBrandToken` the form shows
+ * the access code field (standalone use); without it the form sends the `brandToken` it is given
+ * (the brand app, where sign-in supplies the token). Secrets stay in tab memory.
+ */
 export function RequestForm(props: {
   catalog: CatalogResponse | undefined;
   brandToken: string;
-  onBrandToken: (token: string) => void;
+  onBrandToken?: ((token: string) => void) | undefined;
   onCreated: (order: Pick<OrderView, "orderId">) => void;
   enabled: boolean;
   maxStores: number;
   fake: boolean;
   maxCreditsPerTask: number | undefined;
+  /** Heading; the brand app says "New shelf request". */
+  title?: string | undefined;
 }) {
   const deps = useDeps();
   const [ean, setEan] = useState("");
@@ -64,16 +70,18 @@ export function RequestForm(props: {
     }
   };
   return (
-    <section className="dcard dform" aria-label="New order">
-      <h2 className="dh2">New order</h2>
-      <Field
-        label="Brand access code"
-        type="password"
-        value={props.brandToken}
-        onChange={props.onBrandToken}
-        autoComplete="off"
-        help="Stays in this tab's memory only."
-      />
+    <section className="dcard dform" aria-label={props.title ?? "New order"}>
+      <h2 className="dh2">{props.title ?? "New order"}</h2>
+      {props.onBrandToken ? (
+        <Field
+          label="Brand access code"
+          type="password"
+          value={props.brandToken}
+          onChange={props.onBrandToken}
+          autoComplete="off"
+          help="Stays in this tab's memory only."
+        />
+      ) : null}
       <form
         className="request-form"
         onSubmit={(event) => {

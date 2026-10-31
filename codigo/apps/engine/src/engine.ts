@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   AppError,
   CaptureLocationSchema,
+  brandAccounts,
   ClaimIdSchema,
   ClaimRequestSchema,
   CreateJobRequestSchema,
@@ -1602,7 +1603,7 @@ export class Engine {
       orders: {
         fake: this.env.SOKOSUMI_CLIENT === "fake",
         enabled:
-          Boolean(this.env.BRAND_TOKEN) &&
+          brandAccounts(this.env).length > 0 &&
           this.env.SOKOSUMI_CLIENT === "fake" &&
           this.env.FAKE_PAYMENTS &&
           (this.env.VERIFY_CLIENT ?? "fake") === "fake" &&

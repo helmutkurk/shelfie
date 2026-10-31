@@ -56,6 +56,32 @@ describe("new order", () => {
     expect(screen.getByLabelText<HTMLInputElement>("Brand access code").type).toBe("password");
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
+  it("brand app: no access code field, and the signed-in token is sent", async () => {
+    const created: string[] = [];
+    const { deps, calls } = makeDeps({ routes: { "POST /api/orders": order() } });
+    renderWithDeps(
+      h(RequestForm, {
+        catalog: catalogFixture(),
+        brandToken: "signed-in-code",
+        title: "New shelf request",
+        onCreated: (o: { orderId: string }) => {
+          created.push(o.orderId);
+        },
+        enabled: true,
+        maxStores: 5,
+        fake: true,
+        maxCreditsPerTask: 100,
+      }),
+      deps,
+    );
+    expect(screen.queryByLabelText("Brand access code")).toBeNull();
+    expect(screen.getByRole("heading", { name: "New shelf request" })).toBeTruthy();
+    pickProduct();
+    pickStores("s1");
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+    await waitFor(() => expect(created).toEqual(["ord_01"]));
+    expect(calls[0]?.headers["X-Brand-Token"]).toBe("signed-in-code");
+  });
   it("filters stores by chain, preserves selected stores and requires code/product/store", () => {
     setup({}, "");
     pickProduct();

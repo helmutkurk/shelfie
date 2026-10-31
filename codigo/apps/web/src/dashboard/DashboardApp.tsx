@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
 import { useDeps } from "../deps.js";
 import { usePolling, useLedger } from "../lib/hooks.js";
-import { ExplorerProvider, Logo, Toast } from "../ui/index.js";
+import { ExplorerProvider, Button, Field, Logo, Toast } from "../ui/index.js";
 import { DEFAULT_EXPLORER_TX_BASE } from "../lib/format.js";
 import "../styles/dashboard.css";
 import { Banners } from "./Banners.js";
-import { DashboardNav } from "./Nav.js";
+import { DASHBOARD_ITEMS, DashboardNav } from "./Nav.js";
 import type { NavSection } from "./Nav.js";
 import { Header } from "./Header.js";
 import { JOB_WINDOW } from "./model.js";
@@ -14,44 +14,100 @@ import { TxBaseContext } from "./TxChip.js";
 import { JobDetail } from "./JobDetail.js";
 import { JobList } from "./JobList.js";
 import { LedgerView } from "./LedgerView.js";
-import type { JobView, OrderView } from "@shelfie/core/browser";
-import { OrderStatus } from "./OrderStatus.js";
+import type { JobView } from "@shelfie/core/browser";
 import { OperatorTools } from "./OperatorTools.js";
 import { describeError } from "../lib/messages.js";
-import { RequestForm } from "./RequestForm.js";
 import { LocationsPanel } from "./Locations.js";
 
-/** In-app view state (not in the URL). `new` and `job` belong to the Orders section. */
+/** In-app view state (not in the URL). `job` belongs to the Orders section. */
 type View =
   | { name: "overview" }
   | { name: "orders" }
-  | { name: "new" }
   | { name: "job"; id: string }
   | { name: "locations" }
   | { name: "ledger" }
   | { name: "operator" };
 
 function sectionOf(view: View): NavSection {
-  switch (view.name) {
-    case "new":
-    case "job":
-    case "orders":
-      return "orders";
-    default:
-      return view.name;
-  }
+  return view.name === "job" ? "orders" : view.name;
 }
 
-/** Customer and operator dashboard (`/dashboard`). Sidebar sections; `?stage` keeps the large list and detail. */
+/**
+ * Operator dashboard (`/dashboard`, ADR-21). Nothing is shown until the operator token passes
+ * `GET /api/admin/ping`; brand ordering lives in the brand app (`/b`).
+ */
 export function DashboardApp() {
-  const { api, env } = useDeps();
-  const [view, setView] = useState<View>({ name: "orders" });
-  const [brandToken, setBrandToken] = useState("");
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [adminToken, setAdminToken] = useState(""); // memory only (security.md: no localStorage)
-  const [toast, setToast] = useState<string | null>(null);
+  // Memory only (security.md: no localStorage). Set only after the engine accepted the token.
+  const [adminToken, setAdminToken] = useState<string | null>(null);
   const stage =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).has("stage");
+  if (adminToken === null) return <OperatorGate onUnlock={setAdminToken} />;
+  return <OperatorConsole adminToken={adminToken} stage={stage} />;
+}
+
+/** First screen: the operator token, checked with the admin ping before any operator view loads. */
+function OperatorGate(props: { onUnlock: (token: string) => void }) {
+  const { api } = useDeps();
+  const [token, setToken] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submit = async () => {
+    if (token === "" || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.adminPing(token);
+      props.onUnlock(token);
+    } catch (err) {
+      setError(describeError(err));
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="app app-dashboard dsh">
+      <main className="dpage">
+        <header className="dpage-head">
+          <div>
+            <h1 className="dh1">Operator</h1>
+            <p className="dsub">Operator views for Shelfie. Brand customers use /b.</p>
+          </div>
+        </header>
+        <section className="dcard dform" aria-label="Operator sign in">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
+            }}
+          >
+            <Field
+              label="Operator token"
+              type="password"
+              value={token}
+              onChange={setToken}
+              autoComplete="off"
+              help="Stays in this tab's memory only."
+            />
+            <Button type="submit" disabled={token === "" || busy}>
+              {busy ? "Checking…" : "Unlock"}
+            </Button>
+          </form>
+          {error ? (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+/** The operator sections. Mounted only after the gate, so no operator data loads before it. */
+function OperatorConsole(props: { adminToken: string; stage: boolean }) {
+  const { api, env } = useDeps();
+  const [view, setView] = useState<View>({ name: "orders" });
+  const [toast, setToast] = useState<string | null>(null);
+  const { adminToken, stage } = props;
 
   const { data: config } = usePolling((s) => api.config(s), 30_000);
   const { data: health, error: healthError } = usePolling((s) => api.health(s), 3000);
@@ -61,23 +117,20 @@ export function DashboardApp() {
     // verify Friday: GET /api/jobs carries no counts, so each recent job is read once more.
     return Promise.all(list.jobs.slice(0, JOB_WINDOW).map((j) => api.job(j.id, signal)));
   }, 3000);
-  // Keyed inner component resets fetched order state when the access code changes.
   const ledger = useLedger();
 
   const section = sectionOf(view);
-  const gridView = view.name === "new" || view.name === "job" ? view.name : "orders";
   const onCreated = useCallback((id: string) => {
     setToast("Request sent");
     setView({ name: "job", id });
   }, []);
   const onSelect = useCallback((next: NavSection) => {
-    setView((cur) => {
-      // Orders keeps the open request or the new-order form when you return to it.
-      if (next === "orders") return sectionOf(cur) === "orders" ? cur : { name: "orders" };
-      return { name: next };
-    });
+    // Orders keeps the open request when you return to it.
+    setView((cur) => (next === "orders" && sectionOf(cur) === "orders" ? cur : { name: next }));
   }, []);
   const explorerBase = config?.explorerTxBase ?? DEFAULT_EXPLORER_TX_BASE;
+  // Stage mode is for the room: no operator tools there.
+  const items = stage ? DASHBOARD_ITEMS.filter((i) => i.value !== "operator") : DASHBOARD_ITEMS;
 
   return (
     <ExplorerProvider value={explorerBase}>
@@ -86,7 +139,12 @@ export function DashboardApp() {
           <div className="dshell">
             <aside className="dside">
               <Logo />
-              <DashboardNav current={section} stage={stage} onSelect={onSelect} />
+              <DashboardNav
+                items={items}
+                current={section}
+                label="Operator sections"
+                onSelect={onSelect}
+              />
             </aside>
             <main className="dmain">
               <Header health={health} healthError={healthError} stream={ledger.status} />
@@ -104,91 +162,46 @@ export function DashboardApp() {
                   health={health}
                   ledger={ledger.entries}
                   onOpenJob={(id) => setView({ name: "job", id })}
-                  onNew={stage ? undefined : () => setView({ name: "new" })}
                 />
               ) : null}
 
-              {/* Stays mounted while hidden: the form keeps its access code, selections and
-                  idempotency keys when the brand switches sections. */}
-              <div className="dpage dorders" hidden={section !== "orders"}>
-                <header className="dpage-head">
-                  <div>
-                    <h1 className="dh1">Orders</h1>
-                    <p className="dsub">
-                      One shelf check per store. Follow each store to its report.
-                    </p>
-                  </div>
-                </header>
-                <div className="dgrid" data-view={gridView}>
-                  {!stage ? (
-                    <div className="dcol dcol-form">
-                      <button
-                        type="button"
-                        className="dback"
-                        onClick={() => setView({ name: "orders" })}
-                      >
-                        ‹ Requests
-                      </button>
-                      <RequestForm
+              {section === "orders" ? (
+                <div className="dpage">
+                  <header className="dpage-head">
+                    <div>
+                      <h1 className="dh1">Orders</h1>
+                      <p className="dsub">
+                        Every request, newest first. Open one for its timeline and report.
+                      </p>
+                    </div>
+                  </header>
+                  <div
+                    className="dgrid dgrid-two"
+                    data-view={view.name === "job" ? "job" : "orders"}
+                  >
+                    <div className="dcol dcol-list">
+                      <JobList
+                        jobs={jobs}
                         catalog={catalog}
-                        brandToken={brandToken}
-                        onBrandToken={setBrandToken}
-                        enabled={config?.orders?.enabled ?? false}
-                        fake={config?.orders?.fake ?? true}
-                        maxStores={config?.orders?.maxStores ?? 5}
-                        maxCreditsPerTask={config?.orders?.maxCreditsPerTask}
-                        onCreated={(order) => {
-                          setOrderId(order.orderId);
-                          setView({ name: "orders" });
-                        }}
+                        selectedId={view.name === "job" ? view.id : null}
+                        onOpen={(id) => setView({ name: "job", id })}
                       />
                     </div>
-                  ) : null}
-                  <div className="dcol dcol-list">
-                    {brandToken ? (
-                      <OrdersPanel
-                        key={`${brandToken}:${orderId ?? ""}`}
-                        token={brandToken}
-                        selectedId={orderId}
-                        catalog={catalog}
-                        onOpenJob={(id) => setView({ name: "job", id })}
-                      />
-                    ) : (
-                      <p className="dsub">
-                        Enter your brand access code in New order to see orders.
-                      </p>
-                    )}
-                    <JobList
-                      jobs={jobs}
-                      catalog={catalog}
-                      selectedId={view.name === "job" ? view.id : null}
-                      onOpen={(id) => setView({ name: "job", id })}
-                      onNew={() => setView({ name: "new" })}
-                    />
-                    {!stage ? (
-                      <button
-                        type="button"
-                        className="button button-primary new-check"
-                        onClick={() => setView({ name: "new" })}
-                      >
-                        New order
-                      </button>
-                    ) : null}
-                  </div>
-                  <div className="dcol dcol-detail">
-                    {view.name === "job" ? (
-                      <JobDetail
-                        jobId={view.id}
-                        catalog={catalog}
-                        ledger={ledger.entries}
-                        onBack={() => setView({ name: "orders" })}
-                      />
-                    ) : (
-                      <NoRequestSelected jobs={jobs} />
-                    )}
+                    <div className="dcol dcol-detail">
+                      {view.name === "job" ? (
+                        <JobDetail
+                          jobId={view.id}
+                          catalog={catalog}
+                          ledger={ledger.entries}
+                          onBack={() => setView({ name: "orders" })}
+                        />
+                      ) : (
+                        <NoRequestSelected jobs={jobs} />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
               {section === "locations" ? (
                 <div className="dpage">
@@ -208,12 +221,12 @@ export function DashboardApp() {
                 </div>
               ) : null}
 
-              {!stage ? (
-                <div className="dpage" hidden={section !== "operator"}>
+              {section === "operator" && !stage ? (
+                <div className="dpage">
                   <header className="dpage-head">
                     <div>
                       <h1 className="dh1">Operator tools</h1>
-                      <p className="dsub">Need the operator token. These are not brand actions.</p>
+                      <p className="dsub">Uses the operator token you unlocked this tab with.</p>
                     </div>
                   </header>
                   <OperatorTools
@@ -222,7 +235,6 @@ export function DashboardApp() {
                     enabledOverride={config?.demoOverrideEnabled ?? false}
                     ledger={ledger.entries}
                     adminToken={adminToken}
-                    onAdminToken={setAdminToken}
                     onCreated={onCreated}
                   />
                 </div>
@@ -243,42 +255,6 @@ function NoRequestSelected(props: { jobs: JobView[] | undefined }) {
       <h2 className="dh2">Request detail</h2>
       <p className="dsub">Select a request to see its timeline, transactions and report.</p>
       <OverviewTiles jobs={props.jobs} />
-    </section>
-  );
-}
-
-function OrdersPanel(props: {
-  token: string;
-  selectedId: string | null;
-  catalog: Parameters<typeof OrderStatus>[0]["catalog"];
-  onOpenJob: (id: string) => void;
-}) {
-  const { api } = useDeps();
-  const { data, error } = usePolling(async (signal) => {
-    const list = await api.orders(props.token, signal);
-    if (props.selectedId && !list.orders.some((o) => o.orderId === props.selectedId)) {
-      const selected = await api.order(props.selectedId, props.token, signal);
-      return { orders: [selected, ...list.orders] };
-    }
-    return list;
-  }, 3000);
-  const orders: OrderView[] = data?.orders ?? [];
-  return (
-    <section aria-label="Orders" className="dstack">
-      {error ? (
-        <p role="alert" className="form-error">
-          {describeError(error)}
-        </p>
-      ) : null}
-      {orders.map((order) => (
-        <OrderStatus
-          key={order.orderId}
-          order={order}
-          catalog={props.catalog}
-          onOpenJob={props.onOpenJob}
-        />
-      ))}
-      {data && orders.length === 0 ? <p className="dsub">No orders yet.</p> : null}
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { Express } from "express";
 import { createLogger } from "@shelfie/core";
 import { createApp } from "./http/app.js";
-import { orderRig } from "./orders-testkit.js";
+import { BRAND_A, BRAND_B, TWO_BRANDS_ENV, orderRig } from "./orders-testkit.js";
 import { EAN } from "./testkit.js";
 
 /** Actual Express middleware/JSON parsing with Node HTTP messages; no listening socket. */
@@ -99,5 +99,76 @@ describe("order HTTP security without sockets", () => {
     const logs = r.logs.join("\n");
     expect(logs).not.toContain(r.env.BRAND_TOKEN!);
     expect(logs).not.toContain("?token");
+  });
+});
+
+describe("brand isolation over HTTP (ADR-21)", () => {
+  it("scopes orders and the profile per access code and never returns a code", async () => {
+    const r = orderRig({ BRAND_TOKEN: "", BRAND_ACCOUNTS: TWO_BRANDS_ENV });
+    const app = createApp({
+      engine: r.engine,
+      orders: r.orders,
+      env: r.env,
+      clock: r.clock,
+      logger: createLogger({ sink: (line) => r.logs.push(line) }),
+    });
+    const a = { "x-brand-token": BRAND_A.token };
+    const b = { "x-brand-token": BRAND_B.token };
+    const input = { productEan: EAN, storeIds: ["s1"] };
+    const created = await request(app, "POST", "/api/orders", input, {
+      ...a,
+      "idempotency-key": "brand-key-01",
+    });
+    expect(created.status).toBe(201);
+    const id = (created.body as { orderId: string }).orderId;
+
+    expect((await request(app, "GET", `/api/orders/${id}`, undefined, b)).body).toMatchObject({
+      error: { code: "not_found" },
+    });
+    expect((await request(app, "GET", "/api/orders", undefined, b)).body).toEqual({ orders: [] });
+    expect((await request(app, "GET", `/api/orders/${id}`, undefined, a)).body).toEqual(
+      created.body,
+    );
+    expect(
+      (
+        await request(app, "POST", "/api/orders", input, {
+          ...b,
+          "idempotency-key": "brand-key-01",
+        })
+      ).body,
+    ).toMatchObject({ error: { code: "invalid_request" } });
+
+    const meA = await request(app, "GET", "/api/brand/me", undefined, a);
+    expect(meA.status).toBe(200);
+    expect(meA.body).toMatchObject({
+      brandId: BRAND_A.id,
+      name: BRAND_A.name,
+      creditsReservedToday: 100,
+      fake: true,
+    });
+    const meB = await request(app, "GET", "/api/brand/me", undefined, b);
+    expect(meB.body).toMatchObject({ brandId: BRAND_B.id, creditsReservedToday: 0 });
+    expect(Object.keys(meB.body as object).sort()).toEqual(
+      [
+        "brandId",
+        "creditsReservedToday",
+        "dailyCreditCap",
+        "fake",
+        "maxCreditsPerTask",
+        "maxStores",
+        "name",
+        "walletAddress",
+      ].sort(),
+    );
+    expect(JSON.stringify(meA.body) + JSON.stringify(meB.body)).not.toContain("token");
+
+    expect((await request(app, "GET", "/api/brand/me")).status).toBe(401);
+    expect((await request(app, "GET", `/api/brand/me?token=${BRAND_A.token}`)).status).toBe(401);
+    expect(
+      (await request(app, "GET", "/api/brand/me", undefined, { "x-brand-token": "wrong" })).status,
+    ).toBe(401);
+    const logs = r.logs.join("\n");
+    expect(logs).not.toContain(BRAND_A.token);
+    expect(logs).not.toContain(BRAND_B.token);
   });
 });

@@ -13,7 +13,8 @@ export function JobList(props: {
   catalog: CatalogResponse | undefined;
   selectedId: string | null;
   onOpen: (id: string) => void;
-  onNew: () => void;
+  /** Absent on the operator dashboard, where requests are not placed from this list. */
+  onNew?: (() => void) | undefined;
 }) {
   const [filter, setFilter] = useState<JobFilter>("all");
   const now = useNow();
@@ -36,7 +37,9 @@ export function JobList(props: {
       {jobs.length === 0 ? (
         <EmptyState
           text="No requests yet. Create one to see it here."
-          action={<TextButton onClick={props.onNew}>New order</TextButton>}
+          action={
+            props.onNew ? <TextButton onClick={props.onNew}>New order</TextButton> : undefined
+          }
         />
       ) : (
         <ul className="jlist">

@@ -49,6 +49,10 @@ export function describeError(err: unknown): string {
       return "Service busy, your task is kept; try again.";
     case "unauthorized":
       return "The operator token was not accepted.";
+    case "brand_token_missing":
+      return "Enter your brand access code.";
+    case "brand_token_invalid":
+      return "That brand access code was not accepted.";
     case "input_schema_violation":
     case "intake_rejected":
       return err.message;
