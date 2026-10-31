@@ -25,7 +25,7 @@ Friday night (before sleeping):
 
 | What | Who | Done when |
 |---|---|---|
-| Voice-over for all 12 shots generated with Gemini TTS in Google AI Studio (voice "Koda", one style prompt; text from `video-script.md`), `vo_s01.wav` ... `vo_s12.wav`, 121 s of speech. Shot 6 uses three fingers right of the tag as a placeholder and is regenerated on Saturday | agent (done Fri 23:45) | 12 files in `~/shelfie-video/raw/` |
+| Voice-over for all 12 shots generated with Gemini TTS in Google AI Studio (voice "Nika" (warm, conversational), one style prompt; text from `video-script.md`), `vo_s01.wav` ... `vo_s12.wav`, 121 s of speech. Shot 6 uses three fingers right of the tag as a placeholder and is regenerated on Saturday | agent (done Fri 23:45) | 12 files in `~/shelfie-video/raw/` |
 | Refund tx of an earlier escrow run on preprod.cardanoscan.io, screen recorded (shot 9, label "earlier test run"); hash from `tx-hashes.md` | Lorenz | `s09_refund_t1.mkv` |
 | Log Friday's payout tx `7000899...` (job `job_c88c9da1cb68`) via `/log-evidence`, hash copied from the explorer | Lorenz | row committed (else fallback 1 in section 5 is not usable) |
 | Plan A or B (section 1) decided | Isabel | answer in chat |
