@@ -1,5 +1,5 @@
 import type { CatalogResponse, HealthResponse, JobView, LedgerEvent } from "@shelfie/core/browser";
-import { formatAda, formatTime } from "../lib/format.js";
+import { formatTime, formatWalletBalance } from "../lib/format.js";
 import { Pill } from "../ui/index.js";
 import { isActiveJob, JOB_WINDOW, describeJob, jobOutcome, jobViewStatus } from "./model.js";
 import { relativeTime, useNow } from "./time.js";
@@ -74,11 +74,11 @@ export function Overview(props: {
           <div className="tiles">
             <div className="tile">
               <span className="tile-label">Verification wallet</span>
-              <span className="tile-value">{formatAda(health.wallets.vbuy.balanceLovelace)}</span>
+              <span className="tile-value">{formatWalletBalance(health.wallets.vbuy)}</span>
             </div>
             <div className="tile">
               <span className="tile-label">Payout wallet</span>
-              <span className="tile-value">{formatAda(health.wallets.pay.balanceLovelace)}</span>
+              <span className="tile-value">{formatWalletBalance(health.wallets.pay)}</span>
               <span className="dsub">Queue {health.wallets.pay.queueDepth ?? 0}</span>
             </div>
           </div>
