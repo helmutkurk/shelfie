@@ -6,6 +6,10 @@
 
 ## Current focus
 
+Photo-free real-engine M6 checks implemented in `codigo/scripts/live-check.ts` (Codex, 2026-10-31, D-17). Seven local tests, typecheck and lint pass. Live run and two-phone evidence are pending; D-17 is blocked rather than marked complete. No engine/web/payment behavior changed; no dependencies added.
+
+## Previous focus (2026-10-30)
+
 ADR-20 customer orders implemented on fakes in `/dashboard` per Helmut's amendment (Codex, 2026-10-30 evening). D-36 done; B-16 blocked on B-15's real capped REST Task/authority/identity proof. Real adapter probes the schema and refuses purchases; shared deployments remain on their existing real-payment configuration. [Validation and handoff](../codigo/docs/adr20-validation.md).
 
 ## Update 2026-10-30 evening (Claude for Helmut)
@@ -13,18 +17,25 @@ Public deployment is live (dev.shelfieapp.fyi, app.shelfieapp.fyi, api and api-d
 
 ## Active branch
 
-`feature/adr20-brand-orders`, based on `origin/dev`, worktree `shelfie-orders`. Uncommitted changes; no git write, commit or push. Orchestrator commits with `Purpose-impact: ADR-20` and references B-16/D-36.
+`dev`, with this session's uncommitted changes. `git switch -c feature/live-checks` failed because `.git` is mounted read-only in this sandbox; branch creation and the requested commit are pending. Nothing pushed. On the unrestricted hub, create the branch from this `dev` worktree and commit with `feat(scripts): add photo-free live engine checks (D-17)`; note that D edited B-owned scripts in the commit body.
 
 ## Components I added or integrated
 
 | Name | Path | What it does | How to run | Status | Depends on |
 |---|---|---|---|---|---|
+| Live checks | `codigo/scripts/live-check.ts`, `live-check.sec.test.ts` | Real API health/feed/claims/location/no-payment checks; release/reclaim and cleanup | From `codigo/`: export `ADMIN_TOKEN`, `WORKER_ADDRS`; `ENGINE_URL=https://api-dev.shelfieapp.fyi npx tsx scripts/live-check.ts` | local validation passes; live run pending | production engine; 2-3 distinct teammate preprod addresses |
 | Worker/dashboard | `codigo/apps/web` | Camera/GPS worker flow and live job/ledger views; public package subpaths | `cd codigo && npm run dev -w @shelfie/web` | build and component tests pass; real-phone QA pending | engine, core/browser, evidence/explorer |
 | Evidence ledger + CLI | `codigo/packages/evidence` | Append-only hash chain and explorer helpers; queue/verdict ledger integration | `npm run verify-ledger -w @shelfie/evidence -- <ledger-path>` from codigo | local tests pass; no real tx evidence | core |
 | Team/run handoff | `docs/START-HERE-TEAM.md`, `codigo/README.md` | First 30 minutes, tasks/times, fake/real commands, verify-Friday register | read | complete | component READMEs and canonical design |
 | Branch model | `docs/adr/0005-branch-model-dev-integration-main-final.md`, contributor docs, `.github/`, `.claude/`, `scripts/launch-github.sh` | `dev` integration and gated `dev` -> `main` releases | read | docs and guards updated; Fernando review and live GitHub protection remain | ADR-0005 |
 
 ## What runs / next command
+
+Current block: Node 24 workspace/scripts typecheck, root lint, seven new script tests, redacted gitleaks scans and diff whitespace check pass. Full `npm run check` reached existing engine/payment/vision/verifier tests, repeatedly timed out on HTTP-based tests and was interrupted (exit 130); it is not a passing full check. No deployed run was attempted (sandbox cannot open sockets). Usage and manual M6 gaps: `codigo/scripts/README.md`.
+
+Exact next command at repo root on the unrestricted hub: `git switch -c feature/live-checks`. Then `cd codigo && npm run check`; with operator token and `WORKER_ADDRS` exported, run `ENGINE_URL=https://api-dev.shelfieapp.fyi npx tsx scripts/live-check.ts`. Authenticate `gh` before peer review (`pending` currently fails authentication). Capture real phone/browser evidence separately before closing D-17.
+
+Previous-block validation and handoff (2026-10-30):
 
 Node 24 typecheck, ESLint, web production build, 113 targeted tests, three shell test files, 113 hook tests, redacted source scans and diff whitespace check pass. Full-suite socket listeners hit sandbox EPERM; details in [ADR-20 validation](../codigo/docs/adr20-validation.md). Fake order lifecycle includes delivery, withholding and observed refund; no real order was placed. Peer-review lookup requires authenticated gh on hub.
 
@@ -50,4 +61,4 @@ Node 24.22.2 via mise (global stays 26.8.2), Sokosumi CLI 1.0.4, logged in to pr
 
 ## Last updated
 
-2026-10-30 by Codex for Helmut (D).
+2026-10-31 by Codex for Helmut (D).

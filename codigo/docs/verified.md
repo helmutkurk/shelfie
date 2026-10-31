@@ -88,3 +88,15 @@ Use Shelfie's preprod buyer account on the unrestricted hub. Do not paste creden
 6. Replace the fail-closed branch in `RealSokosumiClient.createTask` with that verified request, retain Bearer redaction/timeout/no redirects/bounded response, and add mocked request+response+idempotency tests. Update this register and contracts with the working endpoint/body/credit price/identity mapping. Only then close B-15 and B-16 and enable real purchases in `/api/config.orders`.
 
 Hub engine env names (no browser/VITE secrets): `SOKOSUMI_CLIENT=real`, `SOKOSUMI_API_URL=https://api.preprod.sokosumi.com`, `SOKOSUMI_API_TOKEN`, `SOKOSUMI_AGENT_ID`, `SOKOSUMI_MAX_CREDITS_PER_TASK`, `ORDER_MAX_STORES`, `ORDER_DAILY_CREDIT_CAP`, `BRAND_TOKEN` (32+ characters). These select the real adapter today, **but do not enable buying until step 6**. The ceilings are not price quotes. Fake local tests use `SOKOSUMI_CLIENT=fake`, `FAKE_PAYMENTS=1`, `VERIFY_CLIENT=fake`, `VERIFIER_PAYMENT=off`, `EVIDENCE_RUN_LOCKED=0` and a private brand access code. Shared deployments stay on their existing real-payment configuration; do not switch them to fakes for this rehearsal.
+
+## Photo-free live checks (Codex for Helmut, 2026-10-31, D-17)
+
+Local code/tests only; no deployed request, photo, payment or transaction evidence captured.
+
+| Item | Answer | Source / proof |
+|---|---|---|
+| Worker identity | Current `/w` stores worker id, payout profile and consent locally; claims send `workerId` in the body. Session-cookie auth is deferred; there is no consent/session HTTP handshake to simulate | `apps/web/src/lib/storage.ts`, `lib/api.ts`, `worker/Onboarding.tsx`; engine `http/app.ts` |
+| Location rejection without a photo | Submission route decodes base64 before the location gate and cleans JPEG afterwards. `live-check.ts` uses an unusable JPEG probe: expected `location_mismatch`; JPEG validation prevents a paid submission if location checks are disabled | `apps/engine/src/engine.ts` `submitPhoto`; `scripts/live-check.sec.test.ts` probe test |
+| Shared engine ledger | Match this job/task and claim rather than global verify-tx totals; require location rejection, no submission/verification/payout events, unchanged attempts and no payout rows. Public APIs expose no internal verify-call counter | `scripts/live-check.ts`; ledger-scoping tests |
+| Local validation | Seven Node tests pass; workspace and scripts typecheck and root lint pass with Node 24.22.2. Deployed checks and M6 remain unverified | `node --import tsx scripts/live-check.sec.test.ts`; typecheck/lint phases of `npm run check`; [usage and limitations](../scripts/README.md#live-usage-d-17) |
+| Remote settings | Health exposes preprod, engine fake flags and verifier reachability, but does not prove server `NODE_ENV` or verifier live/stub mode | `HealthResponseSchema`, engine `health`; run `evidence-preflight.ts` on hub before recording |
