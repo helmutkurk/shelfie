@@ -359,3 +359,16 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - /b: balance tiles (credits available today, max per store) in Spend; "Your transactions" in the profile; the escrow wait shows "Locking payment in escrow (2-3 min)".
 - /w: Wallet "Your tasks" lists the last photos taken on this phone (device storage, ids and names only) with verdict and payout tx from `GET /api/submissions/{id}`. No engine change.
 - Verified: `npm run check` passes (550 passed, 2 skipped); new tests in `apps/web/src/outcomes.test.ts`. Not checked in a browser (no operator token or brand code on this laptop): Helmut checks the pages after the deploy.
+
+## 2026-10-31 09:30 - Isabel (A) + Claude: wallets, brand credits, task cleanup
+
+- Done: settlement of the first real DELIVER: Task `01a18fe6` Withdrawn `2dd05c8b88e460f6c45ab295e4c3213dd4baeec4d1d7192107657cc7fe6beb1c` (block time 03:46:58 UTC, from the worker journal), row in tx-hashes.md. Full M4 cycle through the real engine: lock, verify, payout, ResultSubmitted, Withdrawn.
+- Done: /b Credits paid and refunded were 0 because the Sokosumi create answer has no price yet; the engine now reads `totalCredits` with `GET /v1/tasks/{id}` after the job is linked (cc5efcd). Needs an engine redeploy.
+- Done: dashboard wallets checked: /api/health real values (verification 9780.13 tADA, payout 9981.97 tADA, queue 0, fakes off). Koios (429) and Cardanoscan (bot check) blocked an on-chain cross-check from this laptop. An unreadable balance now reads Unknown, not 0 tADA (e0a2a36).
+- Done: operator test job with catalog dropdowns (fc77a4f); worker wallet earnings and explorer link (7ae6c0c).
+- Decision (T-16): escrow go. Real escrow cycles run on dev since Sat 01:00, DELIVER and refund paths both observed.
+- Tasks cleaned to match reality: done A-21, B-14, A-23, T-14, B-16, T-16, C-11, D-16; blocked T-26 (stay on dev, Helmut), T-25 (ADR-22), T-23 (deferred like A-18); D-17 doing.
+- Lesson: `scripts/task.sh` write commands fail on Windows (Python `fcntl`); run them through WSL: `MSYS_NO_PATHCONV=1 wsl -e bash -lc 'cd /mnt/c/.../shelfie-team && bash scripts/task.sh ...'`.
+- TODO: redeploy engine and web from dev; then one real order to see Credits paid on /b.
+- TODO: explorer screenshots for the evidence rows of Task 01a18fe6.
+- Handoff: branch `dev`, all pushed. Worker for the demo runs on one laptop only.
