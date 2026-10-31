@@ -2,7 +2,7 @@
 
 Production plan for the Devfolio demo video. Story, voice-over and shot intent: [video-script.md](video-script.md). This file owns the Saturday timeline, the edit decision list (EDL), capture tooling and fallbacks. Owner: C (Lorenz, C-14); the cut is done by Lorenz's coding agent, Lorenz reviews.
 
-The video is not shown in the live pitch; judges watch it alone afterwards, so it must explain everything without us. Length: at most 2.5 minutes (prizes page, "What to submit"). Target 2:20. Must show: who it is for, the problem, the business case, one paid job from start to finish with its transactions on a preprod explorer, agent hires agent (x402), payment tied to the result, honest limits.
+The video is not shown in the live pitch; judges watch it alone afterwards, so it must explain everything without us. Length: at most 3:30 (Lorenz, 2026-10-31; the prizes page said 2.5 minutes before). Target 3:00; v3 is 3:00. Must show: who it is for, the problem, the business case, one paid job from start to finish with its transactions on a preprod explorer, agent hires agent (x402), payment tied to the result, honest limits.
 
 ## 1. One job, start to finish
 
@@ -109,7 +109,7 @@ Privacy in every frame: no faces, no customers or staff, no tokens, env files or
 | Escrow result not in by 11:00 | Lock and settlement or refund from earlier runs (`tx-hashes.md` M4, M5 rows), label "earlier run" |
 | Verifier fails on a real take | Re-shoot (light, distance, tag); never the override |
 | W-VBUY still empty | No live verifier take; Friday's run as above |
-| Video over 2:30 | Trim the voice-over (order in `video-script.md`), then drop the "Today and next" card |
+| Video over 3:30 | Trim the voice-over (order in `video-script.md`), then drop the "Today and next" card |
 | No usable voice-over | Titles and subtitles only, no music |
 
 ## 6. Decisions
