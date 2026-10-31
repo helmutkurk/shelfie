@@ -14,6 +14,34 @@ Paid only when the photo is true.
 
 An agent on Sokosumi hires people to check shelf prices in real stores, a verifier agent decides whether each photo is fresh and readable, and Cardano pays the person only if it passes, with an automatic refund to the brand if not.
 
+## The problem it solves
+
+Devfolio field "The problem it solves" (markdown). Written 2026-10-31 (Fernando). Lena is an illustrative example, not a customer; drop the "For example" paragraph if the pitch does not use her.
+
+```markdown
+### Shelf facts are easy to need and hard to trust
+
+A brand launching a product in a new city needs simple answers: **what do competitors cost in this store, and is the product actually on the shelf?** The data exists only in the physical world, so today someone has to go there:
+
+- **Agencies and mystery shoppers** charge per visit: about $30–45 for a quick merchandising audit ([T-ROC Global 2026](https://trocglobal.com/retail-merchandising-services/)) and from EUR 50 for a German test purchase ([mystery.agency](https://www.mystery.agency/content/testkauf-2/)). Visits are booked ahead and **paid whether or not the photo is usable**.
+- **Photos can't be checked.** A blurry shot, an old picture or the wrong shelf looks just like a real one to someone far away.
+- **AI agents can't help on their own.** They can read the whole internet but can't see one shelf, and they have no safe way to pay a stranger for evidence from the real world.
+
+For example, picture Lena, a small drinks maker in Lisbon launching an energy drink in Munich. She is 2,000 km away. Her only option is to pay an agency and hope the photos are real.
+
+### What Shelfie makes easier and safer
+
+**For brands:** post a job such as "check this product in this Munich store" on Sokosumi. The fee is locked in Masumi escrow on Cardano. If a photo passes verification, the result is delivered and the escrow settles. If no photo passes in time, **the brand gets its money back automatically**. Brands never pay for a photo that isn't true.
+
+**For people nearby:** anyone close to the store can claim the task from a phone, take one photo with the live camera, and get **paid on-chain right after it passes**. There is no invoicing and no waiting for an agency to pay out.
+
+**Against cheating:** the worker must be in the store's city to claim the task, and the phone's location is checked against the store when the photo is taken. Each claim gets a one-time hand sign, shown only when the camera opens, that must appear in the photo within 90 seconds, so an old or prepared photo can't contain it. A separate verifier agent, paid per check over x402, applies fixed rules: right sign, right product, readable price, inside the time window, not a photo of a screen.
+
+**For AI agents:** Shelfie gives agents a way to get trustworthy evidence from the physical world and pay for it only when it is correct. Shelf checks are the first use; the same loop works for any "is it really there?" question.
+
+*Built and tested on Cardano preprod with test ADA.*
+```
+
 ## Problem
 
 Small consumer brands want to know, within hours, whether their product is on the shelf in a specific store and at what price. Today they either drive around, book a field-marketing agency or a mystery-shopping panel booked days ahead, or trust sales data that says nothing about the shelf. A quick merchandising audit visit costs about $30-45 ([T-ROC Global 2026 guide](https://trocglobal.com/retail-merchandising-services/)), a German Testkauf about EUR 50-260 per visit ([mystery.agency](https://www.mystery.agency/content/testkauf-2/), [mystery-shopping.de](https://www.mystery-shopping.de/produkt/1-testkauf-mystery-shopping/)). Visits are usually paid whether or not the photo is usable, and photos can be old, blurry or from the wrong store. AI agents can write a report about retail but cannot see a shelf, and they have no safe way to pay a stranger for evidence from the physical world.
@@ -49,13 +77,13 @@ Cheat attempt: an old photo (aimed at with the live camera, since the app has no
 - **Blockfrost (preprod):** chain queries [VERIFY_IF_USED].
 - Test funds: tADA from the faucet and the Masumi dispenser; the escrowed job fee is 1 test USDM (100 Sokosumi credits).
 
-Limits we state openly: preprod only, the Cardano x402 facilitator is preprod-only today, the human payout is a plain transfer rather than x402, and the location is not proven (the hand sign proves freshness, not place; browser location is a deterrent).
+Limits we state openly: preprod only, the Cardano x402 facilitator is preprod-only today, the human payout is a plain transfer rather than x402, and location is checked with the phone's browser GPS against the store (150 m by default), which can be spoofed (the hand sign proves freshness, GPS is a deterrent).
 
 ## How it could run for real
 
 - A small pilot with 3-5 brands in one city and an existing crowd-audit partner as workforce.
 - Mainnet payments in a stable asset, with off-ramp and KYC through a regulated partner; workers do not need to learn wallets (onboarding is roadmap).
-- Store-owned QR codes or NFC tags on shelves for location proof.
+- Stronger in-store location proof than GPS (for example store-owned QR codes or NFC tags; not built).
 - A legal review of the worker model (self-employment, platform work) and data protection (shelves only, no people in frame, short retention) before launch.
 - Multiple verifiers and sampling for high-value jobs.
 
@@ -80,7 +108,7 @@ The engine is a generic verified micro-task loop: job, tasks, worker (human or a
 ## What's next
 
 1. Brand interviews to validate price and demand (5 conversations).
-2. Location proof via store-owned QR codes.
+2. Stronger location proof than GPS (for example store-owned QR codes; not built).
 3. Payout without wallet friction for workers.
 4. Pilot with one crowd-work partner.
 5. Hardening the verifier (multi-verifier, sampling, face/people rejection).

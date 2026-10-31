@@ -117,7 +117,7 @@ If the explorer has not caught up: "The explorer catches up in a few seconds; he
 **FERNANDO:** `Ctrl+1`, one key ("What one shelf check costs today").
 
 **LORENZ:**
-> "A test purchase through an agency starts at fifty euros. A Shelfie check: about twelve, and only if the photo passes. To be honest: this is the test network and one real request, and the sign proves the photo is new, not the shop. Store QR codes are next."
+> "A test purchase through an agency starts at fifty euros. A Shelfie check: about twelve, and only if the photo passes. To be honest: this is the test network and one real request, and the sign proves the photo is new, and the phone's GPS checks the store; GPS can be spoofed, so stronger store proof is next."
 
 ## Scene 8: Close (about 2:48-3:00)
 
@@ -225,7 +225,7 @@ Rest of scene 4 unchanged (claim, hand sign, shot, "Sent."). Scene 5 unchanged, 
 **FERNANDO:** `Ctrl+1`, one key (proposed beat: "Paid only when true" instead of "What one shelf check costs today").
 
 **LORENZ:**
-> "Lena never pays for a blurry photo or the wrong shelf. If no photo passes, the escrow goes back to her. To be honest: this is the test network, and the sign proves the photo is new, not the shop. Store QR codes are next."
+> "Lena never pays for a blurry photo or the wrong shelf. If no photo passes, the escrow goes back to her. To be honest: this is the test network, and the sign proves the photo is new, and the phone's GPS checks the store; GPS can be spoofed, so stronger store proof is next."
 
 If green came before 2:00, Lorenz may add first: "Out-of-stocks cost retail about a trillion dollars a year." (sourced `\MarketPain`; replaces the unsourced "hundred-and-fifty-billion" line in the time rules).
 
