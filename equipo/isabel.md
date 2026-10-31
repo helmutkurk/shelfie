@@ -4,7 +4,7 @@
 - Reviews: pair reviews each other's commits first (peer review, `scripts/peer-review.sh`)
 
 ## Current focus
-Hackathon day, real mode only (ADR-22). Run the Sokosumi worker with the shell bridge and the Masumi Payment Service on this laptop; point the worker's `ENGINE_URL` at Helmut's tunnel; create the `soko_preprod_` user API key on Isabel's Sokosumi account and hand it privately to Helmut for the hub engine (`SOKOSUMI_API_TOKEN`). Then the first real order: `/b` -> engine -> Sokosumi Task -> Masumi escrow -> photo on `/w` -> verifier (x402) -> payout.
+Real-mode demo (ADR-22): the Sokosumi worker + bridge + MPS on this laptop, `ENGINE_URL=https://api-dev.shelfieapp.fyi`. A-25 worker fix (parallel Tasks, restart recovery, settlement events) committed locally on `dev`, not pushed (`npm run check` has 2 payments test failures on Windows). Restart: exactly one `npm run worker` in `codigo/apps/shell/starter`.
 
 ## Active branch
 `docs/decisions-2026-10-31` from `dev`: ADR-22 and doc updates for the 2026-10-31 decisions. Repo checkout: `C:\Users\maria\shelfie-team` (native Windows). The WSL clone `~/shelfie` is clean and behind `dev`; not used today.
@@ -29,4 +29,4 @@ Hackathon day, real mode only (ADR-22). Run the Sokosumi worker with the shell b
 - `docs/deploy.md` is empty but linked from several docs. (Helmut)
 
 ## Last updated
-2026-10-31 01:40 Europe/Berlin by Claude Opus 5.5 (Isabel's session)
+2026-10-31 02:50 Europe/Berlin by Claude Opus 5.5 (Isabel's session)
