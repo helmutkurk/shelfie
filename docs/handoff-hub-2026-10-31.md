@@ -1,6 +1,6 @@
-# Hub handoff, 2026-10-31 ~03:10 (Claude for Helmut, role D)
+# Hub handoff, 2026-10-31 ~03:20 (Claude for Helmut, role D)
 
-Safe checkpoint before Helmut's Claude credits run out. Isabel continues as the single active role (testing and fixes) until Helmut is back. Demo engine: `https://api-dev.shelfieapp.fyi` (dev branch), decided by Helmut and Isabel (ADR-22).
+Safe checkpoint before Helmut's Claude credits run out. Isabel leads from now on, together with Fernando (B, `/b`); Helmut's Claude session is not needed again before the deadline. Helmut's laptop only keeps running the hub. Secrets (operator token, shell token, brand code, all hub env values) are in a private file Helmut sends directly to Isabel and Fernando: never commit it, never post it in a group. Demo engine: `https://api-dev.shelfieapp.fyi` (dev branch), decided by Helmut and Isabel (ADR-22).
 
 ## Hub state (Helmut's laptop, stays on, plugged in, online)
 
@@ -34,11 +34,10 @@ Wallets (2026-10-31 00:30): W-VBUY ~9,793 tADA, W-PAY ~9,991 tADA, W-SELL 6, W-M
 
 ## Open, in priority order (Isabel continues)
 
-1. **Unmerged UI branches** (worktrees next to the repo; Sonnet agents were finishing them at 03:10):
-   - `fix/ui-dashboard-w` (`../shelfie-ui-dashboard-w`): `/w` take-button disabled after the claim cutoff, claim time left; `/dashboard` Operator tab removed; finished jobs no longer "active"; Done filter Passed / Failed / Timeout.
-   - `fix/ui-brand` (`../shelfie-ui-brand`): `/b` price per order (credits), spend/refund/balance, per-order transactions with explorer links, outcome per store.
-   If a branch has a commit: review the diff, run `npm run check` in `codigo/`, merge into dev (`git merge --no-ff`), push; the hub deploys it. If a branch has no commit, it is unfinished: skip it.
-   These worktrees live on Helmut's laptop; if Isabel works from her laptop, ask Helmut to push the branches first (`git push origin fix/ui-dashboard-w fix/ui-brand`) or redo the items.
+1. **UI branches:**
+   - `fix/ui-brand`: **merged into dev** (`6587180`): `/b` shows the price before ordering (credit ceiling per store and total), a Spend and checks card (reserved today vs cap, paid, refunded, passed/failed/timed out), Transactions (escrow lock, result, settlement, refund, x402 fee, payout with explorer links) and the outcome per store. New endpoints `GET /api/brand/summary` and `GET /api/brand/transactions` (brand-scoped, security tests).
+   - `fix/ui-dashboard-w`: see the status line at the end of this file. Content: `/w` take-button disabled after the claim cutoff and time left = time to claim; `/dashboard` Operator tab removed; finished jobs no longer "active"; Done filter Passed / Failed / Timeout. If it is on origin with a commit and not yet merged: review, `npm run check`, merge into dev with `--no-ff`, push.
+   - Test note: on a loaded machine two old tests can time out at 5 s (`apps/verifier/src/app.test.ts` stub end-to-end, `apps/engine/src/wiring.test.ts` payout queue). They are unrelated to these merges; rerun them alone before treating them as failures.
 2. **End-to-end real order (2 stores) from `/b`**: one store gets a passing photo on `/w` (live camera, 2-5 fingers hand sign next to the tag, within 150 m of the store, the product of the order), the other is left to withhold. Follow: Task -> lock -> job in `/w` within 1.5-3 min -> claim -> photo -> verify x402 tx -> payout tx -> DELIVER -> `RESULT_SUBMITTED` -> `SETTLED`; withheld store -> refund. Log every tx in `codigo/docs/evidence/tx-hashes.md` (explorer links).
 3. Last paid escrow cycle must start by **13:00**; feature freeze **11:00**; Devfolio **15:00**.
 4. Release PR dev -> main: needs 3 approvals, only two people active; Helmut (admin) decides the bypass after 13:00 and records it in `docs/ai-log.md`. The demo itself runs on api-dev and does not need it.
@@ -48,3 +47,7 @@ Wallets (2026-10-31 00:30): W-VBUY ~9,793 tADA, W-PAY ~9,991 tADA, W-SELL 6, W-M
 ## If something breaks on the hub while Helmut is away
 
 Isabel cannot restart the hub. Pushing a fix to `dev` deploys automatically (timer). If the engine is down (`/api/health` not 200) or the tunnel is down, call Helmut: `systemctl --user restart shelfie-engine@dev shelfie-verifier@dev shelfie-tunnel`.
+
+## Status of `fix/ui-dashboard-w`
+
+03:20: still being finished by an agent on Helmut's laptop. Helmut (or his Claude, if credits remain) merges it into dev when `npm run check` passes and updates this line. Until then `/dashboard` and `/w` run the previous version, which works except: Operator tab still visible (ignore it), take-button can look active after the claim cutoff (the engine refuses with "Too late to start this task"), finished field-test job shown as active.
