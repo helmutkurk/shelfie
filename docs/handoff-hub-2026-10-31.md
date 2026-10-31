@@ -2,6 +2,14 @@
 
 Safe checkpoint before Helmut's Claude credits run out. Isabel leads from now on, together with Fernando (B, `/b`); Helmut's Claude session is not needed again before the deadline. Helmut's laptop only keeps running the hub. Secrets (operator token, shell token, brand code, all hub env values) are in a private file Helmut sends directly to Isabel and Fernando: never commit it, never post it in a group. Demo engine: `https://api-dev.shelfieapp.fyi` (dev branch), decided by Helmut and Isabel (ADR-22).
 
+## Update 2026-10-31 ~12:55 (Claude for Helmut)
+
+- Hub unchanged and healthy: `/api/health` `ok:true`, fakes both false, verifier up; W-VBUY ~9,775 tADA, W-PAY ~9,976 tADA; auto-deploy from `dev` working (deployed `56766e9` at 11:54 UTC).
+- Open item 1: `fix/ui-brand` merged (`6587180`). `fix/ui-dashboard-w` was **never committed or merged**, see its status at the end of this file.
+- Open item 2 done twice: full real cycles for Tasks `01a18fe6` and `01a19013` (lock, x402 verify, payout, DELIVER, ResultSubmitted, settlement) plus refunds of withheld Tasks, all in `codigo/docs/evidence/tx-hashes.md` (A-25). The `01a19013` settlement came at 08:45 UTC because MPS was down from about 05:00.
+- Since 03:20 on `dev`: shell worker fixes, real Sokosumi Task price for brand credits, store-internal barcodes ignored by the verifier, worker wallet earnings, pinned operator tools and catalog test job (Isabel); Devfolio text and 3-minute video cut (Fernando, Lorenz); hooks suspended (ADR-0007).
+- Still open: item 4 (release PR dev -> main, Helmut's bypass), items 5 and 6.
+
 ## Hub state (Helmut's laptop, stays on, plugged in, online)
 
 | Unit (`systemctl --user`) | State | Notes |
@@ -50,4 +58,6 @@ Isabel cannot restart the hub. Pushing a fix to `dev` deploys automatically (tim
 
 ## Status of `fix/ui-dashboard-w`
 
-03:20: still being finished by an agent on Helmut's laptop. Helmut (or his Claude, if credits remain) merges it into dev when `npm run check` passes and updates this line. Until then `/dashboard` and `/w` run the previous version, which works except: Operator tab still visible (ignore it), take-button can look active after the claim cutoff (the engine refuses with "Too late to start this task"), finished field-test job shown as active.
+03:20: still being finished by an agent on Helmut's laptop.
+
+12:55 (Claude): not merged. The branch still points at the old `dev` commit `835b6a4`; its work exists only as uncommitted changes in Helmut's worktree `../shelfie-ui-dashboard-w`. That work deletes `OperatorTools.tsx` and the Operator tab, which conflicts with Isabel's later operator tools on `dev` (`a1705ed`, `fc77a4f`). The feature freeze (11:00) has passed: do not merge it for the hackathon. `/dashboard` and `/w` run the `dev` version: the take-button can look active after the claim cutoff (the engine refuses with "Too late to start this task").
