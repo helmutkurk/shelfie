@@ -190,12 +190,25 @@ Timing: scenes 1 and 2 grow from 0:40 to 0:45; scene 7 loses the price sentence,
 **LORENZ:**
 > "So we built Shelfie. An agent hires someone nearby, a second agent checks the photo, and Lena pays only for a photo that is true. Shelfie: paid only when the photo is true."
 
+### Before the pitch: Lena's order (Helmut, Fernando)
+
+Why: from "Place order" in `/b` to the task on the worker's phone takes about 2:30-3:05 on the real hub (2:30 and 2:45 at 03:50, 3:04 for the first DELIVER at 04:10; `docs/ai-log.md`, `codigo/docs/verified.md`), almost all of it the Sokosumi buyer's escrow lock; our part, lock to open task, is under 5 s. An order placed at 0:00 would show up at about 2:30-3:05, after the claim in scene 4 (about 0:58). So the order is placed before the pitch.
+
+| When | What | Who |
+|---|---|---|
+| T-8 to T-6 min (previous team still presenting) | Place Lena's order in `/b`: one store, the demo drink | Fernando |
+| About 3 min later | Confirm the task is in the list on Isabel's phone. Do **not** claim it: the claim timer (`CLAIM_TTL_SEC=180`) starts at the claim | Isabel |
+| 2-3 min after the first order | Backup order, same store and product, in case the first never appears | Fernando |
+| Until the table is called | Watch the clock: the job stays open `JOB_WINDOW_SEC=660` (11 min from job creation), so the order covers a start delay of about 4-6 min. Longer delay: place a fresh order | Helmut |
+
+Values from the hub handoff (`docs/ai-log.md`, 03:10); confirm them with Helmut or `/api/health` before the pitch. The unused order ends in withhold and automatic refund: keep it as refund evidence, never present it as part of the live demo. Do not place a new order on stage: it adds nothing and costs credits.
+
 ### Scene 3: The job (0:45-0:58)
 
-**FERNANDO:** one key (How it works), then `Ctrl+2` (Sokosumi).
-> "Lena's question as a job on Sokosumi: one product, one store in Munich. The fee is locked in escrow on Cardano. This lock was created before the pitch."
+**FERNANDO:** one key (How it works), then `/b` tab (Lena's order: status, credits locked, escrow lock tx), then `Ctrl+2` (Sokosumi) only if time allows.
+> "Lena placed this order a few minutes ago. Before anyone works, her money is locked in escrow on Cardano; that lock is what you see here. Now the job is open for anyone in Munich."
 
-(The reason, escrow takes about half an hour, stays for Q&A: no development problems on stage.)
+If a judge asks why the order was placed earlier: "The escrow lock is a real Cardano transaction sent by Sokosumi; it takes about two to three minutes to confirm. Our part, from lock to open task, takes under five seconds."
 
 **FERNANDO:** `Ctrl+3` (dashboard job page).
 
@@ -233,3 +246,5 @@ If asked for the price: answer from `qa-prep.md` Q15a, not on stage.
 | `pitch-plan.md` section 2 (hook), `live-pitch.md` roles line, `storyline.md`, `video-script.md`: same story | Lorenz |
 | `slides/facts.tex`: `\RequestWho`, `\RequestLine` and `\PricePerStore` no longer used on stage (backup deck only) | Lorenz |
 | Confirm the demo drink is in the seeded catalog (ADR-17) | Isabel |
+| Props checklist and laptop tabs above: replace "Fresh job created" with the order timing in "Before the pitch: Lena's order"; add a `/b` tab with Lena's order before `Ctrl+2` | Lorenz |
+| Add the "why was the order placed earlier" answer to `qa-prep.md` | Lorenz |
