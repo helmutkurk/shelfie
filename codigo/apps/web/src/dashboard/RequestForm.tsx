@@ -151,11 +151,7 @@ export function RequestForm(props: {
             Fake orders: local rehearsal, no Sokosumi purchase or real escrow.
           </p>
         ) : null}
-        {!props.enabled ? (
-          <p className="footnote">
-            Orders are unavailable on this engine. Real ordering is not available yet.
-          </p>
-        ) : null}
+        {!props.enabled ? <p className="footnote">Orders are not enabled on this engine.</p> : null}
         <Button type="submit" disabled={!ready || busy}>
           {busy ? "Placing order…" : "Place order"}
         </Button>

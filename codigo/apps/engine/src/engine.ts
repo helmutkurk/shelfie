@@ -1602,13 +1602,16 @@ export class Engine {
       demoOverrideEnabled: this.env.ALLOW_DEMO_OVERRIDE,
       orders: {
         fake: this.env.SOKOSUMI_CLIENT === "fake",
+        // ADR-22: real orders are enabled whenever brand accounts exist (also in evidence runs);
+        // fake orders keep the rehearsal gates.
         enabled:
           brandAccounts(this.env).length > 0 &&
-          this.env.SOKOSUMI_CLIENT === "fake" &&
-          this.env.FAKE_PAYMENTS &&
-          (this.env.VERIFY_CLIENT ?? "fake") === "fake" &&
-          !this.env.EVIDENCE_RUN_LOCKED,
-        realReady: false,
+          (this.env.SOKOSUMI_CLIENT === "real" ||
+            (this.env.SOKOSUMI_CLIENT === "fake" &&
+              this.env.FAKE_PAYMENTS &&
+              (this.env.VERIFY_CLIENT ?? "fake") === "fake" &&
+              !this.env.EVIDENCE_RUN_LOCKED)),
+        realReady: this.env.SOKOSUMI_CLIENT === "real",
         maxStores: this.env.ORDER_MAX_STORES,
         maxCreditsPerTask: this.env.SOKOSUMI_MAX_CREDITS_PER_TASK,
       },

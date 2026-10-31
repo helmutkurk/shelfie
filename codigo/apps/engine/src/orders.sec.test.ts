@@ -22,10 +22,7 @@ function auth(
   configured: string | undefined = brand,
 ) {
   let error: unknown;
-  requireBrand(
-    configured === undefined ? [] : [{ id: DEMO, token: configured }],
-    freshLock(),
-  )(
+  requireBrand(configured === undefined ? [] : [{ id: DEMO, token: configured }], freshLock())(
     { headers, query } as unknown as Request,
     { locals: {} } as unknown as Response,
     (err?: unknown) => {
@@ -187,14 +184,35 @@ describe("order trust boundary", () => {
     expect(entries.length).toBeGreaterThan(0);
     expect(entries.every((entry) => entry.flags["fakeSokosumi"] === true)).toBe(true);
     expect(r.engine.configView(true).orders?.fake).toBe(true);
-    expect(
-      orderRig({
-        SOKOSUMI_CLIENT: "real",
-        SOKOSUMI_API_TOKEN: "synthetic-api-token",
-        SOKOSUMI_COWORKER_ID: "coworker-1",
-        SOKOSUMI_ORGANIZATION_SLUG: "org-slug",
-      }).engine.configView(true).orders?.enabled,
-    ).toBe(false);
+  });
+  it("/api/config orders: real client is enabled with brand accounts (ADR-22), fake needs the rehearsal gates", () => {
+    const realEnv = {
+      SOKOSUMI_CLIENT: "real",
+      SOKOSUMI_API_TOKEN: "synthetic-api-token",
+      SOKOSUMI_COWORKER_ID: "coworker-1",
+      SOKOSUMI_ORGANIZATION_SLUG: "org-slug",
+    };
+    const real = orderRig(realEnv).engine.configView(true).orders;
+    expect(real).toMatchObject({ enabled: true, realReady: true, fake: false });
+    const locked = orderRig({ ...realEnv, EVIDENCE_RUN_LOCKED: "1" }).engine.configView(
+      true,
+    ).orders;
+    expect(locked).toMatchObject({ enabled: true, realReady: true, fake: false });
+    // Fake client with real payments: fake orders stay disabled.
+    const payments = orderRig();
+    payments.env.FAKE_PAYMENTS = false;
+    expect(payments.engine.configView(true).orders).toMatchObject({
+      enabled: false,
+      realReady: false,
+      fake: true,
+    });
+    // No brand accounts: orders disabled (real mode refuses to boot without them, so test fake).
+    const noBrand = orderRig({ BRAND_TOKEN: "" });
+    expect(noBrand.engine.configView(true).orders).toMatchObject({
+      enabled: false,
+      realReady: false,
+      fake: true,
+    });
   });
   it("fails closed on real-mode credentials, weak brand codes and non-preprod URLs", () => {
     for (const vars of [
