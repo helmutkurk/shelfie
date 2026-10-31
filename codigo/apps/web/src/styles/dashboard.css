@@ -841,7 +841,7 @@
   }
 }
 
-/* ---- operator tools (collapsed disclosure) */
+/* ---- operator tools (always open) */
 .operator {
   padding-top: 0.25em;
 }
@@ -852,6 +852,7 @@
   cursor: pointer;
   font-weight: 600;
 }
+.operator .dh2:not(:first-child),
 .operator .dh3 {
   margin-top: 1em;
 }

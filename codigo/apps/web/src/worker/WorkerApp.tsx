@@ -13,15 +13,17 @@ import { DEFAULT_EXPLORER_TX_BASE } from "../lib/format.js";
 import { readCoarseLocation } from "../lib/geo.js";
 import { describeError, S } from "../lib/messages.js";
 import {
+  addHistory,
   clearConsent,
   hasConsent,
+  loadHistory,
   loadProfile,
   locationHint,
   saveConsent,
   saveLocationHint,
   saveProfile,
 } from "../lib/storage.js";
-import type { Profile } from "../lib/storage.js";
+import type { HistoryEntry, Profile } from "../lib/storage.js";
 import { ExplorerProvider, Toast } from "../ui/index.js";
 import { ActiveClaimCard } from "./ActiveClaim.js";
 import type { ActiveClaim } from "./ActiveClaim.js";
@@ -87,6 +89,7 @@ export function WorkerApp() {
   const [busy, setBusy] = useState(false);
   const [active, setActive] = useState<ActiveClaim | null>(null);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory(storage));
 
   // Location (coarse) for the city feed; asked on a user gesture, or silently if allowed before.
   const [location, setLocation] = useState<ClaimLocation | undefined>(undefined);
@@ -212,6 +215,7 @@ export function WorkerApp() {
           <Wallet
             payoutAddress={profile?.address ?? null}
             result={sessionResult}
+            history={history}
             onGoProfile={() => toTab("profile")}
           />
         );
@@ -299,6 +303,15 @@ export function WorkerApp() {
             onSubmitted={(info) => {
               setCamera(null);
               setSessionResult({ task: active.task, submissionId: info.submissionId, view: null });
+              setHistory(
+                addHistory(storage, {
+                  submissionId: info.submissionId,
+                  productName: active.task.productName,
+                  storeName: active.task.storeName,
+                  payoutAmount: active.task.payoutAmount,
+                  at: new Date().toISOString(),
+                }),
+              );
               setActive(null);
               setScreen({ name: "result", task: active.task, info });
             }}

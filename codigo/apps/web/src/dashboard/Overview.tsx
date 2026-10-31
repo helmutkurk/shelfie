@@ -1,7 +1,7 @@
 import type { CatalogResponse, HealthResponse, JobView, LedgerEvent } from "@shelfie/core/browser";
 import { formatAda, formatTime } from "../lib/format.js";
 import { Pill } from "../ui/index.js";
-import { ACTIVE_JOB_STATES, JOB_WINDOW, describeJob, jobStatus } from "./model.js";
+import { isActiveJob, JOB_WINDOW, describeJob, jobOutcome, jobViewStatus } from "./model.js";
 import { relativeTime, useNow } from "./time.js";
 
 const RECENT = 5;
@@ -27,13 +27,13 @@ export function OverviewTiles(props: { jobs: JobView[] | undefined }) {
   const jobs = props.jobs ?? [];
   const states = jobs.map((j) => j.job.state);
   const countOf = (wanted: readonly string[]) => states.filter((s) => wanted.includes(s)).length;
-  const active = states.filter((s) => ACTIVE_JOB_STATES.includes(s)).length;
+  const active = jobs.filter(isActiveJob).length;
   const passed = jobs.reduce((n, j) => n + j.counts.passed, 0);
   return (
     <>
       <div className="tiles tiles-big" aria-label="Request counts">
         <Tile label="Active requests" value={active} />
-        <Tile label="Delivered" value={countOf(["DELIVERED", "SETTLED"])} />
+        <Tile label="Delivered" value={jobs.filter((j) => jobOutcome(j) === "delivered").length} />
         <Tile label="Withheld or refunded" value={countOf(["WITHHELD", "REFUNDED"])} />
         <Tile label="Passed checks" value={passed} />
       </div>
@@ -98,7 +98,7 @@ export function Overview(props: {
             <ul className="jlist">
               {recentJobs.map((view) => {
                 const { title, subtitle } = describeJob(view, props.catalog);
-                const status = jobStatus(view.job.state);
+                const status = jobViewStatus(view);
                 return (
                   <li key={view.job.id}>
                     <button

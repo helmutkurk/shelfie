@@ -60,11 +60,18 @@ export function OperatorTools(props: {
     ),
   ];
   return (
-    <details className="dcard operator">
-      <summary>Operator</summary>
+    <section className="dcard operator" aria-label="Operator tools">
+      <h2 className="dh2">Test job</h2>
+      <p className="dsub">
+        Creates a job directly in the engine, without a Sokosumi Task or Masumi escrow: use it to
+        test the worker app, the verifier and the worker payout. The verifier fee (x402) and the
+        payout for a passing photo are real preprod payments; no brand fee is charged or refunded.
+        Real brand orders come from /b.
+      </p>
       <Button variant="plain" disabled={busy || !props.catalog} onClick={() => void demo()}>
-        Demo job
+        Create test job
       </Button>
+      <h2 className="dh2">Override</h2>
       {props.enabledOverride ? (
         <>
           <Select
@@ -86,6 +93,6 @@ export function OperatorTools(props: {
           {error}
         </p>
       ) : null}
-    </details>
+    </section>
   );
 }

@@ -180,7 +180,7 @@ describe("order status", () => {
     );
     expect(screen.getByText("Store A")).toBeTruthy();
     expect(screen.getByText("Store B")).toBeTruthy();
-    expect(screen.getByText("Waiting for Shelfie")).toBeTruthy();
+    expect(screen.getByText("Locking payment in escrow (2-3 min)")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Timeline and report/ }));
     expect(opened).toEqual(["job_01"]);
     expect(screen.getByText(/Fake order/)).toBeTruthy();

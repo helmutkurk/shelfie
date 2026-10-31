@@ -1,12 +1,20 @@
-import type { BrandProfile, BrandSummary } from "@shelfie/core/browser";
+import type {
+  BrandProfile,
+  BrandSummary,
+  BrandTransaction,
+  CatalogResponse,
+} from "@shelfie/core/browser";
 import { AddressCopy } from "../worker/AddressCopy.js";
 import { Pill } from "../ui/index.js";
 import { SpendCard } from "./SpendCard.js";
+import { TransactionList } from "./TransactionList.js";
 
 /** Brand profile: identity, preprod wallet, spending caps. Opened from the sidebar, not a tab. */
 export function ProfilePanel(props: {
   profile: BrandProfile;
   summary: BrandSummary | undefined;
+  transactions: BrandTransaction[] | undefined;
+  catalog: CatalogResponse | undefined;
   onBack: () => void;
 }) {
   const p = props.profile;
@@ -52,6 +60,11 @@ export function ProfilePanel(props: {
         </p>
       </section>
       <SpendCard profile={p} summary={props.summary} />
+      <TransactionList
+        transactions={props.transactions}
+        catalog={props.catalog}
+        title="Your transactions"
+      />
     </div>
   );
 }

@@ -184,6 +184,8 @@ function BrandConsole(props: { session: Session; onSignOut: () => void }) {
                 <ProfilePanel
                   profile={profile}
                   summary={summary.data}
+                  transactions={transactions.data?.transactions}
+                  catalog={catalog}
                   onBack={() => setProfileOpen(false)}
                 />
               ) : null}

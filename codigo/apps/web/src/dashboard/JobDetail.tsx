@@ -10,7 +10,7 @@ import {
   describeJob,
   entriesForJob,
   jobSentence,
-  jobStatus,
+  jobViewStatus,
   receiptLabel,
   taskStatus,
 } from "./model.js";
@@ -91,7 +91,7 @@ export function JobDetail(props: {
   }
 
   const { title, subtitle } = describeJob(view, props.catalog);
-  const status = jobStatus(view.job.state);
+  const status = jobViewStatus(view);
   const report = view.job.reportMd;
   const oos = view.tasks.some((t) => t.acceptedOutcome === "OUT_OF_STOCK");
   const showOos = oos && status.tone === "success";

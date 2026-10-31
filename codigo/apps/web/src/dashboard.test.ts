@@ -201,7 +201,7 @@ describe("operator gate", () => {
     expect(screen.queryByRole("button", { name: "Place order" })).toBeNull();
     expect(screen.queryByRole("button", { name: "New order" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Operator" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Demo job" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create test job" }));
     await waitFor(() =>
       expect(calls.some((c) => c.method === "POST" && c.path === "/api/jobs")).toBe(true),
     );

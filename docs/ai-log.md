@@ -352,3 +352,10 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Fix: G4/O4 ignore barcodes with prefixes 020-029, 040-049, 200-299 and fall back to the name (no threshold change; `diseno/verifier-rules.md` updated). Verifier tests 99/99. C-owned file, small change; Lorenz reviews.
 - Also seen: HoC job ended after about 350 s because all attempts were used (gesture not recognised twice, then G4). Augustiner Task: 2:29 from order to job, 2:20 of it the Sokosumi buyer's escrow lock (expected).
 - Update 04:10: first DELIVER on the real hub. Task `01a18fe6` (Red Bull, demo shelf HoC): order -> job 3:04, photo passed, DELIVER 03:05:31, ResultSubmitted `366cb05d...` confirmed 03:06:18, Task COMPLETED 03:06:24 with the report; verify payment `88bbb58d...`, payout `b570bca0...`. Settlement expected about 03:46 UTC (worker posts SETTLED). Evidence rows added; screenshots pending.
+
+## 2026-10-31 04:45 (Europe/Berlin) - Claude Opus 5.5 for Helmut (D, on Isabel's laptop) - dashboard, /b and /w polish
+- Helmut's decision: stay on `dev` for demo, video and pitch (no release PR to `main`); no peer reviewers until the final version; Isabel and Helmut only.
+- Dashboard: Operator section always open; "Demo job" renamed "Create test job" with a plain explanation (no Sokosumi Task, no escrow; verifier fee and worker payout are real preprod payments). A finished test job (`source: demo`, DELIVERABLE) counts as delivered, not active (it was the Oct 30 field-test job `job_c88c9da1cb68` stuck in Active). Request filters: All, Active, Delivered, Failed, Timed out.
+- /b: balance tiles (credits available today, max per store) in Spend; "Your transactions" in the profile; the escrow wait shows "Locking payment in escrow (2-3 min)".
+- /w: Wallet "Your tasks" lists the last photos taken on this phone (device storage, ids and names only) with verdict and payout tx from `GET /api/submissions/{id}`. No engine change.
+- Verified: `npm run check` passes (550 passed, 2 skipped); new tests in `apps/web/src/outcomes.test.ts`. Not checked in a browser (no operator token or brand code on this laptop): Helmut checks the pages after the deploy.

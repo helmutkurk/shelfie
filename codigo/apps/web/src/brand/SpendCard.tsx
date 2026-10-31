@@ -8,9 +8,14 @@ import { Tile } from "../dashboard/Overview.js";
  */
 export function SpendCard(props: { profile: BrandProfile; summary: BrandSummary | undefined }) {
   const { profile, summary } = props;
+  const available = Math.max(0, profile.dailyCreditCap - profile.creditsReservedToday);
   return (
     <section className="dcard" aria-label="Spend and checks">
       <h2 className="dh2">Spend and checks</h2>
+      <div className="tiles" aria-label="Balance">
+        <Tile label="Available today" value={available} />
+        <Tile label="Max per store" value={profile.maxCreditsPerTask} />
+      </div>
       <p className="dsub">
         Credits reserved today: {profile.creditsReservedToday} of {profile.dailyCreditCap} daily
         cap. Sokosumi preprod test credits, not money.

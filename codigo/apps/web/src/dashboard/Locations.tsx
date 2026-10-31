@@ -3,13 +3,13 @@ import { TaskSpecSchema } from "@shelfie/core/browser";
 import type { CatalogResponse, JobView } from "@shelfie/core/browser";
 import { StoreMap } from "../ui/map/StoreMap.js";
 import type { MapMarker } from "../ui/map/StoreMap.js";
-import { ACTIVE_JOB_STATES } from "./model.js";
+import { isActiveJob } from "./model.js";
 
 /** Open requests per store, counted over the jobs the dashboard has loaded (active states only). */
 export function openRequestsByStore(jobs: readonly JobView[] | undefined): Map<string, number> {
   const counts = new Map<string, number>();
   for (const view of jobs ?? []) {
-    if (!ACTIVE_JOB_STATES.includes(view.job.state)) continue;
+    if (!isActiveJob(view)) continue;
     const storeIds = new Set<string>();
     for (const task of view.tasks) {
       const spec = TaskSpecSchema.safeParse(task.spec);
