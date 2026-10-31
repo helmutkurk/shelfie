@@ -9,6 +9,7 @@ Status: implemented (`smoke.ts`, `hub-up.sh`, `fund-check.ts`, `payout-once.ts`,
 | `live-check.ts` | Photo-free checks against the real HTTPS engine: health/no fakes, catalog selection, independent worker feeds, wrong city, first claim wins, capture-location refusal with job-scoped ledger/no-payout checks, release/reclaim and cleanup. Requires an explicit operator token and 2-3 distinct preprod addresses. Prints PASS/FAIL and stable error codes; exit 0/1. | See live usage below |
 | `hub-up.sh` | Starts engine, verifier, web, waits for `/api/health`, prints URLs and a fake-mode warning. With `--tunnel` (B-08) it first starts the cloudflared quick tunnel for the engine port only, reads its `https://*.trycloudflare.com` URL, starts the engine with `PUBLIC_BASE_URL` and `ALLOWED_HOSTS` set to it, and prints the phone URL `<tunnel>/w` (a QR code too if `qrencode` is installed). Without cloudflared it stops before starting anything. Fails fast if `codigo/.env` is missing (use `--fake` for a rehearsal without secrets). Never prints env values. `stop` and `status` subcommands. | `bash scripts/hub-up.sh --fake` |
 | `fund-check.ts` | Reads public wallet addresses from env and prints Blockfrost **preprod** balances. Refuses mainnet addresses, mainnet project ids and `NETWORK` other than preprod. Without `BLOCKFROST_PROJECT_ID` it is a dry run (no request). | `node --env-file=.env --import tsx scripts/fund-check.ts` |
+| `ledger-audit.ts` | Read-only deployment audit: evidence hash chain/time order, engine decisions, accepted submissions, payout uniqueness/amounts, durable verifier receipts, preprod transaction inputs/outputs and wallet movement. Summary table plus discrepancies; exit 0 when requested checks pass, 1 on discrepancies/input/query failures. | `node --env-file="$HOME/.config/shelfie/dev.env" --import tsx scripts/ledger-audit.ts` (explicit deployed paths below) |
 | `payout-once.ts` | One real plain transfer from `W-PAY` on **preprod** with the queue's `EvolutionPayoutAdapter`, to settle ADR-04 (task B-04). Prints balance, sends once (default 2 tADA, capped at `MAX_PAYOUT_LOVELACE`) with a `shelfie:` metadata tag, waits for one confirmation, then checks that `find()` returns the same hash. Dry run unless `--send` (still needs the real env: it reads the balance). Refuses `FAKE_PAYMENTS`. One attempt per run and no idempotency record across runs (manual operator tool, documented exception): never rerun `--send` after exit 2 "Outcome UNKNOWN" or exit 3; check the explorer, then `--check <hash> --tag <tag> --since <iso>`. Exit codes: 0 ok, 1 refused, 2 not sent or unknown, 3 sent but unconfirmed or not found (waits up to 10 min). | `node --env-file=.env --import tsx scripts/payout-once.ts --to addr_test1... [--send]` |
 | `verify-once.ts` | One paid x402 request on **preprod** (M1, B-03): the engine's buyer (`createVerifyClient`, W-VBUY, spend cap, payee pinned to `SELLER_ADDRESS`) pays the running verifier for one `POST /v1/verify` and prints the settlement tx hash. Checks `/health` and `/v1/price` first (payee must be W-SELL, price within `VERIFY_MAX_PRICE_LOVELACE`). Synthetic image and stub reader: the payment is evidence, the verdict is not. Dry run unless `--send`; refuses `FAKE_PAYMENTS` and `VERIFIER_PAYMENT=off`. Exit 3 = payment unclear: never rerun `--send`, check W-VBUY on the explorer. | verifier: `VERIFIER_PAYMENT=on VERIFIER_MODE=stub node --env-file=.env --import tsx apps/verifier/src/main.ts`; then `node --env-file=.env --import tsx scripts/verify-once.ts [--send]` |
 | `payout-queue-once.ts` | One real payout through the engine's payout queue on **preprod** (B-07): `DefaultPayoutQueue` + `EvolutionPayoutAdapter` (W-PAY) + `FilePayoutStore` (default `./data/payout-queue-once.json`). Pays one task (`PAYOUT_LOVELACE`), polls to CONFIRMED, re-enqueues the same task and checks nothing new is sent. `--task <id>` repeats it after a restart. Refuses a new task while an earlier payout in the store is unfinished; refuses `FAKE_PAYMENTS`; dry run unless `--send`. Run from `codigo/`, one run at a time. | `node --env-file=.env --import tsx scripts/payout-queue-once.ts --to addr_test1... [--send] [--task tsk_...]` |
@@ -111,3 +112,85 @@ performed in the Codex sandbox.
 ## Do not
 - Never print or commit mnemonics or keys.
 - Do not restart the tunnel mid-demo.
+
+## Deployment ledger audit (D-42)
+
+Run the new script from this checkout against the deployment's persistent data, with Node 24:
+
+```bash
+cd /home/hks/Academia/TUM/bsc_winfo/hackathon/shelfie-audit/codigo
+"$HOME/.local/share/mise/installs/node/24.22.2/bin/node" \
+  --env-file="$HOME/.config/shelfie/dev.env" --import tsx scripts/ledger-audit.ts \
+  --store "$HOME/.local/share/shelfie/dev/engine-events.jsonl" \
+  --ledger "$HOME/.local/share/shelfie/dev/evidence-ledger.jsonl" \
+  --payout-store "$HOME/.local/share/shelfie/dev/payout-queue.json" \
+  --verify-state "$HOME/.local/share/shelfie/dev/verify-client.json"
+```
+
+Node loads `--env-file` before the script, matching `fund-check.ts`; there is no custom dotenv
+reader. Shell variables take precedence. Online checks require `NETWORK=preprod`,
+`BLOCKFROST_PROJECT_ID`, `WALLET_ADDRESS_VBUY`, `WALLET_ADDRESS_PAY`, `SELLER_ADDRESS`, and the
+prices used by the deployment: `PAYOUT_LOVELACE` (default 3000000) and `VERIFY_PRICE_LOVELACE`
+(default 1000000). Only these public configuration fields and data paths are retained; the audit
+never uses signing mnemonics or payment adapters. No new dependencies.
+
+Paths default to `STORE_PATH`, `LEDGER_PATH`, `PAYOUT_STORE_PATH` (or `payout-queue.json` beside
+`STORE_PATH`) and `verify-client.json` beside `STORE_PATH`, matching engine wiring. The default
+transaction log is **this checkout's** `codigo/docs/evidence/tx-hashes.md`; use `--tx-log <path>`
+for another captured log. Every input must exist and pass validation. `--help` lists all flags.
+
+- `--since <ISO-UTC>` scopes job checks to creation, ledger activity, submission receipt or payout
+  write-ahead activity since the timestamp; related earlier records are retained for context.
+  The entire ledger chain and timestamp order are always checked. Unattributed payments cannot
+  be silently hidden by the time filter. Every documented hash is checked because Markdown
+  rows do not have reliable structured timestamps.
+- `--no-chain` performs local checks without any network request or Blockfrost key. Exit 0 then
+  means **local consistency only**; the output explicitly marks transaction existence, on-chain
+  amounts and balance deltas as skipped.
+- A passing `DELIVER` job needs one accepted submission with an effective PASS and exactly one
+  submitted/confirmed payout. `WITHHOLD`, cancelled and failed tasks must have none. Intake
+  rejection does not require a task. Repeated journal updates and submitted/confirmed ledger
+  observations of the same payout are deduplicated; conflicting hashes and duplicate task or
+  submission payments fail. Unfinished payouts, pending/uncertain verifier payments and expired
+  undecided jobs fail; active jobs before their deadline are reported as in flight.
+- The journal is replayed without discarding historical records at `clear` markers. Lost records,
+  missing durable queue/receipt entries, fake/dry hashes and flagged overrides fail. This audit
+  complements `evidence-preflight.ts`; it does not attest the photo or verifier model's truth.
+
+The Blockfrost client uses GET only at the fixed preprod origin, a timeout, pacing, and refused
+redirects. Transaction metadata and UTxOs are validated; reference/collateral inputs do not count
+as the sender. Receiver **net** lovelace across ordinary inputs/outputs must match the expected
+payment, excluding change. Fee expectations for deployment receipts use the configured verifier
+price; payouts use their recorded destination/amount and the configured payout amount. API
+contract: [Blockfrost official OpenAPI](https://github.com/blockfrost/openapi/blob/master/openapi.yaml).
+
+Balance rows reconstruct outputs minus inputs at W-VBUY and W-PAY over the window, paginating
+address history against a fixed tip height. Expected delta is minus recorded payment principal
+and actual recorded-transaction fees, each hash counted once. Residuals are report-only: funding,
+unrelated transfers, deposits, co-funding and clock/indexing differences can explain them. No
+opening/closing balance snapshots exist in these stores; this is a reconstructed address delta,
+not an independent reconciliation against saved wallet balances. Only the configured public
+address for each wallet is covered; extra wallet derivations require a separate audit.
+
+Limits: files are stat-checked before and after the snapshot but the running engine is not
+locked. Detected writes fail; retry in a quiet interval or use a consistent snapshot. Script
+validation failure or a Blockfrost 404/API error fails closed, including unconfirmed transactions
+which are not yet indexed. Documented setup/escrow hashes get existence checks; historical
+payout rows lacking a worker address get sender/amount checks with an explicit coverage note.
+Historical documented amounts are used when no deployment record supplies an expectation.
+The hash chain cannot detect suffix removal or a complete rewrite without an externally saved
+head, and payload preimages are not persisted, so `payloadHash` cannot be recomputed. Purged data
+cannot produce a complete consistency pass. The tool never repairs, reconciles, signs or submits.
+
+Socket-free synthetic tests (fixtures in `ledger-audit-fixtures.ts`, under 50 KB):
+
+```bash
+cd codigo
+node node_modules/vitest/vitest.mjs run --configLoader native --no-cache \
+  scripts/ledger-audit.test.ts scripts/ledger-audit-chain.test.ts scripts/ledger-audit.sec.test.ts
+node node_modules/typescript/bin/tsc -p scripts/tsconfig.json
+```
+
+The native config loader and disabled cache avoid writes to the prepared worktree's read-only
+`node_modules` symlink. The root Vitest include now covers `scripts/**/*.test.ts`, so these tests
+also run in `npm run check` on a normal writable checkout.

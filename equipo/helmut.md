@@ -66,3 +66,5 @@ Node 24.22.2 via mise (global stays 26.8.2), Sokosumi CLI 1.0.4, logged in to pr
 ## Last updated
 
 2026-10-31 by Codex for Helmut (D), D-42.
+
+Update 2026-10-31 02:00 (Claude): ledger audit `codigo/scripts/ledger-audit.ts` merged into dev (D-43); first run 18/18 txs on preprod, 11 fake-era ledger entries flagged, one uncertain verify payment (W-VBUY paid twice, one verdict recorded).
