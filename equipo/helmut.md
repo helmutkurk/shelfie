@@ -6,6 +6,10 @@
 
 ## Current focus
 
+Read-only deployment ledger audit (D-42) implemented on `feature/ledger-audit`: 33 synthetic tests pass, script typecheck and lint pass. Live Blockfrost verification remains for the unrestricted hub. [Audit validation and exact next command](../codigo/docs/ledger-audit-validation.md). No git writes; orchestrator commits.
+
+Earlier work retained for continuity:
+
 ADR-20 customer orders implemented on fakes in `/dashboard` per Helmut's amendment (Codex, 2026-10-30 evening). D-36 done; B-16 blocked on B-15's real capped REST Task/authority/identity proof. Real adapter probes the schema and refuses purchases; shared deployments remain on their existing real-payment configuration. [Validation and handoff](../codigo/docs/adr20-validation.md).
 
 ## Update 2026-10-30 evening (Claude for Helmut)
@@ -13,18 +17,23 @@ Public deployment is live (dev.shelfieapp.fyi, app.shelfieapp.fyi, api and api-d
 
 ## Active branch
 
-`feature/adr20-brand-orders`, based on `origin/dev`, worktree `shelfie-orders`. Uncommitted changes; no git write, commit or push. Orchestrator commits with `Purpose-impact: ADR-20` and references B-16/D-36.
+Current block: `feature/ledger-audit`, prepared worktree `shelfie-audit`; changes left uncommitted. Orchestrator owns commit/integration (D-42). Prior handoff: `feature/adr20-brand-orders`, worktree `shelfie-orders`; orchestrator commits that separate work with `Purpose-impact: ADR-20` and references B-16/D-36.
 
 ## Components I added or integrated
 
 | Name | Path | What it does | How to run | Status | Depends on |
 |---|---|---|---|---|---|
+| Deployment ledger audit | `codigo/scripts/ledger-audit*.ts` | Read-only cross-store/chain consistency and wallet movement report | Exact dev data command: `codigo/scripts/README.md` | 33 offline tests pass; live chain run pending | deployment journals/snapshots, public wallet env, Blockfrost preprod |
 | Worker/dashboard | `codigo/apps/web` | Camera/GPS worker flow and live job/ledger views; public package subpaths | `cd codigo && npm run dev -w @shelfie/web` | build and component tests pass; real-phone QA pending | engine, core/browser, evidence/explorer |
 | Evidence ledger + CLI | `codigo/packages/evidence` | Append-only hash chain and explorer helpers; queue/verdict ledger integration | `npm run verify-ledger -w @shelfie/evidence -- <ledger-path>` from codigo | local tests pass; no real tx evidence | core |
 | Team/run handoff | `docs/START-HERE-TEAM.md`, `codigo/README.md` | First 30 minutes, tasks/times, fake/real commands, verify-Friday register | read | complete | component READMEs and canonical design |
 | Branch model | `docs/adr/0005-branch-model-dev-integration-main-final.md`, contributor docs, `.github/`, `.claude/`, `scripts/launch-github.sh` | `dev` integration and gated `dev` -> `main` releases | read | docs and guards updated; Fernando review and live GitHub protection remain | ADR-0005 |
 
 ## What runs / next command
+
+Audit block (2026-10-31): script tsc, ESLint, 33 tests and CLI help pass. Root `npm run check` passed typecheck/lint then hit EROFS at Vitest startup; native-loader broad tests hit existing socket-dependent timeouts and were stopped. Run the audit command in `codigo/scripts/README.md` on the hub; append `--no-chain` for local consistency only. Peer-review lookup still needs gh authentication. No deployed data contents or secrets were read. See the audit validation report for limitations.
+
+Previous ADR-20 block:
 
 Node 24 typecheck, ESLint, web production build, 113 targeted tests, three shell test files, 113 hook tests, redacted source scans and diff whitespace check pass. Full-suite socket listeners hit sandbox EPERM; details in [ADR-20 validation](../codigo/docs/adr20-validation.md). Fake order lifecycle includes delivery, withholding and observed refund; no real order was placed. Peer-review lookup requires authenticated gh on hub.
 
@@ -50,4 +59,4 @@ Node 24.22.2 via mise (global stays 26.8.2), Sokosumi CLI 1.0.4, logged in to pr
 
 ## Last updated
 
-2026-10-30 by Codex for Helmut (D).
+2026-10-31 by Codex for Helmut (D), ledger audit D-42.
