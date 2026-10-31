@@ -22,5 +22,5 @@ The screen on stage is the story page `/story` (`codigo/apps/web/public/story/`)
 
 | Folder | What it is |
 |---|---|
-| [website/](website/) | Planning, reviews and sources for the `/homepage` website (Helmut, D-41). Not the pitch screen; `homepage-market-research.md` holds the checked market sources |
+| [website/](website/) | Planning, reviews and sources for the `/homepage` website (Helmut, D-41). Frozen and not used for the hackathon pitch or demo (ADR-22); `/story` is the stage screen. `homepage-market-research.md` holds the checked market sources |
 | [archive/](archive/) | Discarded ideas, kept for the record; do not use them for the pitch |

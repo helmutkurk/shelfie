@@ -172,6 +172,29 @@ Short records. Status "accepted" means: build on it unless a "verify Friday" ite
 - **Consequences:** the operator registers each brand in the engine env; daily credit cap stays global, reserved credits shown per brand. Contracts: Orders section and admin routes in `diseno/contracts.md`; routes in `diseno/webapps.md`.
 - **Amends:** ADR-20 amendment "`/brand` dropped" (brands now order from `/b`, not `/dashboard`).
 
+## ADR-22 Demo runtime on 2026-10-31: real mode only, hub split, Sokosumi buyer account (Isabel, 2026-10-31)
+- **Status:** accepted (team decision, 2026-10-31).
+- **Context:** hackathon day. Feature freeze Sat 11:00, last paid escrow cycle started by 13:00, Devfolio deadline 15:00 (AGENTS.md build window). The demo and pitch must run on real preprod services with several phones in a supermarket. The docs still described fakes, a blocked real Sokosumi adapter and Isabel as the hub operator.
+- **Decision:**
+  1. Real mode only for the demo and evidence: shared deployments run with fakes off (`FAKE_PAYMENTS=0`, `VERIFIER_PAYMENT=on`, `VERIFY_CLIENT=real`, `VERIFIER_MODE=live`, `SOKOSUMI_CLIENT=real`). Fakes stay for local tests only. If something fails we fix it, we do not switch to fakes.
+  2. Topology: Helmut's laptop is the hub for engine and verifier, behind the named Cloudflare tunnel (`api.shelfieapp.fyi` / `api-dev.shelfieapp.fyi`); the web app is on Vercel. Isabel's Windows laptop runs the Masumi Payment Service (port 38127, Postgres 16, never public) and the patched starter worker with the shell bridge (`codigo/apps/shell`); the bridge reaches the engine through the tunnel URL with `X-Shell-Token`. MPS stays on Isabel's laptop because its wallets and the paid Tasks M4, M5 and A-25 already ran there.
+  3. Sokosumi buyer: the engine creates the Tasks (`RealSokosumiClient`, `POST /v1/tasks`, verified as A-25 in [verified.md](../codigo/docs/verified.md)) with a Sokosumi user API key (`soko_preprod_` prefix) of Isabel's preprod account. This is "Shelfie's own account" in ADR-20 point 3, so credits are charged to Isabel's account (100 credits per Task at the current registration price). The key lives only in the hub engine env as `SOKOSUMI_API_TOKEN`, handed to Helmut privately; never in Vercel, chat or git. Engine env for real orders: `SOKOSUMI_CLIENT=real`, `SOKOSUMI_API_TOKEN`, `SOKOSUMI_COWORKER_ID` (= the starter's `COWORKER_ID`), `SOKOSUMI_ORGANIZATION_SLUG` (TUM workspace slug), `BRAND_ACCOUNTS` or `BRAND_TOKEN`, caps `SOKOSUMI_MAX_CREDITS_PER_TASK`, `ORDER_MAX_STORES`, `ORDER_DAILY_CREDIT_CAP`. `SOKOSUMI_AGENT_ID` is not read by the real adapter.
+  4. Brand flow: the brand opens `/b` and signs in with its access code only; there is no separate payment in `/b` (ADR-21 point 3). The order becomes one Sokosumi Task per store, the Task locks the Masumi escrow, the engine pays the verifier per check via x402 and pays the worker in preprod ADA on a pass; deliver settles the escrow, withhold refunds it.
+  5. Pages and owners for the hackathon:
+
+     | Page / part | What | Owner |
+     |---|---|---|
+     | `/story` | pitch and demo screen | Lorenz (C) |
+     | `/homepage` | startup homepage, frozen, not part of the hackathon | frozen (built as D-41) |
+     | `/dashboard` | operator | Helmut (D) |
+     | `/w` | worker phone app | Helmut (D) |
+     | `/b` | brand app (ADR-21) | Fernando (B) |
+     | Sokosumi worker + MPS | on Isabel's laptop | Isabel (A) |
+     | Pitch and presentation | deck, script, video (`pitch/`) | Lorenz (C) |
+- **Alternatives:** move MPS to Helmut's hub (new DB, wallets, registration and a private link from the worker; too risky hours before the freeze); keep fakes as a stage fallback (rejected: fake output must not be presented as real, AGENTS.md).
+- **Consequences:** Isabel's laptop and Helmut's laptop must both stay on and online during the demo; Isabel's account needs enough Sokosumi credits; the worker's `ENGINE_URL` must point to the tunnel, not 127.0.0.1. The worker uses `https://api-dev.shelfieapp.fyi` (dev) per [hub-laptop.md](../preparacion/hub-laptop.md); moving the demo to `api` (main) needs the release PR (decide: Helmut). Creating the `soko_preprod_` key in the Sokosumi web app is still unverified (verify on first use).
+- **Amends:** ADR-20 point 3 (names the buyer account), [hub-laptop.md](../preparacion/hub-laptop.md) (hub operator), [adr20-validation.md](../codigo/docs/adr20-validation.md) (historical).
+
 ## Open (not yet decided)
 - Early delivery (`earlyDeliver`) default: false (dashboard shows the full table); revisit if the Masumi submit deadline is tight.
 - Whether to enter the API3 track as a secondary candidacy: not decided here; this design does not depend on it.

@@ -78,6 +78,8 @@ These confirm code behaviour only; no paid request, real model call or preprod t
 
 ### TODO B-15 — account-backed capped REST Task spike (Fernando)
 
+> Superseded 2026-10-31: the spike was done as A-25 (row above) and the real adapter is implemented (row "Real adapter status"). `SOKOSUMI_AGENT_ID` is not used. Demo runtime: [ADR-22](../../diseno/decisions.md). Steps below are kept as history.
+
 Use Shelfie's preprod buyer account on the unrestricted hub. Do not paste credentials into chat, output, evidence or Vercel. Keep `SOKOSUMI_API_TOKEN` in the engine's private env only. No claim that this spike passed; no real order or price was observed here.
 
 1. Read-only: `GET https://api.preprod.sokosumi.com/v1/agents/AGENT_ID/input-schema`, header `Authorization: Bearer <engine secret>`. Record the **redacted** actual schema, public agent id and quoted credit cost. The official MCP source sends `inputSchema` = response `data`, never a fabricated schema.
@@ -87,7 +89,7 @@ Use Shelfie's preprod buyer account on the unrestricted hub. Do not paste creden
 5. Verify timeout and retry behavior with a duplicate per-store idempotency key (`orderId:storeId`, plus operation suffix only where the verified API requires it). Reconcile any timeout through GETs before resending. Capture one real 1-2-store order, actual credit debit and Masumi lock, delivery/settlement or withhold/refund. Tx hashes go to `docs/evidence/tx-hashes.md` only from observed output.
 6. Replace the fail-closed branch in `RealSokosumiClient.createTask` with that verified request, retain Bearer redaction/timeout/no redirects/bounded response, and add mocked request+response+idempotency tests. Update this register and contracts with the working endpoint/body/credit price/identity mapping. Only then close B-15 and B-16 and enable real purchases in `/api/config.orders`.
 
-Hub engine env names (no browser/VITE secrets): `SOKOSUMI_CLIENT=real`, `SOKOSUMI_API_URL=https://api.preprod.sokosumi.com`, `SOKOSUMI_API_TOKEN`, `SOKOSUMI_AGENT_ID`, `SOKOSUMI_MAX_CREDITS_PER_TASK`, `ORDER_MAX_STORES`, `ORDER_DAILY_CREDIT_CAP`, `BRAND_TOKEN` (32+ characters). These select the real adapter today, **but do not enable buying until step 6**. The ceilings are not price quotes. Fake local tests use `SOKOSUMI_CLIENT=fake`, `FAKE_PAYMENTS=1`, `VERIFY_CLIENT=fake`, `VERIFIER_PAYMENT=off`, `EVIDENCE_RUN_LOCKED=0` and a private brand access code. Shared deployments stay on their existing real-payment configuration; do not switch them to fakes for this rehearsal.
+Hub engine env names (no browser/VITE secrets): `SOKOSUMI_CLIENT=real`, `SOKOSUMI_API_URL=https://api.preprod.sokosumi.com`, `SOKOSUMI_API_TOKEN`, `SOKOSUMI_AGENT_ID`, `SOKOSUMI_MAX_CREDITS_PER_TASK`, `ORDER_MAX_STORES`, `ORDER_DAILY_CREDIT_CAP`, `BRAND_TOKEN` (32+ characters). These select the real adapter today, **but do not enable buying until step 6**. The ceilings are not price quotes. Fake local tests use `SOKOSUMI_CLIENT=fake`, `FAKE_PAYMENTS=1`, `VERIFY_CLIENT=fake`, `VERIFIER_PAYMENT=off`, `EVIDENCE_RUN_LOCKED=0` and a private brand access code. Shared deployments stay on their existing real-payment configuration; do not switch them to fakes for this rehearsal. Superseded by ADR-22: `SOKOSUMI_AGENT_ID` is not needed; `SOKOSUMI_COWORKER_ID` and `SOKOSUMI_ORGANIZATION_SLUG` are.
 
 ## Photo-free live checks (Codex for Helmut, 2026-10-31, D-17)
 
