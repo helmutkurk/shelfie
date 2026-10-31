@@ -189,6 +189,21 @@ export function createApp(opts: AppOptions): express.Express {
       res.json(opts.orders.profile(brand));
     }),
   );
+  // Spend, check counts and on-chain transactions of the calling brand's own orders only.
+  brandRouter.get(
+    "/summary",
+    h((_req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      res.json(opts.orders.summary(brandIdOf(res)));
+    }),
+  );
+  brandRouter.get(
+    "/transactions",
+    h((_req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      res.json(opts.orders.transactions(brandIdOf(res)));
+    }),
+  );
   app.use("/api/brand", brandRouter);
 
   // ---------------------------------------------------------------- public reads

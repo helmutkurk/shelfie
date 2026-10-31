@@ -162,6 +162,34 @@ describe("brand isolation over HTTP (ADR-21)", () => {
     );
     expect(JSON.stringify(meA.body) + JSON.stringify(meB.body)).not.toContain("token");
 
+    // Summary and transactions are brand-scoped, header-only and never carry another brand's data.
+    const jobId = (created.body as { jobs: { jobId: string }[] }).jobs[0]!.jobId;
+    r.engine.settlementEvent(jobId, { event: "ESCROW_LOCKED", txHash: "c".repeat(64) });
+    const txA = await request(app, "GET", "/api/brand/transactions", undefined, a);
+    expect(txA.body).toMatchObject({ transactions: [{ orderId: id, kind: "escrow_lock" }] });
+    expect((await request(app, "GET", "/api/brand/transactions", undefined, b)).body).toEqual({
+      transactions: [],
+    });
+    expect(JSON.stringify(txA.body)).not.toContain("token");
+    expect(
+      (
+        (await request(app, "GET", "/api/brand/summary", undefined, a)).body as {
+          checks: { open: number };
+        }
+      ).checks.open,
+    ).toBe(1);
+    expect(
+      (
+        (await request(app, "GET", "/api/brand/summary", undefined, b)).body as {
+          checks: { open: number };
+        }
+      ).checks.open,
+    ).toBe(0);
+    for (const path of ["/api/brand/summary", "/api/brand/transactions"]) {
+      expect((await request(app, "GET", path)).status).toBe(401);
+      expect((await request(app, "GET", `${path}?token=${BRAND_A.token}`)).status).toBe(401);
+    }
+
     expect((await request(app, "GET", "/api/brand/me")).status).toBe(401);
     expect((await request(app, "GET", `/api/brand/me?token=${BRAND_A.token}`)).status).toBe(401);
     expect(

@@ -11,12 +11,17 @@ import {
 } from "@shelfie/core";
 import type {
   BrandProfile,
+  BrandSummary,
+  BrandTransaction,
   Clock,
   EngineEnv,
   IdGenerator,
+  JobView,
   OrderRecord,
+  OrderResult,
   OrderView,
 } from "@shelfie/core";
+import { txUrl } from "@shelfie/evidence";
 import type { Engine } from "./engine.js";
 import type { SokosumiClient } from "./sokosumi.js";
 import type { Store } from "./store.js";
@@ -32,6 +37,22 @@ interface OrderDeps {
 
 /** Owner of an order; records written before per-brand codes belong to the demo brand. */
 const ownerOf = (order: OrderRecord): string => order.brandId ?? DEMO_BRAND_ID;
+
+type CheckKind = "passed" | "failed" | "timed_out" | "open" | "other";
+
+/**
+ * One store check as the brand sees it: passed (decision DELIVER), failed (withheld and a photo was
+ * rejected), timed out (withheld with no rejected photo), open (still running), other (cancelled
+ * or rejected input; not counted).
+ */
+function classify(view: JobView): CheckKind {
+  const state = view.job.state;
+  if (state === "DELIVERABLE" || state === "DELIVERED" || state === "SETTLED") return "passed";
+  if (state === "WITHHELD" || state === "REFUNDED")
+    return view.tasks.some((t) => t.state === "FAILED") ? "failed" : "timed_out";
+  if (state === "CANCELLED" || state === "REJECTED_INPUT") return "other";
+  return "open";
+}
 
 export class Orders {
   private readonly active = new Set<string>();
@@ -131,7 +152,7 @@ export class Orders {
     this.active.add(id);
     for (const storeId of req.storeIds) {
       try {
-        const { taskId } = await this.d.client.createTask(
+        const { taskId, credits } = await this.d.client.createTask(
           {
             orderId: id,
             storeId,
@@ -154,7 +175,14 @@ export class Orders {
         this.d.store.orders.put({
           ...current,
           jobs: current.jobs.map((j) =>
-            j.storeId === storeId ? { ...j, sokosumiTaskId: taskId, status: "AWAITING_SHELL" } : j,
+            j.storeId === storeId
+              ? {
+                  ...j,
+                  sokosumiTaskId: taskId,
+                  status: "AWAITING_SHELL",
+                  ...(credits !== undefined ? { credits } : {}),
+                }
+              : j,
           ),
         });
       } catch {
@@ -209,6 +237,7 @@ export class Orders {
         const active = job?.job.state === "COLLECTING" ? job.tasks[0]?.state : undefined;
         return {
           ...row,
+          ...(job ? { result: this.resultOf(job) } : {}),
           status:
             active ??
             job?.job.state ??
@@ -219,6 +248,62 @@ export class Orders {
       }),
     };
   }
+  /** Outcome of one store check, for the order view. Only ids and plain words, no photo data. */
+  private resultOf(view: JobView): OrderResult {
+    const kind = classify(view);
+    const reportReady = view.job.reportMd !== null && view.job.reportMd !== "";
+    if (kind === "passed") {
+      const oos = view.tasks.some((t) => t.acceptedOutcome === "OUT_OF_STOCK");
+      const priceEur = oos ? undefined : this.acceptedPrice(view);
+      return {
+        outcome: oos ? "out_of_stock" : "passed",
+        ...(priceEur !== undefined ? { priceEur } : {}),
+        reportReady,
+      };
+    }
+    if (kind === "failed") {
+      const reason = this.failureReason(view);
+      return { outcome: "failed", ...(reason ? { reason } : {}), reportReady };
+    }
+    return { outcome: kind === "timed_out" ? "timed_out" : "open", reportReady };
+  }
+
+  private acceptedPrice(view: JobView): number | undefined {
+    for (const t of view.tasks) {
+      const task = this.d.store.tasks.get(t.id);
+      const subId = task?.acceptedSubmissionId;
+      if (!subId) continue;
+      const verdicts = this.d.store.verdicts.all().filter((v) => v.submissionId === subId);
+      const raw: unknown = verdicts[verdicts.length - 1]?.extraction["price"];
+      const price =
+        typeof raw === "object" && raw !== null
+          ? (raw as { value?: unknown; currency?: unknown })
+          : null;
+      if (
+        price &&
+        typeof price.value === "number" &&
+        Number.isFinite(price.value) &&
+        price.value >= 0 &&
+        price.value <= 100_000 &&
+        (price.currency === null || price.currency === undefined || price.currency === "EUR")
+      )
+        return price.value;
+    }
+    return undefined;
+  }
+
+  private failureReason(view: JobView): string | undefined {
+    const failed = view.tasks.filter((t) => t.state === "FAILED").map((t) => t.id as string);
+    const verdicts = this.d.store.verdicts
+      .all()
+      .filter(
+        (v) =>
+          !v.pass && failed.includes(this.d.store.submissions.get(v.submissionId)?.taskId ?? ""),
+      );
+    const msg = verdicts[verdicts.length - 1]?.workerMessage.trim();
+    return msg ? msg.slice(0, 240) : undefined;
+  }
+
   list(brandId: string): { orders: OrderView[] } {
     return {
       orders: this.d.store.orders
@@ -250,5 +335,115 @@ export class Orders {
       maxStores: this.d.env.ORDER_MAX_STORES,
       fake: this.d.env.SOKOSUMI_CLIENT === "fake",
     });
+  }
+  /**
+   * GET /api/brand/summary: spend and check counts, derived only from this brand's order rows and
+   * their jobs. Settled (delivered) = paid; withheld or refunded = refunded. Credits are the
+   * recorded Sokosumi price per row; rows without one are counted, never estimated.
+   */
+  summary(brandId: string): BrandSummary {
+    let spent = 0;
+    let refunded = 0;
+    let unpriced = 0;
+    const checks = { passed: 0, failed: 0, timedOut: 0, open: 0 };
+    for (const order of this.d.store.orders.all().filter((o) => ownerOf(o) === brandId)) {
+      for (const stored of order.jobs) {
+        const job =
+          stored.jobId && this.d.store.jobs.get(stored.jobId)
+            ? this.d.engine.getJob(stored.jobId)
+            : undefined;
+        const kind = job ? classify(job) : "open";
+        if (kind === "passed") checks.passed += 1;
+        else if (kind === "failed") checks.failed += 1;
+        else if (kind === "timed_out") checks.timedOut += 1;
+        else if (kind === "open") checks.open += 1;
+        const state = job?.job.state;
+        const paid = state === "DELIVERED" || state === "SETTLED";
+        const back = state === "WITHHELD" || state === "REFUNDED";
+        if (paid || back) {
+          if (stored.credits === undefined) unpriced += 1;
+          else if (paid) spent += stored.credits;
+          else refunded += stored.credits;
+        }
+      }
+    }
+    return { credits: { spent, refunded, unpricedChecks: unpriced }, checks };
+  }
+
+  /**
+   * GET /api/brand/transactions: on-chain transactions of this brand's own store checks only
+   * (escrow lock, result, settlement, refund, verifier x402 fee, worker payout). The job ids come
+   * from the brand's order rows, so another brand's jobs are never selected.
+   */
+  transactions(brandId: string): { transactions: BrandTransaction[] } {
+    const out: BrandTransaction[] = [];
+    const ledger = this.d.engine.ledger.all();
+    const kinds: Partial<Record<string, BrandTransaction["kind"]>> = {
+      ESCROW_LOCKED: "escrow_lock",
+      RESULT_SUBMITTED: "result_submitted",
+      SETTLED: "settlement",
+      REFUND_OBSERVED: "refund",
+      VERIFY_PAID: "verifier_fee",
+      PAYOUT_SUBMITTED: "worker_payout",
+      PAYOUT_CONFIRMED: "worker_payout",
+      PAYOUT_MARKED_PAID: "worker_payout",
+    };
+    const orders = this.d.store.orders
+      .all()
+      .filter((o) => ownerOf(o) === brandId)
+      .slice()
+      .reverse();
+    for (const order of orders) {
+      for (const row of order.jobs) {
+        const jobId = row.jobId;
+        if (!jobId) continue;
+        const seen = new Set<string>();
+        const add = (
+          kind: BrandTransaction["kind"],
+          txHash: string,
+          ts: string | undefined,
+          explorerUrl: string | undefined,
+        ): void => {
+          const key = `${kind}:${txHash}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          const url = order.fake
+            ? undefined
+            : (explorerUrl ?? txUrl(txHash, this.d.env.EXPLORER_TX_BASE));
+          out.push({
+            orderId: order.id,
+            storeId: row.storeId,
+            jobId,
+            kind,
+            txHash,
+            ...(url ? { explorerUrl: url } : {}),
+            ...(ts ? { ts } : {}),
+          });
+        };
+        for (const e of ledger) {
+          const kind = kinds[e.kind];
+          if (kind && e.txHash && e.refs["jobId"] === jobId)
+            add(kind, e.txHash, e.ts, e.explorerUrl);
+        }
+        const st = this.d.store.settlements.all().find((s) => s.jobId === jobId);
+        if (st) {
+          if (st.escrowRefs.lockTx) add("escrow_lock", st.escrowRefs.lockTx, undefined, undefined);
+          if (st.escrowRefs.settleTx)
+            add("settlement", st.escrowRefs.settleTx, undefined, undefined);
+          if (st.escrowRefs.refundTx) add("refund", st.escrowRefs.refundTx, undefined, undefined);
+        }
+        const taskIds = new Set(
+          this.d.store.tasks
+            .all()
+            .filter((t) => t.jobId === jobId)
+            .map((t) => t.id as string),
+        );
+        for (const p of this.d.store.payouts.all()) {
+          if (p.txHash && taskIds.has(p.taskId))
+            add("worker_payout", p.txHash, undefined, undefined);
+        }
+      }
+    }
+    return { transactions: out };
   }
 }

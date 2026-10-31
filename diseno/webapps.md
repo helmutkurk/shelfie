@@ -7,7 +7,7 @@ Both sides live in one app, `apps/web` (Vite + React, owner D), served by the en
 | Side | Route | Audience | Layout | In contracts.md? |
 |---|---|---|---|---|
 | Worker app | `/w` | People in stores and on the street who take shelf photos (or report an empty shelf spot) | Mobile first, one hand, bright light | Yes (architecture.md component 5) |
-| Brand app | `/b` | A brand that orders shelf checks: Overview, Orders, Profile; sign in with the brand access code (ADR-21) | Desktop layout, readable on a phone | Yes (orders and `GET /api/brand/me` in contracts.md) |
+| Brand app | `/b` | A brand that orders shelf checks: Overview, Orders, Profile; sign in with the brand access code (ADR-21) | Desktop layout, readable on a phone | Yes (orders, `GET /api/brand/me`, `/api/brand/summary` and `/api/brand/transactions` in contracts.md) |
 | Operator dashboard | `/dashboard` | Operators: requests, locations, ledger, tools; behind the operator token gate (ADR-21) | Desktop and stage layout | Yes (component 6; `GET /api/admin/ping` in contracts.md) |
 | Extra routes (proposed) | `/dashboard/jobs/:id`, `/dashboard/jobs/:id/report`, `/dashboard/ledger`, `/dashboard/entry-brief` | Operator | Same | **Proposed, not in contracts yet** |
 
@@ -239,7 +239,7 @@ Out-of-stock failure uses W5 with the O-gate messages (verifier-rules.md section
 
 1. Open `/b`, sign in with the brand access code (tab memory only), select a product and several stores from the Munich catalog, optionally filtering stores by chain. No free-text order fields and no file inputs.
 2. Place `POST /api/orders`. Intake runs for every store before any Sokosumi call. Shelfie buys one Task per store with its own account and bounded credits (ADR-20, amended Helmut 2026-10-30).
-3. Watch the order's per-store statuses through authenticated `GET /api/orders` and `GET /api/orders/{id}` (3 s polling). A pending Task has no engine job until the shell picks it up; the fake client creates it immediately through the same `Engine.createJob` path.
+3. Watch the order's per-store statuses through authenticated `GET /api/orders` and `GET /api/orders/{id}` (3 s polling). The order form shows the credit ceiling per store and for the order, the latest recorded price and the escrow refund rule (B-17); each store row shows its outcome (passed with the photo price, failed with reason, timed out, refunded) and links to the timeline and report; Overview and Profile show credits paid/refunded and check counts (`GET /api/brand/summary`), Orders lists the brand's own on-chain transactions (`GET /api/brand/transactions`), all hashes linked to the preprod explorer. The brand wallet balance is not shown (informational address, ADR-21). A pending Task has no engine job until the shell picks it up; the fake client creates it immediately through the same `Engine.createJob` path.
 4. Open a linked job for its existing timeline, payouts, receipts and report. Deliver means a passing price or out-of-stock observation; withhold means no passing observation. Settlement/refund is shown only when observed.
 5. Operator-only demo job and override stay in a collapsed **Operator** section, gated by the operator token. Stage mode hides that section.
 
@@ -359,7 +359,7 @@ None exist for this flow. Proposed (not in contracts yet): `POST /api/briefs` (c
 
 | Proposed | Purpose | Needs |
 |---|---|---|
-| `/b` | Brand places and follows shelf requests (Overview, Orders, Profile) | `X-Brand-Token` from sign-in; POST/GET `/api/orders`, GET `/api/orders/{id}`, GET `/api/brand/me`; contracts Orders |
+| `/b` | Brand places and follows shelf requests (Overview, Orders, Profile) | `X-Brand-Token` from sign-in; POST/GET `/api/orders`, GET `/api/orders/{id}`, GET `/api/brand/me`, `/api/brand/summary`, `/api/brand/transactions`; contracts Orders |
 | `/dashboard` | Operator views behind the operator token gate | `X-Admin-Token`; `GET /api/admin/ping` as the gate; `/api/jobs`, ledger (no brand order form) |
 | `/dashboard/jobs/:id` | Deep link to one job | none beyond existing GETs |
 | `/dashboard/jobs/:id/report` | Printable report | `reportMd` rendering |

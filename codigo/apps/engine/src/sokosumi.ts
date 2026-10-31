@@ -13,7 +13,7 @@ export interface SokosumiClient {
   createTask(
     input: SokosumiTaskInput,
     onCreated?: (taskId: string) => void,
-  ): Promise<{ taskId: string }>;
+  ): Promise<{ taskId: string; credits?: number }>;
 }
 
 /** Local rehearsal only: same createJob method/body as the authenticated shell bridge. */
@@ -83,7 +83,7 @@ export class RealSokosumiClient implements SokosumiClient {
   async createTask(
     input: SokosumiTaskInput,
     onCreated?: (taskId: string) => void,
-  ): Promise<{ taskId: string }> {
+  ): Promise<{ taskId: string; credits?: number }> {
     let raw: unknown;
     try {
       const response = await this.fetchFn(new URL("/v1/tasks", this.env.SOKOSUMI_API_URL), {
@@ -127,11 +127,16 @@ export class RealSokosumiClient implements SokosumiClient {
     const credits = parsed.data.data.credits;
     if (typeof credits !== "number" || credits > input.maxCredits) {
       // Sokosumi has no cap in the create call; an unknown or higher price stops the order here.
-      throw new AppError("sokosumi_unavailable", "Task price unknown or above the credit cap; check Sokosumi.", 502, {
-        reason: "task_above_credit_cap",
-        taskId,
-      });
+      throw new AppError(
+        "sokosumi_unavailable",
+        "Task price unknown or above the credit cap; check Sokosumi.",
+        502,
+        {
+          reason: "task_above_credit_cap",
+          taskId,
+        },
+      );
     }
-    return { taskId };
+    return { taskId, credits };
   }
 }
