@@ -8,7 +8,7 @@ import { brandCounts, recentRows } from "./model.js";
 const RECENT = 5;
 
 /**
- * Brand overview. Only the brand's own orders: with none, the page is a single large "+" and
+ * Brand overview. Only the brand's own orders: with none, the page is a single round "+" button and
  * nothing else (no tiles, no containers), also while the first read is pending. With orders: four counts and the newest store rows.
  */
 export function BrandOverview(props: {
@@ -29,7 +29,6 @@ export function BrandOverview(props: {
           aria-label="New shelf request"
           onClick={props.onNew}
         >
-          <span aria-hidden="true">+</span>
         </button>
       </div>
     );

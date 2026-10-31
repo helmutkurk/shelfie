@@ -47,6 +47,43 @@ function pickStores(...ids: string[]) {
 const pickProduct = () =>
   fireEvent.change(screen.getByLabelText("Product"), { target: { value: "4000000000000" } });
 
+describe("new order availability", () => {
+  const renderForm = (extra: Record<string, unknown>) => {
+    const { deps } = makeDeps({ routes: {} });
+    renderWithDeps(
+      h(RequestForm, {
+        catalog: catalogFixture(),
+        brandToken: "brand-code",
+        onCreated: () => undefined,
+        enabled: true,
+        maxStores: 5,
+        fake: false,
+        maxCreditsPerTask: 100,
+        ...extra,
+      }),
+      deps,
+    );
+  };
+  it("real mode: no fake notice, order button enabled with product and stores", () => {
+    renderForm({});
+    expect(screen.queryByText(/Fake orders/)).toBeNull();
+    pickProduct();
+    pickStores("s1");
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Place order" }).disabled).toBe(
+      false,
+    );
+  });
+  it("disabled real mode explains the missing settings and blocks the button", () => {
+    renderForm({ enabled: false });
+    expect(screen.getByText(/real Sokosumi settings/)).toBeTruthy();
+    pickProduct();
+    pickStores("s1");
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Place order" }).disabled).toBe(
+      true,
+    );
+  });
+});
+
 describe("new order", () => {
   it("uses catalog dropdowns only; access code is outside the order form; no file inputs", () => {
     setup();

@@ -152,8 +152,10 @@ export function RequestForm(props: {
           </p>
         ) : null}
         {!props.enabled ? (
-          <p className="footnote">
-            Orders are unavailable on this engine. Real ordering is not available yet.
+          <p className="footnote" role="status">
+            {props.fake
+              ? "Orders are not available: fake orders need fake payments and verifier, outside evidence runs."
+              : "Orders are not available: the real Sokosumi settings (API token, coworker, organization) or the real payment and verifier settings are missing on this engine."}
           </p>
         ) : null}
         <Button type="submit" disabled={!ready || busy}>
