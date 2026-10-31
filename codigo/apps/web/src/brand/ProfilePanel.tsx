@@ -1,9 +1,14 @@
-import type { BrandProfile } from "@shelfie/core/browser";
+import type { BrandProfile, BrandSummary } from "@shelfie/core/browser";
 import { AddressCopy } from "../worker/AddressCopy.js";
 import { Pill } from "../ui/index.js";
+import { SpendCard } from "./SpendCard.js";
 
 /** Brand profile: identity, preprod wallet, spending caps. Opened from the sidebar, not a tab. */
-export function ProfilePanel(props: { profile: BrandProfile; onBack: () => void }) {
+export function ProfilePanel(props: {
+  profile: BrandProfile;
+  summary: BrandSummary | undefined;
+  onBack: () => void;
+}) {
   const p = props.profile;
   return (
     <div className="dpage">
@@ -46,6 +51,7 @@ export function ProfilePanel(props: { profile: BrandProfile; onBack: () => void 
           brand (ADR-20).
         </p>
       </section>
+      <SpendCard profile={p} summary={props.summary} />
     </div>
   );
 }

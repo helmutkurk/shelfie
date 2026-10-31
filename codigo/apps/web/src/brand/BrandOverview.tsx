@@ -1,9 +1,10 @@
-import type { CatalogResponse, OrderView } from "@shelfie/core/browser";
+import type { BrandProfile, BrandSummary, CatalogResponse, OrderView } from "@shelfie/core/browser";
 import { Pill } from "../ui/index.js";
 import { Tile } from "../dashboard/Overview.js";
 import { statusLabel } from "../dashboard/OrderStatus.js";
 import { relativeTime, useNow } from "../dashboard/time.js";
 import { brandCounts, recentRows } from "./model.js";
+import { SpendCard } from "./SpendCard.js";
 
 const RECENT = 5;
 
@@ -14,6 +15,8 @@ const RECENT = 5;
 export function BrandOverview(props: {
   orders: OrderView[] | undefined;
   catalog: CatalogResponse | undefined;
+  profile: BrandProfile;
+  summary: BrandSummary | undefined;
   onNew: () => void;
   onOpenJob: (jobId: string) => void;
 }) {
@@ -28,8 +31,7 @@ export function BrandOverview(props: {
           className="brand-plus"
           aria-label="New shelf request"
           onClick={props.onNew}
-        >
-        </button>
+        ></button>
       </div>
     );
   }
@@ -61,6 +63,8 @@ export function BrandOverview(props: {
         </div>
         <p className="dsub">Counts cover all your shelf requests.</p>
       </section>
+
+      <SpendCard profile={props.profile} summary={props.summary} />
 
       <section className="dcard" aria-label="Recent shelf requests">
         <h2 className="dh2">Recent</h2>

@@ -1,6 +1,8 @@
 import {
   AppError,
   BrandProfileSchema,
+  BrandSummarySchema,
+  BrandTransactionsResponseSchema,
   OrderViewSchema,
   OrderListResponseSchema,
   OverrideResponseSchema,
@@ -196,6 +198,20 @@ export class ApiClient {
   /** ADR-21: validates a brand access code and returns the brand profile (never the code). */
   brandMe(brandToken: string, signal?: AbortSignal) {
     return this.request(BrandProfileSchema, "/api/brand/me", {
+      ...withSignal(signal),
+      headers: { "X-Brand-Token": brandToken },
+    });
+  }
+  /** Spend and check counts over the brand's own orders. */
+  brandSummary(brandToken: string, signal?: AbortSignal) {
+    return this.request(BrandSummarySchema, "/api/brand/summary", {
+      ...withSignal(signal),
+      headers: { "X-Brand-Token": brandToken },
+    });
+  }
+  /** On-chain transactions of the brand's own orders (scoped by the engine). */
+  brandTransactions(brandToken: string, signal?: AbortSignal) {
+    return this.request(BrandTransactionsResponseSchema, "/api/brand/transactions", {
       ...withSignal(signal),
       headers: { "X-Brand-Token": brandToken },
     });

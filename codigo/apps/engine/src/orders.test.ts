@@ -160,6 +160,7 @@ describe("real Sokosumi transport (mocked; request shape from A-25)", () => {
     });
     await expect(client.createTask(task, (id) => seen.push(id))).resolves.toEqual({
       taskId: "task-1",
+      credits: 100,
     });
     expect(urls).toEqual(["https://api.preprod.sokosumi.com/v1/tasks"]);
     expect(calls[0]?.method).toBe("POST");

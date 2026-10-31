@@ -48,6 +48,29 @@ const brandRoutes = (over: FetchRoutes = {}): FetchRoutes => ({
   "GET /api/health": healthFixture(),
   "GET /api/catalog": catalogFixture(),
   "GET /api/orders": { orders: [] },
+  "GET /api/brand/summary": {
+    credits: { spent: 100, refunded: 50, unpricedChecks: 1 },
+    checks: { passed: 1, failed: 1, timedOut: 2, open: 0 },
+  },
+  "GET /api/brand/transactions": {
+    transactions: [
+      {
+        orderId: "ord_01",
+        storeId: "s1",
+        jobId: "job_01",
+        kind: "escrow_lock",
+        txHash: "a".repeat(64),
+        explorerUrl: `https://preprod.cardanoscan.io/transaction/${"a".repeat(64)}`,
+      },
+      {
+        orderId: "ord_01",
+        storeId: "s2",
+        jobId: "job_02",
+        kind: "refund",
+        txHash: "b".repeat(64),
+      },
+    ],
+  },
   "GET /api/jobs/job_01": jobFixture(),
   "GET /api/ledger": { entries: [] },
   "GET /api/payouts": { payouts: [] },
@@ -154,6 +177,86 @@ describe("brand overview", () => {
   });
 });
 
+describe("brand price, spend, results and transactions (B-17)", () => {
+  it("the order form shows the ceiling per store and in total, refunds and test credits", async () => {
+    const { deps } = makeDeps({ routes: brandRoutes() });
+    renderWithDeps(h(BrandApp), deps);
+    await signIn();
+    fireEvent.click(screen.getByRole("button", { name: "Orders" }));
+    const note = await screen.findByLabelText("Order price");
+    expect(within(note).getByText(/up to 100 credits per store/)).toBeTruthy();
+    expect(within(note).getByText(/test credits, not money|no credits are charged/)).toBeTruthy();
+    expect(screen.getByText(/refunded through the escrow/)).toBeTruthy();
+  });
+
+  it("overview shows credits paid and refunded and the check counts from the summary", async () => {
+    const { deps, calls } = makeDeps({
+      routes: brandRoutes({ "GET /api/orders": () => brandOrders() }),
+    });
+    renderWithDeps(h(BrandApp), deps);
+    await signIn();
+    const card = await screen.findByRole("region", { name: "Spend and checks" });
+    await within(card).findByText("Credits paid");
+    const value = (label: string) =>
+      within(card).getByText(label).parentElement?.querySelector(".tile-value")?.textContent;
+    expect(value("Credits paid")).toBe("100");
+    expect(value("Credits refunded")).toBe("50");
+    expect(value("Checks failed")).toBe("1");
+    expect(value("Checks timed out")).toBe("2");
+    expect(within(card).getByText(/1 finished check has no recorded price/)).toBeTruthy();
+    expect(calls.find((c) => c.path === "/api/brand/summary")?.headers["X-Brand-Token"]).toBe(CODE);
+  });
+
+  it("orders show each store's outcome and the brand's transactions with explorer links", async () => {
+    const orders = brandOrders();
+    orders.orders[0]!.jobs = [
+      {
+        storeId: "s2",
+        sokosumiTaskId: "t2",
+        jobId: "job_02",
+        status: "REFUNDED",
+        credits: 40,
+        result: { outcome: "timed_out", reportReady: false },
+      },
+    ] as never;
+    orders.orders[1]!.jobs[0] = {
+      storeId: "s1",
+      sokosumiTaskId: "t1",
+      jobId: "job_01",
+      status: "SETTLED",
+      credits: 40,
+      result: { outcome: "passed", priceEur: 2.49, reportReady: true },
+    } as never;
+    const { deps } = makeDeps({ routes: brandRoutes({ "GET /api/orders": () => orders }) });
+    renderWithDeps(h(BrandApp), deps);
+    await signIn();
+    fireEvent.click(screen.getByRole("button", { name: "Orders" }));
+    expect(await screen.findByText("Timed out, refunded")).toBeTruthy();
+    expect(screen.getByText("Passed")).toBeTruthy();
+    expect(screen.getByText(/Price on the shelf: .*2\.49/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Photo report and timeline/ })).toBeTruthy();
+    const list = await screen.findByRole("region", { name: "Transactions" });
+    await within(list).findByText("Escrow lock");
+    expect(within(list).getByText("Refund")).toBeTruthy();
+    const link = within(list).getAllByRole("link", { name: "View on explorer" })[0];
+    expect(link?.getAttribute("href")).toContain(`/transaction/${"a".repeat(64)}`);
+  });
+
+  it("a failing summary or transactions read leaves the console usable", async () => {
+    const { deps } = makeDeps({
+      routes: brandRoutes({
+        "GET /api/orders": () => brandOrders(),
+        "GET /api/brand/summary": () => errorResponse("not_found", "Missing", 404),
+        "GET /api/brand/transactions": () => errorResponse("not_found", "Missing", 404),
+      }),
+    });
+    renderWithDeps(h(BrandApp), deps);
+    await signIn();
+    const card = await screen.findByRole("region", { name: "Spend and checks" });
+    expect(within(card).getByText(/Spend is not available/)).toBeTruthy();
+  });
+});
+
 describe("brand profile", () => {
   it("shows name, brand id, wallet, credit caps and the demo line", async () => {
     const { deps } = makeDeps({ routes: brandRoutes() });
@@ -206,4 +309,3 @@ describe("brand access code storage", () => {
     expect(window.sessionStorage.length).toBe(0);
   });
 });
-

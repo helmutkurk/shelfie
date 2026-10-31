@@ -108,6 +108,9 @@ function BrandConsole(props: { session: Session; onSignOut: () => void }) {
   const me = usePolling((s) => api.brandMe(token, s), 30_000);
   const profile = me.data ?? signedInProfile;
   const orders = usePolling((s) => api.orders(token, s), 3000);
+  // Spend and transactions are secondary: if they fail the rest of the console keeps working.
+  const summary = usePolling((s) => api.brandSummary(token, s), 10_000);
+  const transactions = usePolling((s) => api.brandTransactions(token, s), 6000);
   const { data: config } = usePolling((s) => api.config(s), 30_000);
   const { data: health, error: healthError } = usePolling((s) => api.health(s), 3000);
   const { data: catalog } = usePolling((s) => api.catalog(s), 60_000);
@@ -178,12 +181,18 @@ function BrandConsole(props: { session: Session; onSignOut: () => void }) {
               ) : null}
 
               {profileOpen ? (
-                <ProfilePanel profile={profile} onBack={() => setProfileOpen(false)} />
+                <ProfilePanel
+                  profile={profile}
+                  summary={summary.data}
+                  onBack={() => setProfileOpen(false)}
+                />
               ) : null}
               {!profileOpen && section === "overview" ? (
                 <BrandOverview
                   orders={orders.data?.orders}
                   catalog={catalog}
+                  profile={profile}
+                  summary={summary.data}
                   onNew={newRequest}
                   onOpenJob={openJob}
                 />
@@ -196,12 +205,15 @@ function BrandConsole(props: { session: Session; onSignOut: () => void }) {
                   orders={orders.data?.orders}
                   catalog={catalog}
                   ledger={ledger.entries}
+                  transactions={transactions.data?.transactions}
                   view={ordersView}
                   onView={setOrdersView}
                   onCreated={() => {
                     setToast("Request sent");
                     setOrdersView({ jobId: null, composing: false });
                     orders.reload();
+                    summary.reload();
+                    transactions.reload();
                   }}
                 />
               ) : null}

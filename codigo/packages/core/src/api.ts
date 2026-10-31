@@ -68,6 +68,17 @@ export const OrderPurchaseStatusSchema = z.enum([
   "AWAITING_SHELL",
   "SOKOSUMI_UNAVAILABLE",
 ]);
+/** Per-store outcome shown to the brand; derived by the engine from the job, never stored. */
+export const OrderResultSchema = z.strictObject({
+  outcome: z.enum(["passed", "out_of_stock", "failed", "timed_out", "open"]),
+  /** Price read from the accepted photo (EUR), only for a passed price check. */
+  priceEur: z.number().nonnegative().max(100_000).optional(),
+  /** Plain-words reason for a failed check. */
+  reason: z.string().max(240).optional(),
+  /** True once the job has a report (opened from the job detail). */
+  reportReady: z.boolean(),
+});
+export type OrderResult = z.infer<typeof OrderResultSchema>;
 export const OrderJobSchema = z.strictObject({
   storeId: OrderStoreIdSchema,
   sokosumiTaskId: z
@@ -77,6 +88,9 @@ export const OrderJobSchema = z.strictObject({
     .regex(/^[A-Za-z0-9_-]+$/)
     .nullable(),
   jobId: JobIdSchema.nullable(),
+  /** Sokosumi price of this store's Task, recorded when the Task was created; absent if unknown. */
+  credits: z.number().nonnegative().max(1_000_000_000).optional(),
+  result: OrderResultSchema.optional(),
   status: z.enum([
     ...OrderPurchaseStatusSchema.options,
     ...JobStateSchema.options,
@@ -119,6 +133,50 @@ export const BrandProfileSchema = z.strictObject({
   fake: z.boolean(),
 });
 export type BrandProfile = z.infer<typeof BrandProfileSchema>;
+
+/**
+ * GET /api/brand/summary: spend and check counts over the calling brand's own orders. Credits count
+ * only rows whose Sokosumi price was recorded; `unpricedChecks` says how many settled or refunded
+ * checks have no recorded price (never estimated).
+ */
+export const BrandSummarySchema = z.strictObject({
+  credits: z.strictObject({
+    spent: z.number().nonnegative(),
+    refunded: z.number().nonnegative(),
+    unpricedChecks: z.number().int().nonnegative(),
+  }),
+  checks: z.strictObject({
+    passed: z.number().int().nonnegative(),
+    failed: z.number().int().nonnegative(),
+    timedOut: z.number().int().nonnegative(),
+    open: z.number().int().nonnegative(),
+  }),
+});
+export type BrandSummary = z.infer<typeof BrandSummarySchema>;
+
+/** One on-chain transaction that belongs to one of the calling brand's store checks. */
+export const BrandTransactionKindSchema = z.enum([
+  "escrow_lock",
+  "result_submitted",
+  "settlement",
+  "refund",
+  "verifier_fee",
+  "worker_payout",
+]);
+export const BrandTransactionSchema = z.strictObject({
+  orderId: OrderIdSchema,
+  storeId: OrderStoreIdSchema,
+  jobId: JobIdSchema,
+  kind: BrandTransactionKindSchema,
+  txHash: z.string().min(1).max(200),
+  explorerUrl: z.string().max(400).optional(),
+  ts: IsoTimestampSchema.optional(),
+});
+export type BrandTransaction = z.infer<typeof BrandTransactionSchema>;
+export const BrandTransactionsResponseSchema = z.strictObject({
+  transactions: z.array(BrandTransactionSchema),
+});
+export type BrandTransactionsResponse = z.infer<typeof BrandTransactionsResponseSchema>;
 
 // ---------------------------------------------------------------- 1.1 Jobs
 /** POST /api/jobs. Strict: free-text fields (product.name, store.address ...) are a 422. */

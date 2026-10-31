@@ -1,8 +1,15 @@
-import type { BrandProfile, CatalogResponse, LedgerEvent, OrderView } from "@shelfie/core/browser";
+import type {
+  BrandProfile,
+  BrandTransaction,
+  CatalogResponse,
+  LedgerEvent,
+  OrderView,
+} from "@shelfie/core/browser";
 import { JobDetail } from "../dashboard/JobDetail.js";
-import { OrderStatus } from "../dashboard/OrderStatus.js";
 import { RequestForm } from "../dashboard/RequestForm.js";
-import { jobBelongsTo } from "./model.js";
+import { OrderCard } from "./OrderCard.js";
+import { TransactionList } from "./TransactionList.js";
+import { jobBelongsTo, lastPriceCredits } from "./model.js";
 
 /** Orders-section state: an open shelf request, or the new-request form. */
 export interface OrdersView {
@@ -21,6 +28,7 @@ export function BrandOrders(props: {
   orders: OrderView[] | undefined;
   catalog: CatalogResponse | undefined;
   ledger: readonly LedgerEvent[];
+  transactions: BrandTransaction[] | undefined;
   view: OrdersView;
   onView: (next: OrdersView) => void;
   onCreated: () => void;
@@ -53,6 +61,7 @@ export function BrandOrders(props: {
             fake={props.profile.fake}
             maxStores={props.profile.maxStores}
             maxCreditsPerTask={props.profile.maxCreditsPerTask}
+            lastPriceCredits={lastPriceCredits(props.orders)}
             onCreated={() => props.onCreated()}
           />
         </div>
@@ -70,7 +79,7 @@ export function BrandOrders(props: {
           ) : null}
           <section aria-label="Shelf requests" className="dstack">
             {orders.map((order) => (
-              <OrderStatus
+              <OrderCard
                 key={order.orderId}
                 order={order}
                 catalog={props.catalog}
@@ -78,15 +87,24 @@ export function BrandOrders(props: {
               />
             ))}
           </section>
+          <TransactionList transactions={props.transactions} catalog={props.catalog} limit={10} />
         </div>
         <div className="dcol dcol-detail">
           {view.jobId !== null && jobOwned ? (
-            <JobDetail
-              jobId={view.jobId}
-              catalog={props.catalog}
-              ledger={props.ledger}
-              onBack={home}
-            />
+            <>
+              <JobDetail
+                jobId={view.jobId}
+                catalog={props.catalog}
+                ledger={props.ledger}
+                onBack={home}
+              />
+              <TransactionList
+                transactions={props.transactions}
+                catalog={props.catalog}
+                jobId={view.jobId}
+                title="Transactions of this check"
+              />
+            </>
           ) : (
             <section className="dcard dhint" aria-label="Request detail">
               <h2 className="dh2">Shelf request detail</h2>
