@@ -250,6 +250,8 @@ const engineBase = z.object({
   STORE_PATH: z.string().default("./data/engine-events.jsonl"),
   LEDGER_PATH: z.string().default("./data/evidence-ledger.jsonl"),
   BLOCKFROST_PROJECT_ID: optStr(),
+  /** Public W-VBUY address for the read-only health balance (never a key). */
+  WALLET_ADDRESS_VBUY: optStr(),
   PAY_MNEMONIC_1: optStr(),
   PAY_MNEMONIC_2: optStr(),
   VBUY_MNEMONIC_1: optStr(),

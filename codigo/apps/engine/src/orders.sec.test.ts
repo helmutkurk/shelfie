@@ -191,6 +191,12 @@ describe("order trust boundary", () => {
       SOKOSUMI_API_TOKEN: "synthetic-api-token",
       SOKOSUMI_COWORKER_ID: "coworker-1",
       SOKOSUMI_ORGANIZATION_SLUG: "org-slug",
+      // ADR-22: real orders also need real payments and verifier
+      FAKE_PAYMENTS: "0",
+      VERIFY_CLIENT: "real",
+      BLOCKFROST_PROJECT_ID: "preprodabc",
+      PAY_MNEMONIC_1: "synthetic-fixture",
+      VERIFIER_PAYMENT: "off",
     };
     const real = orderRig(realEnv).engine.configView(true).orders;
     expect(real).toMatchObject({ enabled: true, realReady: true, fake: false });
@@ -213,6 +219,29 @@ describe("order trust boundary", () => {
       realReady: false,
       fake: true,
     });
+  });
+  it("enables real orders only with every real setting, real payments and verifier", () => {
+    const real = {
+      SOKOSUMI_CLIENT: "real",
+      SOKOSUMI_API_TOKEN: "synthetic-api-token",
+      SOKOSUMI_COWORKER_ID: "coworker-1",
+      SOKOSUMI_ORGANIZATION_SLUG: "org-slug",
+      BRAND_ACCOUNTS: `acme|Acme|addr_test1${"q".repeat(50)}|${"t".repeat(40)}`,
+    };
+    const view = (vars: Record<string, string>) => orderRig(vars).engine.configView(true).orders;
+    // real client but fake payments (rig default): not ready
+    expect(view({ ...real })).toMatchObject({ fake: false, enabled: false, realReady: false });
+    const live = {
+      ...real,
+      FAKE_PAYMENTS: "0",
+      VERIFY_CLIENT: "real",
+      BLOCKFROST_PROJECT_ID: "preprodabc",
+      PAY_MNEMONIC_1: "synthetic-fixture",
+      VERIFIER_PAYMENT: "off",
+    };
+    expect(view(live)).toMatchObject({ fake: false, enabled: true, realReady: true });
+    // fake combination stays enabled and never reports realReady
+    expect(view({})).toMatchObject({ fake: true, enabled: true, realReady: false });
   });
   it("fails closed on real-mode credentials, weak brand codes and non-preprod URLs", () => {
     for (const vars of [

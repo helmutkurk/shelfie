@@ -151,7 +151,13 @@ export function RequestForm(props: {
             Fake orders: local rehearsal, no Sokosumi purchase or real escrow.
           </p>
         ) : null}
-        {!props.enabled ? <p className="footnote">Orders are not enabled on this engine.</p> : null}
+        {!props.enabled ? (
+          <p className="footnote" role="status">
+            {props.fake
+              ? "Orders are not available: fake orders need fake payments and verifier, outside evidence runs."
+              : "Orders are not available: the real Sokosumi settings (API token, coworker, organization) or the real payment and verifier settings are missing on this engine."}
+          </p>
+        ) : null}
         <Button type="submit" disabled={!ready || busy}>
           {busy ? "Placing order…" : "Place order"}
         </Button>

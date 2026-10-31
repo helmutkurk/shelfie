@@ -402,6 +402,8 @@ export const LedgerListResponseSchema = z.object({ entries: z.array(LedgerEventS
 const WalletHealthSchema = z.object({
   balanceLovelace: LovelaceSchema,
   queueDepth: z.number().int().nonnegative().optional(),
+  /** True when the balance could not be read; `balanceLovelace` is then a placeholder. */
+  unknown: z.boolean().optional(),
 });
 export const HealthResponseSchema = z.object({
   ok: z.boolean(),
