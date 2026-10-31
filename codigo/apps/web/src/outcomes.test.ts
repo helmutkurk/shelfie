@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { JobView } from "@shelfie/core/browser";
+import type { JobView, SubmissionView } from "@shelfie/core/browser";
 import { isActiveJob, jobOutcome, jobViewStatus, matchesFilter } from "./dashboard/model.js";
 import { addHistory, createMemoryStorage, loadHistory } from "./lib/storage.js";
+import { historyEarnings } from "./worker/Wallet.js";
 
 type Slice = Pick<JobView, "job" | "counts">;
 const view = (state: string, source: string, failed = 0): Slice =>
@@ -51,5 +52,27 @@ describe("photo history on this device", () => {
     const store = createMemoryStorage({ "shelfie.history": "{not json" });
     expect(loadHistory(store)).toEqual([]);
     expect(addHistory(store, entry("../etc"))).toEqual([]);
+  });
+});
+
+describe("worker earnings", () => {
+  const entry = (id: string, amount: string) => ({
+    submissionId: id,
+    productName: "Red Bull Energy Drink 250 ml",
+    storeName: "Shelfie demo shelf",
+    payoutAmount: amount,
+    at: "2026-10-31T03:05:00.000Z",
+  });
+  const view = (state: string, payout?: string) =>
+    ({ state, payout: payout ? { state: payout } : null }) as unknown as SubmissionView;
+  it("sums confirmed payouts as paid and other accepted photos as pending, never rejected ones", () => {
+    const history = [entry("sub_1", "3000000"), entry("sub_2", "2500000"), entry("sub_3", "9")];
+    const views = new Map([
+      ["sub_1", view("PASSED", "CONFIRMED")],
+      ["sub_2", view("PASSED", "SUBMITTED")],
+      ["sub_3", view("REJECTED")],
+    ]);
+    expect(historyEarnings(history, views)).toEqual({ paid: "3000000", pending: "2500000" });
+    expect(historyEarnings(history, undefined)).toEqual({ paid: "0", pending: "0" });
   });
 });

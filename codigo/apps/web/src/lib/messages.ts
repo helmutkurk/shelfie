@@ -88,6 +88,8 @@ export const S = {
   ],
   handSignNote: "Your hand sign is revealed when the camera opens.",
   walletNote: "Payouts are sent in test ADA (tADA) on the Cardano preprod test network.",
+  walletEarningsNote:
+    "Earnings count the photos taken on this phone. The explorer shows everything this address holds.",
   walletHistoryNote:
     "Your photos are the last ones taken on this phone; another phone or a cleared browser starts empty.",
   noSecureContext: "Open the secure link to take the photo.",

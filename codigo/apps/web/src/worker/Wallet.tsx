@@ -1,3 +1,4 @@
+import { addressUrl } from "@shelfie/evidence/explorer";
 import type { SubmissionView, TaskListItem } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
 import { usePolling } from "../lib/hooks.js";
@@ -17,7 +18,8 @@ export interface SessionResult {
 
 /**
  * Wallet tab: the stored payout address, what payouts are, and the latest result of this session.
- * No balance and no fiat amounts. "Your photos" is the history this phone keeps (lib/storage).
+ * No fiat amounts. The earnings sum the payouts of the photos this phone keeps (lib/storage); the
+ * address balance itself is on the preprod explorer (the browser has no chain API, CSP 'self').
  */
 export function Wallet(props: {
   payoutAddress: string | null;
@@ -25,6 +27,9 @@ export function Wallet(props: {
   history: readonly HistoryEntry[];
   onGoProfile: () => void;
 }) {
+  const views = useHistoryViews(props.history);
+  const earnings = historyEarnings(props.history, views);
+  const explorer = props.payoutAddress ? addressUrl(props.payoutAddress) : undefined;
   return (
     <section className="tab-section" aria-labelledby="wallet-title">
       <div className="page-head">
@@ -46,6 +51,30 @@ export function Wallet(props: {
         <p className="footnote">{S.walletNote}</p>
       </div>
 
+      <h2 className="section-title">Earnings</h2>
+      <Group>
+        <Row
+          title="Paid to you"
+          secondary="Confirmed payouts"
+          trailing={formatAda(earnings.paid)}
+        />
+        {earnings.pending !== "0" ? (
+          <Row
+            title="On its way"
+            secondary="Accepted, payment pending"
+            trailing={formatAda(earnings.pending)}
+          />
+        ) : null}
+      </Group>
+      {explorer ? (
+        <p className="footnote">
+          <a href={explorer} target="_blank" rel="noopener noreferrer">
+            See the full balance of this address on the explorer
+          </a>
+        </p>
+      ) : null}
+      <p className="footnote">{S.walletEarningsNote}</p>
+
       <h2 className="section-title">Latest result in this session</h2>
       {props.result ? (
         <SessionPayout result={props.result} />
@@ -56,7 +85,7 @@ export function Wallet(props: {
         />
       )}
       <h2 className="section-title">Your tasks</h2>
-      <PhotoHistory history={props.history} />
+      <PhotoHistory history={props.history} views={views} />
       <p className="footnote wallet-history">{S.walletHistoryNote}</p>
     </section>
   );
@@ -100,10 +129,12 @@ function historyStatus(view: SubmissionView | undefined): string {
   return "Checking";
 }
 
-/** Photos this phone submitted, newest first, with verdict and payout read from the engine. */
-function PhotoHistory(props: { history: readonly HistoryEntry[] }) {
+/** Verdict and payout of the newest photos on this phone, read from the engine every 10 s. */
+function useHistoryViews(
+  history: readonly HistoryEntry[],
+): ReadonlyMap<string, SubmissionView | undefined> | undefined {
   const { api } = useDeps();
-  const ids = props.history.slice(0, 10).map((e) => e.submissionId);
+  const ids = history.slice(0, 10).map((e) => e.submissionId);
   const { data } = usePolling(
     async (signal) => {
       const views = await Promise.all(
@@ -114,6 +145,34 @@ function PhotoHistory(props: { history: readonly HistoryEntry[] }) {
     10_000,
     ids.length > 0,
   );
+  return data;
+}
+
+/**
+ * Lovelace earned by the photos this phone keeps: paid = payout CONFIRMED on-chain, pending =
+ * accepted and not yet confirmed. Integer sums; the reward is the one recorded at submit time.
+ */
+export function historyEarnings(
+  history: readonly HistoryEntry[],
+  views: ReadonlyMap<string, SubmissionView | undefined> | undefined,
+): { paid: string; pending: string } {
+  let paid = 0n;
+  let pending = 0n;
+  for (const entry of history) {
+    const view = views?.get(entry.submissionId);
+    if (view?.state !== "PASSED") continue;
+    if (view.payout?.state === "CONFIRMED") paid += BigInt(entry.payoutAmount);
+    else pending += BigInt(entry.payoutAmount);
+  }
+  return { paid: paid.toString(), pending: pending.toString() };
+}
+
+/** Photos this phone submitted, newest first, with verdict and payout read from the engine. */
+function PhotoHistory(props: {
+  history: readonly HistoryEntry[];
+  views: ReadonlyMap<string, SubmissionView | undefined> | undefined;
+}) {
+  const data = props.views;
   if (props.history.length === 0) {
     return (
       <EmptyState
