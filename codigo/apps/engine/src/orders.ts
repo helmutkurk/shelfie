@@ -56,6 +56,8 @@ function classify(view: JobView): CheckKind {
 
 export class Orders {
   private readonly active = new Set<string>();
+  /** Last price lookup per store check (`orderId:storeId`, epoch ms). */
+  private readonly priceLookups = new Map<string, number>();
   constructor(private readonly d: OrderDeps) {}
 
   async create(body: unknown, key: string | undefined, brandId: string): Promise<OrderView> {
@@ -304,7 +306,44 @@ export class Orders {
     return msg ? msg.slice(0, 240) : undefined;
   }
 
+  /**
+   * The price recorded at create time is 0 or missing: Sokosumi prices the Task seconds later, when
+   * the coworker requests the payment (verified.md). Once the shell has linked a job the Task is
+   * priced, so read it from Sokosumi in the background, at most once a minute per store check;
+   * the next read shows it. The daily cap uses `reservedCredits` and is not affected.
+   */
+  private refreshPrices(orders: readonly OrderRecord[]): void {
+    const client = this.d.client;
+    if (!client.taskCredits) return;
+    const now = this.d.clock.nowMs();
+    for (const order of orders) {
+      for (const row of order.jobs) {
+        const taskId = row.sokosumiTaskId;
+        if (!row.jobId || !taskId || (row.credits ?? 0) > 0) continue;
+        const key = `${order.id}:${row.storeId}`;
+        const last = this.priceLookups.get(key);
+        if (last !== undefined && now - last < 60_000) continue;
+        this.priceLookups.set(key, now);
+        void client
+          .taskCredits(taskId)
+          .then((credits) => {
+            if (credits === undefined || credits <= 0) return;
+            const fresh = this.d.store.orders.get(order.id);
+            if (!fresh) return;
+            this.d.store.orders.put({
+              ...fresh,
+              jobs: fresh.jobs.map((j) =>
+                j.storeId === row.storeId && j.sokosumiTaskId === taskId ? { ...j, credits } : j,
+              ),
+            });
+          })
+          .catch(() => undefined);
+      }
+    }
+  }
+
   list(brandId: string): { orders: OrderView[] } {
+    this.refreshPrices(this.d.store.orders.all().filter((o) => ownerOf(o) === brandId));
     return {
       orders: this.d.store.orders
         .all()
@@ -342,6 +381,7 @@ export class Orders {
    * recorded Sokosumi price per row; rows without one are counted, never estimated.
    */
   summary(brandId: string): BrandSummary {
+    this.refreshPrices(this.d.store.orders.all().filter((o) => ownerOf(o) === brandId));
     let spent = 0;
     let refunded = 0;
     let unpriced = 0;

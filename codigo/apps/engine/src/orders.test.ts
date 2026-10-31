@@ -208,6 +208,31 @@ describe("real Sokosumi transport (mocked; request shape from A-25)", () => {
     }
   });
 
+  it("reads a Task's price with a GET; anything odd is unknown, never an error", async () => {
+    const urls: string[] = [];
+    const calls: RequestInit[] = [];
+    const answer = (data: unknown, status = 200) => {
+      const client = new RealSokosumiClient(realEnv(), (url, init) => {
+        urls.push(url instanceof Request ? url.url : String(url));
+        calls.push(init!);
+        return Promise.resolve(Response.json({ data }, { status }));
+      });
+      return client.taskCredits("task-1");
+    };
+    await expect(answer({ id: "task-1", totalCredits: 100 })).resolves.toBe(100);
+    expect(urls[0]).toBe("https://api.preprod.sokosumi.com/v1/tasks/task-1");
+    expect(calls[0]?.method).toBe("GET");
+    expect(calls[0]?.redirect).toBe("error");
+    expect(new Headers(calls[0]?.headers).get("authorization")).toBe("Bearer synthetic-api-token");
+    await expect(answer({ id: "task-1", credits: 40 })).resolves.toBe(40);
+    await expect(answer({ id: "task-1" })).resolves.toBeUndefined();
+    await expect(answer({ id: "task-1", totalCredits: "100" })).resolves.toBeUndefined();
+    await expect(answer({ id: "task-1", totalCredits: 100 }, 404)).resolves.toBeUndefined();
+    const client = new RealSokosumiClient(realEnv(), () => Promise.reject(new Error("reset")));
+    await expect(client.taskCredits("task-1")).resolves.toBeUndefined();
+    await expect(client.taskCredits("../x")).resolves.toBeUndefined();
+  });
+
   it("hides upstream bodies, errors and malformed responses; does not retry", async () => {
     for (const response of [
       new Response("synthetic-api-token", { status: 401 }),

@@ -44,6 +44,36 @@ describe("brand summary and transactions (B-17)", () => {
     });
   });
 
+  it("replaces the 0 price of the create answer with the Task's real price once a job is linked", async () => {
+    const holder: { inner?: SokosumiClient } = {};
+    const lookups: string[] = [];
+    const r = orderRig(twoBrands, {
+      // Like Sokosumi: the create answer has price 0; the Task is priced when payment is requested.
+      createTask: (input, created) =>
+        holder.inner!.createTask(input, created).then((out) => ({ ...out, credits: 0 })),
+      taskCredits: (taskId) => {
+        lookups.push(taskId);
+        return Promise.resolve(100);
+      },
+    });
+    holder.inner = new FakeSokosumiClient(r.engine, r.env, new SequentialIdGenerator());
+    const order = await r.orders.create({ ...body, storeIds: ["s1"] }, undefined, BRAND_A.id);
+    r.orders.summary(BRAND_A.id);
+    r.orders.list(BRAND_A.id); // within a minute: no second lookup
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(lookups).toEqual([order.jobs[0]!.sokosumiTaskId]);
+    expect(r.orders.get(order.orderId, BRAND_A.id).jobs[0]?.credits).toBe(100);
+    r.clock.advance(1000_000);
+    r.engine.tick();
+    r.engine.settlementEvent(order.jobs[0]!.jobId!, { event: "WITHHELD" });
+    expect(r.orders.summary(BRAND_A.id).credits).toEqual({
+      spent: 0,
+      refunded: 100,
+      unpricedChecks: 0,
+    });
+    expect(lookups).toHaveLength(1); // priced rows are never looked up again
+  });
+
   it("counts settled checks without a recorded price as unpriced, never as a number", async () => {
     const r = orderRig(twoBrands); // the fake client records no price
     const order = await r.orders.create({ ...body, storeIds: ["s1"] }, undefined, BRAND_A.id);

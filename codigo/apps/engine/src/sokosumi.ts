@@ -14,6 +14,11 @@ export interface SokosumiClient {
     input: SokosumiTaskInput,
     onCreated?: (taskId: string) => void,
   ): Promise<{ taskId: string; credits?: number }>;
+  /**
+   * Price Sokosumi charged for a Task, or undefined when unknown. The create answer carries no
+   * price yet: Sokosumi sets it seconds later, when the coworker requests the payment.
+   */
+  taskCredits?(taskId: string): Promise<number | undefined>;
 }
 
 /** Local rehearsal only: same createJob method/body as the authenticated shell bridge. */
@@ -54,6 +59,10 @@ const CreatedResponse = z.object({
     credits: z.number().nullable().optional(),
   }),
 });
+
+const Credits = z.number().nonnegative().max(1_000_000_000).nullable().optional();
+/** GET /v1/tasks/{id}: the price is `totalCredits` (`credits` as fallback, as the Sokosumi CLI reads it). */
+const TaskResponse = z.object({ data: z.object({ totalCredits: Credits, credits: Credits }) });
 
 /**
  * Real adapter (B-16). Request shape verified by A-25 (codigo/docs/verified.md): one READY
@@ -138,5 +147,33 @@ export class RealSokosumiClient implements SokosumiClient {
       );
     }
     return { taskId, credits };
+  }
+
+  /** Read-only price lookup; any failure is "unknown", never an error, and no body is exposed. */
+  async taskCredits(taskId: string): Promise<number | undefined> {
+    if (!/^[A-Za-z0-9_-]{1,100}$/.test(taskId)) return undefined;
+    try {
+      const response = await this.fetchFn(
+        new URL(`/v1/tasks/${taskId}`, this.env.SOKOSUMI_API_URL),
+        {
+          method: "GET",
+          redirect: "error",
+          signal: AbortSignal.timeout(10_000),
+          headers: {
+            Authorization: `Bearer ${this.env.SOKOSUMI_API_TOKEN}`,
+            "X-Organization-Slug": this.env.SOKOSUMI_ORGANIZATION_SLUG!,
+            Accept: "application/json",
+          },
+        },
+      );
+      if (!response.ok) return undefined;
+      const text = await response.text();
+      if (text.length > 512_000) return undefined;
+      const parsed = TaskResponse.safeParse(JSON.parse(text));
+      if (!parsed.success) return undefined;
+      return parsed.data.data.totalCredits ?? parsed.data.data.credits ?? undefined;
+    } catch {
+      return undefined;
+    }
   }
 }
